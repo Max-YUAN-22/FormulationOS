@@ -1,0 +1,1 @@
+"""Scientific Workspace: persistent state (Task 7, planned)."""

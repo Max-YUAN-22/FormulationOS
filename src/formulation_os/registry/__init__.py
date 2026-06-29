@@ -1,0 +1,1 @@
+"""Scientific Registry: catalog of tools with retrieval (Task 3, planned)."""
