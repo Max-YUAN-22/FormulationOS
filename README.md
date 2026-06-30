@@ -2,64 +2,145 @@
 
 **A Scientific Operating System for Computational Pharmaceutics**
 
-FormulationOS is an operating layer that orchestrates heterogeneous scientific AI models through natural language. It introduces the **Scientific Workflow Abstraction** — a first-class abstraction that unifies execution, persistence, replay, refinement, provenance, and artifacts under a unified operating layer. In the current implementation, Scientific Workflows are expressed as directed acyclic execution graphs (DAGs).
+[![Python](https://img.shields.io/badge/python-3.11%2B-blue)](https://www.python.org/)
+[![Tests](https://img.shields.io/badge/tests-151%20passing-brightgreen)](#development)
+[![Status](https://img.shields.io/badge/status-v0.1%20MVP-yellow)](#status)
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+
+FormulationOS is an operating layer that orchestrates heterogeneous
+scientific AI models through natural language. It introduces the
+**Scientific Workflow Abstraction** — a first-class abstraction that
+unifies execution, persistence, replay, refinement, provenance, and
+artifacts under a unified operating layer. In the current
+implementation, Scientific Workflows are expressed as directed acyclic
+execution graphs (DAGs).
+
+See the [architecture diagram](docs/architecture.md) for the one-page
+overview of the 5-layer stack and the query data flow.
 
 ---
 
 ## Status
 
-🚧 **v0.1 (in development)** — Architecture Frozen v1.0.
-
-End-to-end MVP demo ready: Planner → Registry → Orchestrator → Report → Streamlit UI, with 5 built-in mock Tools and 117 passing tests.
-See [`paper/outline.md`](paper/outline.md) for the paper outline.
+🚧 **v0.1 MVP — architecture frozen.** End-to-end demo is wired:
+Planner → Registry → Orchestrator → Report → Streamlit UI, with 5
+built-in mock Tools and 151 passing tests. See the [roadmap
+section](#roadmap) for what's next.
 
 ---
 
 ## Quickstart
 
+Three steps. No API key required for the rule-based demo.
+
+### 1. Install
+
 ```bash
-# Install in editable mode with dev + API + UI extras
-pip install -e ".[all,dev]"
-
-# Run all tests
-pytest
-
-# Run the end-to-end smoke test (Task 2.5)
-pytest tests/smoke/test_end_to_end.py -v -s
-
-# Launch the Streamlit UI (requires the [ui] extra)
-pip install -e ".[ui]"
-streamlit run src/formulation_os/ui/app.py
+git clone <repo-url> FormulationOS
+cd FormulationOS
+make install          # pip install -e ".[all,dev]"
 ```
+
+Or with plain `pip` if you don't have `make`:
+
+```bash
+pip install -e ".[all,dev]"
+```
+
+`make install` pulls in the dev tools (pytest, mypy, ruff), the UI
+(Streamlit), and the LLM SDKs (openai, anthropic). If you only need a
+subset:
+
+```bash
+pip install -e ".[dev]"    # tests + lint, no UI, no LLM SDKs
+pip install -e ".[ui]"     # add Streamlit
+pip install -e ".[llm]"    # add openai + anthropic SDKs
+```
+
+### 2. Run the tests
+
+```bash
+make test              # 151 tests, ~2 seconds
+```
+
+### 3. Launch the UI
+
+```bash
+make run-ui            # rule-based planner, no key required
+# → opens http://localhost:8501 in your browser
+```
+
+You'll see a query input pre-filled with an example. Click **Run ▶**
+and the planner picks a tool, the tool executes, and the rendered
+Report appears below.
+
+**With the LLM planner** (MiniMax M3 by default):
+
+```bash
+export MINIMAX_API_KEY=sk-...          # or ANTHROPIC_API_KEY
+make run-ui-llm
+# same UI, but routing is now done by the LLM
+```
+
+To stop the server: `Ctrl-C`.
 
 ---
 
-## Architecture (5 Layers)
+## What you'll see
+
+The Streamlit UI has two panels:
+
+- **Sidebar** — a list of the 5 built-in tools (Literature,
+  FormulationAI, PreformulationAI, PBPK-AI, FormulationDT) with each
+  tool's description, domain, and capabilities. Acts as a live check
+  that the registry loaded.
+- **Main panel** — a query input (with example queries as defaults)
+  and a Run button. After clicking Run, the chosen tool's result
+  appears as a card (status, duration, input/output JSON, warnings),
+  with the raw Markdown Report in a collapsed expander below.
+
+Example queries that route cleanly with the rule-based planner:
+
+| Query | Routes to |
+|-------|-----------|
+| `Find recent literature review on solubility` | Literature |
+| `I want to formulate ibuprofen as a tablet` | FormulationAI |
+| `What is the bioavailability of caffeine?` | PBPK-AI |
+| `Predict solubility of naproxen` | PreformulationAI |
+
+---
+
+## Architecture (5 layers)
 
 | Layer | Component | Status |
 |-------|-----------|--------|
 | 5 | User Interface (Streamlit / REST API / CLI) | **Streamlit UI live** |
 | 4 | Scientific Workspace (persistent state) | planned |
-| 3 | Workflow Planner (LLM-based) + Workflow Graph (DAG) | **Rule-based Planner live** |
-| 2 | Scientific Registry + Execution Runtime (with provenance) | **Registry + Orchestrator live** |
+| 3 | Workflow Planner + Workflow Graph (DAG) | **Rule-based + LLM live** |
+| 2 | Scientific Registry + Execution Runtime | **Registry + Orchestrator live** |
 | 1 | Scientific Models (heterogeneous executors) | **5 mocks live** |
 
-See [`paper/sections/04_formulationos_architecture.md`](paper/sections/04_formulationos_architecture.md).
+See [`docs/architecture.md`](docs/architecture.md) for the full
+diagram, or [`paper/sections/04_formulationos_architecture.md`](paper/sections/04_formulationos_architecture.md)
+for the design rationale.
 
 ---
 
 ## Scientific Tool Specification (STS)
 
-Tools are declared via `tool.yaml` following the [STS v0.2 specification](docs/sts_specification.md).
+Tools are declared via `tool.yaml` following the
+[STS v0.2 specification](docs/sts_specification.md).
 
-STS is an **extension schema** over standard tool specifications (OpenAPI, MCP tool descriptors), adding four scientific extensions:
+STS is an **extension schema** over standard tool specifications
+(OpenAPI, MCP tool descriptors), adding four scientific extensions:
 
 1. **Scientific Semantics** — informal capability annotations
 2. **Planning Hints** — examples, keywords, notes for the Workflow Planner
 3. **Scientific Dependencies** — cross-tool constraints
 4. **Provenance Specification** — declarative trace requirements
 
-To add a new tool, see [docs/tool_author_guide.md](docs/tool_author_guide.md).
+To add a new tool, see
+[`docs/tool_author_guide.md`](docs/tool_author_guide.md).
 
 ---
 
@@ -73,13 +154,52 @@ To add a new tool, see [docs/tool_author_guide.md](docs/tool_author_guide.md).
 | `FormulationDT` | dissolution profile / particle simulation | digital-twin |
 | `Literature` | literature search | literature |
 
-All five are mocks (`mock: true`) that return deterministic placeholder data with `warnings` fields clearly labeled.
+All five are mocks (`mock: true`) that return deterministic placeholder
+data with `warnings` fields clearly labeled. See Task 8 for real
+model integration.
+
+---
+
+## Development
+
+```bash
+make install    # editable install with [all,dev]
+make test       # full pytest run
+make lint       # ruff + mypy
+make run-ui     # Streamlit (rule-based)
+make run-ui-llm # Streamlit (LLM; needs MINIMAX_API_KEY or ANTHROPIC_API_KEY)
+make clean      # remove caches and build artifacts
+```
+
+See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the dev setup, code
+style, commit-message convention, and how to add a new Tool or
+Planner.
+
+---
+
+## Roadmap
+
+Phase 1 (this MVP) is complete. Phase 2 work:
+
+- **Task 8: Real model integration.** Replace the 5 mock backends with
+  real PK/PD/Formulation/DT solvers. Model selection, license
+  management, benchmark validation.
+- **Scientific Workspace (Layer 4).** Persistent state, replay,
+  refinement, provenance panel.
+- **Provenance record format.** Structured scientific evidence chain
+  for every execution.
+- **HTTP / CLI / MCP / gRPC Executors.** Today only `python`
+  executors are supported; the other five types from STS v0.2 are
+  planned.
+- **Embedding-based retriever.** Vector index over
+  `Tool.to_card()` for sub-millisecond semantic tool retrieval.
 
 ---
 
 ## Paper
 
-This project is being prepared as a submission to an AI Systems venue. See [`paper/`](paper/) for the working draft.
+This project is being prepared as a submission to an AI Systems venue.
+See [`paper/`](paper/) for the working draft.
 
 **Slogan:**
 > *FormulationOS elevates Scientific Workflows to first-class citizens, enabling heterogeneous scientific foundation models to be executed, persisted, refined, replayed, and traced under a unified operating layer.*
