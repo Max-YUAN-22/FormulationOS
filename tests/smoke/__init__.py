@@ -1,0 +1,1 @@
+"""End-to-end smoke tests (Task 2.5)."""
