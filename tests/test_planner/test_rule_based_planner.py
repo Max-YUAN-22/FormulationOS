@@ -37,9 +37,9 @@ def test_planner_picks_pbpk_for_bioavailability_query(planner: RuleBasedPlanner)
     assert selected[0].name == "PBPK-AI"
 
 
-def test_planner_picks_literature_for_papers_query(planner: RuleBasedPlanner) -> None:
-    """User's example: 'Find recent papers on solubility' -> [Literature]."""
-    selected = planner.plan("Find recent papers on solubility", top_k=1)
+def test_planner_picks_literature_for_literature_review_query(planner: RuleBasedPlanner) -> None:
+    """User's example: 'Find recent literature review on solubility' -> [Literature]."""
+    selected = planner.plan("Find recent literature review on solubility", top_k=1)
     assert len(selected) == 1
     assert selected[0].name == "Literature"
 
