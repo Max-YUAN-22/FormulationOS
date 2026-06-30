@@ -65,10 +65,16 @@ planning_hints:
   keywords:
     - literature
     - paper
+    - papers
     - reference
     - citation
     - PubMed
     - DOI
+    - find
+    - search
+    - research
+    - study
+    - studies
   notes: |
     Use as a parallel branch in scientific workflows — Literature
     retrieval is independent of property prediction.

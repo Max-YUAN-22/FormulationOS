@@ -67,6 +67,9 @@ planning_hints:
     - PK
     - PBPK
     - pharmacokinetics
+    - pharmacokinetic
+    - bioavailability
+    - absorption
     - Cmax
     - AUC
     - clearance
