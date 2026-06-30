@@ -1,0 +1,94 @@
+name: Literature
+version: 0.1.0
+owner: formulation-os-mock
+description: |
+  Searches academic literature for papers relevant to a query.
+  Returns title, authors, year, abstract, DOI, and source.
+
+  USE THIS TOOL WHEN:
+    - User asks for "literature", "papers", "references", "studies"
+    - User wants background context for an API or formulation
+    - User asks "what's known about X"
+
+semantics:
+  capabilities:
+    - literature_search
+    - citation_retrieval
+  domain: literature
+
+input_schema:
+  type: object
+  properties:
+    query:
+      type: string
+      minLength: 1
+    max_results:
+      type: integer
+      minimum: 1
+      maximum: 50
+      default: 5
+    year_from:
+      type: integer
+      minimum: 1900
+    year_to:
+      type: integer
+      maximum: 2100
+  required: [query]
+
+output_schema:
+  type: object
+  properties:
+    query: {type: string}
+    papers:
+      type: array
+      items:
+        type: object
+        properties:
+          title: {type: string}
+          authors:
+            type: array
+            items: {type: string}
+          year: {type: integer}
+          abstract: {type: string}
+          doi: {type: string}
+          source: {type: string}
+    total_found: {type: integer}
+    warnings:
+      type: array
+      items: {type: string}
+  required: [query, papers, total_found]
+
+planning_hints:
+  examples:
+    - input: {query: ibuprofen tablet formulation}
+      output_summary: 2–5 mock paper entries
+  keywords:
+    - literature
+    - paper
+    - reference
+    - citation
+    - PubMed
+    - DOI
+  notes: |
+    Use as a parallel branch in scientific workflows — Literature
+    retrieval is independent of property prediction.
+
+scientific_dependencies: {}
+
+executor:
+  type: python
+  module: formulation_os.tools.builtins.literature.backend
+  function: run
+
+provenance_spec:
+  record_inputs: true
+  record_outputs: true
+  record_parameters: true
+  record_compute_env: false
+
+cost:
+  latency_class: low
+  cost_class: low
+  confidence: experimental
+
+mock: true

@@ -1,0 +1,100 @@
+name: PBPK-AI
+version: 0.1.0
+owner: formulation-os-mock
+description: |
+  Estimates physiologically-based pharmacokinetic (PBPK) parameters
+  (Cmax, AUC, t1/2, clearance, volume of distribution) for a compound
+  at a given dose and route.
+
+  USE THIS TOOL WHEN:
+    - User asks about PK / PD behavior
+    - Validating a formulation choice (e.g., does the predicted PK
+      match therapeutic targets?)
+
+semantics:
+  capabilities:
+    - pbpk_simulation
+    - parameter_estimation
+  domain: pbpk
+
+input_schema:
+  type: object
+  properties:
+    drug_name:
+      type: string
+    dose_mg:
+      type: number
+      minimum: 0
+    route:
+      type: string
+      enum: [oral, iv, sc, im]
+      default: oral
+    species:
+      type: string
+      enum: [human, rat, mouse]
+      default: human
+  required: [drug_name, dose_mg]
+
+output_schema:
+  type: object
+  properties:
+    drug_name: {type: string}
+    route: {type: string}
+    species: {type: string}
+    parameters:
+      type: object
+      properties:
+        cmax_ng_ml: {type: number}
+        auc_ng_h_ml: {type: number}
+        t_half_h: {type: number}
+        clearance_L_h: {type: number}
+        vd_L: {type: number}
+    confidence:
+      type: number
+      minimum: 0
+      maximum: 1
+    notes: {type: string}
+    warnings:
+      type: array
+      items: {type: string}
+  required: [drug_name, route, species, parameters, notes]
+
+planning_hints:
+  examples:
+    - input: {drug_name: Ibuprofen, dose_mg: 200, route: oral}
+      output_summary: Cmax ~18 µg/mL, t1/2 ~2h, AUC ~70 µg·h/mL
+  keywords:
+    - PK
+    - PBPK
+    - pharmacokinetics
+    - Cmax
+    - AUC
+    - clearance
+    - half-life
+  notes: |
+    Requires formulation context (excipient list) for accurate
+    absorption modeling. Run after FormulationAI when possible.
+
+scientific_dependencies:
+  upstream_capabilities_optional:
+    - excipient_design
+    - solubility_prediction
+  upstream_capabilities_required: []
+
+executor:
+  type: python
+  module: formulation_os.tools.builtins.pbpk_ai.backend
+  function: run
+
+provenance_spec:
+  record_inputs: true
+  record_outputs: true
+  record_parameters: true
+  record_compute_env: true
+
+cost:
+  latency_class: medium
+  cost_class: low
+  confidence: experimental
+
+mock: true

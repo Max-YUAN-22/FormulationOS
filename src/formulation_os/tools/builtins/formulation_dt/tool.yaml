@@ -1,0 +1,95 @@
+name: FormulationDT
+version: 0.1.0
+owner: formulation-os-mock
+description: |
+  Digital-twin simulation of formulation performance: dissolution
+  profile under specified conditions, and particle-size distribution
+  evolution over time.
+
+  USE THIS TOOL WHEN:
+    - User asks about in-silico dissolution prediction
+    - User wants to compare formulation prototypes
+    - Particle-engineering questions
+
+semantics:
+  capabilities:
+    - dissolution_profile
+    - particle_simulation
+  domain: digital-twin
+
+input_schema:
+  type: object
+  properties:
+    formulation_id:
+      type: string
+      description: Optional reference to a prior FormulationAI output.
+    drug_name:
+      type: string
+    medium:
+      type: string
+      enum: [pH_1_2, pH_4_5, pH_6_8, pH_7_4, FaSSIF, FeSSIF]
+      default: pH_6_8
+    duration_min:
+      type: number
+      minimum: 0
+      maximum: 1440
+      default: 120
+  required: [drug_name]
+
+output_schema:
+  type: object
+  properties:
+    drug_name: {type: string}
+    medium: {type: string}
+    dissolution_curve:
+      type: array
+      items:
+        type: object
+        properties:
+          t_min: {type: number}
+          pct_dissolved: {type: number, minimum: 0, maximum: 100}
+    f2_similarity: {type: number}
+    summary: {type: string}
+    warnings:
+      type: array
+      items: {type: string}
+  required: [drug_name, medium, dissolution_curve, summary]
+
+planning_hints:
+  examples:
+    - input: {drug_name: Ibuprofen, medium: pH_6_8, duration_min: 120}
+      output_summary: ~85% dissolved at 60 min in pH 6.8
+  keywords:
+    - dissolution
+    - digital twin
+    - particle size
+    - in-silico
+    - F2
+  notes: |
+    Particle size and excipient choice (from FormulationAI) influence
+    dissolution; consider chaining PreformulationAI → FormulationAI →
+    FormulationDT for a complete in-silico screening workflow.
+
+scientific_dependencies:
+  upstream_capabilities_optional:
+    - excipient_design
+    - solubility_prediction
+  upstream_capabilities_required: []
+
+executor:
+  type: python
+  module: formulation_os.tools.builtins.formulation_dt.backend
+  function: run
+
+provenance_spec:
+  record_inputs: true
+  record_outputs: true
+  record_parameters: true
+  record_compute_env: true
+
+cost:
+  latency_class: medium
+  cost_class: medium
+  confidence: experimental
+
+mock: true

@@ -1,0 +1,101 @@
+name: FormulationAI
+version: 0.1.0
+owner: formulation-os-mock
+description: |
+  Suggests a pharmaceutical formulation (excipients + composition)
+  for a given API, dose, and dosage form.
+
+  USE THIS TOOL WHEN:
+    - User wants to design or optimize a drug formulation
+    - User mentions excipients, dosage form, or composition
+
+  DO NOT USE WHEN:
+    - User asks about PK/PD or pharmacokinetics (use PBPK-AI)
+    - User asks about literature review (use Literature)
+
+semantics:
+  capabilities:
+    - excipient_design
+    - tablet
+    - capsule
+  domain: formulation
+
+input_schema:
+  type: object
+  properties:
+    drug_name:
+      type: string
+      description: API or compound name.
+    target_dose_mg:
+      type: number
+      minimum: 0
+      description: Target dose in milligrams.
+    dosage_form:
+      type: string
+      enum: [tablet, capsule, injection, cream, patch]
+      description: Target dosage form.
+    indication:
+      type: string
+      description: Optional therapeutic indication.
+  required: [drug_name, target_dose_mg, dosage_form]
+
+output_schema:
+  type: object
+  properties:
+    drug_name: {type: string}
+    dosage_form: {type: string}
+    excipients:
+      type: array
+      items:
+        type: object
+        properties:
+          name: {type: string}
+          function: {type: string}
+          percent_w_w: {type: number}
+    summary: {type: string}
+    warnings:
+      type: array
+      items: {type: string}
+  required: [drug_name, dosage_form, excipients, summary]
+
+planning_hints:
+  examples:
+    - input: {drug_name: Ibuprofen, target_dose_mg: 200, dosage_form: tablet}
+      output_summary: Tablet with MCC/lactose/Mg-stearate, 200 mg API load
+  keywords:
+    - excipient
+    - formulation
+    - dosage form
+    - composition
+    - tablet
+    - capsule
+  notes: |
+    Prefer this tool after PreformulationAI when solubility / BCS class info
+    is available; solubility informs excipient selection.
+
+scientific_dependencies:
+  upstream_capabilities_optional:
+    - solubility_prediction
+    - literature_search
+  upstream_capabilities_required: []
+  rationale: |
+    Solubility (from PreformulationAI) informs excipient selection
+    (e.g., BCS class II compounds may need solubilizers).
+
+executor:
+  type: python
+  module: formulation_os.tools.builtins.formulation_ai.backend
+  function: run
+
+provenance_spec:
+  record_inputs: true
+  record_outputs: true
+  record_parameters: true
+  record_compute_env: true
+
+cost:
+  latency_class: low
+  cost_class: low
+  confidence: experimental
+
+mock: true

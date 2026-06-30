@@ -1,0 +1,94 @@
+name: PreformulationAI
+version: 0.1.0
+owner: formulation-os-mock
+description: |
+  Predicts preformulation properties (aqueous solubility, logP,
+  permeability, BCS class) for an API based on its name.
+
+  USE THIS TOOL WHEN:
+    - Early-stage compound screening
+    - User asks about solubility, permeability, or BCS class
+    - Informing downstream formulation design
+
+semantics:
+  capabilities:
+    - solubility_prediction
+    - permeability
+    - stability
+  domain: preformulation
+
+input_schema:
+  type: object
+  properties:
+    drug_name:
+      type: string
+      description: API or compound name.
+    assays:
+      type: array
+      items:
+        type: string
+        enum: [solubility, logp, permeability, stability, bcs_class]
+      description: Optional subset of assays to run; defaults to all.
+  required: [drug_name]
+
+output_schema:
+  type: object
+  properties:
+    drug_name: {type: string}
+    solubility_mg_ml:
+      type: number
+      description: Aqueous solubility at pH 6.8 (mock).
+    logp:
+      type: number
+      description: Calculated logP (mock).
+    permeability_cm_s:
+      type: number
+      description: Apparent permeability (mock).
+    bcs_class:
+      type: string
+      enum: [I, II, III, IV]
+    stability_ph:
+      type: object
+      additionalProperties: {type: number}
+    summary: {type: string}
+    warnings:
+      type: array
+      items: {type: string}
+  required: [drug_name, solubility_mg_ml, logp, bcs_class, summary]
+
+planning_hints:
+  examples:
+    - input: {drug_name: Ibuprofen}
+      output_summary: Solubility ~21 mg/mL, logP 3.5, BCS class II
+  keywords:
+    - solubility
+    - logP
+    - permeability
+    - BCS
+    - stability
+  notes: |
+    BCS class informs downstream FormulationAI excipient selection.
+    Run before FormulationAI when BCS info is not yet known.
+
+scientific_dependencies:
+  upstream_capabilities_optional:
+    - literature_search
+  upstream_capabilities_required: []
+
+executor:
+  type: python
+  module: formulation_os.tools.builtins.preformulation_ai.backend
+  function: run
+
+provenance_spec:
+  record_inputs: true
+  record_outputs: true
+  record_parameters: true
+  record_compute_env: true
+
+cost:
+  latency_class: low
+  cost_class: low
+  confidence: experimental
+
+mock: true
