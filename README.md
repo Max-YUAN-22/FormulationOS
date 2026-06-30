@@ -10,7 +10,7 @@ FormulationOS is an operating layer that orchestrates heterogeneous scientific A
 
 🚧 **v0.1 (in development)** — Architecture Frozen v1.0.
 
-Currently implementing Task 2: Tool abstraction + Scientific Tool Specification (STS) + 5 mock tools.
+End-to-end MVP demo ready: Planner → Registry → Orchestrator → Report → Streamlit UI, with 5 built-in mock Tools and 117 passing tests.
 See [`paper/outline.md`](paper/outline.md) for the paper outline.
 
 ---
@@ -26,6 +26,10 @@ pytest
 
 # Run the end-to-end smoke test (Task 2.5)
 pytest tests/smoke/test_end_to_end.py -v -s
+
+# Launch the Streamlit UI (requires the [ui] extra)
+pip install -e ".[ui]"
+streamlit run src/formulation_os/ui/app.py
 ```
 
 ---
@@ -34,10 +38,10 @@ pytest tests/smoke/test_end_to_end.py -v -s
 
 | Layer | Component | Status |
 |-------|-----------|--------|
-| 5 | User Interface (Streamlit / REST API / CLI) | planned |
+| 5 | User Interface (Streamlit / REST API / CLI) | **Streamlit UI live** |
 | 4 | Scientific Workspace (persistent state) | planned |
-| 3 | Workflow Planner (LLM-based) + Workflow Graph (DAG) | planned |
-| 2 | Scientific Registry + Execution Runtime (with provenance) | planned |
+| 3 | Workflow Planner (LLM-based) + Workflow Graph (DAG) | **Rule-based Planner live** |
+| 2 | Scientific Registry + Execution Runtime (with provenance) | **Registry + Orchestrator live** |
 | 1 | Scientific Models (heterogeneous executors) | **5 mocks live** |
 
 See [`paper/sections/04_formulationos_architecture.md`](paper/sections/04_formulationos_architecture.md).
