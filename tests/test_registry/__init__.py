@@ -1,0 +1,1 @@
+"""Tests for the Scientific Registry (Task 3)."""
