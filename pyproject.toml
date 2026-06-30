@@ -45,11 +45,17 @@ api = [
     "httpx>=0.27",
 ]
 ui = ["streamlit>=1.31"]
+llm = [
+    "openai>=1.30",
+    "anthropic>=0.30",
+]
 all = [
     "fastapi>=0.110",
     "uvicorn[standard]>=0.27",
     "httpx>=0.27",
     "streamlit>=1.31",
+    "openai>=1.30",
+    "anthropic>=0.30",
 ]
 
 [tool.hatch.build.targets.wheel]

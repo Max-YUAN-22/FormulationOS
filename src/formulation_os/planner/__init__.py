@@ -1,15 +1,24 @@
-"""Workflow Planner: maps NL queries to ranked Tools (Task 3).
+"""Workflow Planner: maps NL queries to ranked Tools.
 
 The Planner interface is intentionally minimal so it can be swapped
-without changing downstream code. The v0.1 implementation is
-:class:`~formulation_os.planner.rule_based.RuleBasedPlanner`.
+without changing downstream code.
 
-Future implementations will arrive in Phase 2:
-- LLM-based Planner (LLM with structured output → DAG)
-- Embedding-based retriever (BGE / Qwen + Chroma → top-k)
+Implementations:
+
+* :class:`RuleBasedPlanner` — v0.1 default. Keyword/token overlap
+  across capabilities, planning_hints.keywords, and description.
+* :class:`LLMPlanner` — opt-in (Task 7). Delegates to an LLM via
+  :class:`~formulation_os.llm.client.LLMClient`. Use
+  :func:`make_planner_from_env` to choose at runtime based on env vars.
 """
 
 from formulation_os.planner.base import Planner
+from formulation_os.planner.llm import LLMPlanner, make_planner_from_env
 from formulation_os.planner.rule_based import RuleBasedPlanner
 
-__all__ = ["Planner", "RuleBasedPlanner"]
+__all__ = [
+    "LLMPlanner",
+    "Planner",
+    "RuleBasedPlanner",
+    "make_planner_from_env",
+]
