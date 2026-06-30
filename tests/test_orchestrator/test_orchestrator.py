@@ -1,9 +1,11 @@
-"""Tests for :class:`Orchestrator`, :class:`Report`, :class:`ToolResult`,
-and :class:`StubInputResolver`."""
+"""Tests for :class:`Orchestrator` and :class:`StubInputResolver`.
+
+Report / ToolResult dataclass and rendering tests live in
+``tests/test_report/test_report.py``.
+"""
 
 from __future__ import annotations
 
-import json
 from typing import Any
 from unittest.mock import patch
 
@@ -11,13 +13,12 @@ import pytest
 
 from formulation_os.orchestrator import (
     Orchestrator,
-    Report,
     StubInputResolver,
-    ToolResult,
 )
 from formulation_os.planner import RuleBasedPlanner
 from formulation_os.planner.base import Planner
 from formulation_os.registry import ToolRegistry
+from formulation_os.report import Report, ToolResult
 from formulation_os.core.tool import Tool
 from tests.conftest import BUILTINS_DIR
 
@@ -317,38 +318,4 @@ def test_orchestrator_measures_duration(orchestrator: Orchestrator) -> None:
 # --------------------------------------------------------------------------- #
 # Report serialization                                                        #
 # --------------------------------------------------------------------------- #
-
-
-def test_report_to_dict_is_json_serializable(orchestrator: Orchestrator) -> None:
-    """Report.to_dict() can be round-tripped through json.dumps / json.loads."""
-    report = orchestrator.run("Find recent literature review on ibuprofen", top_k=1)
-    d = report.to_dict()
-    text = json.dumps(d)  # must not raise
-    reloaded = json.loads(text)
-    assert reloaded["query"] == "Find recent literature review on ibuprofen"
-    assert reloaded["status"] == "ok"
-    assert len(reloaded["tool_results"]) == 1
-    assert reloaded["tool_results"][0]["tool_name"] == "Literature"
-    assert reloaded["tool_results"][0]["output"]["papers"] is not None
-    # datetime should be ISO string
-    assert isinstance(reloaded["produced_at"], str)
-
-
-def test_report_to_markdown_contains_query_and_tool_output(orchestrator: Orchestrator) -> None:
-    """The Markdown rendering includes the query, tool name, and at least one
-    recognizable piece of the output."""
-    report = orchestrator.run("Find recent literature review on ibuprofen", top_k=1)
-    md = report.to_markdown()
-    assert "Find recent literature review on ibuprofen" in md
-    assert "Literature" in md
-    assert "## Literature" in md
-    assert "ok" in md
-    assert '"papers"' in md  # the output JSON block
-
-
-def test_report_to_markdown_for_no_match_is_informative(orchestrator: Orchestrator) -> None:
-    """The no-match Markdown clearly says so."""
-    report = orchestrator.run("xyzzy foo bar baz qux", top_k=3)
-    md = report.to_markdown()
-    assert "no_match" in md
-    assert "No tools matched the query" in md
+# Report / ToolResult tests live in tests/test_report/test_report.py.
