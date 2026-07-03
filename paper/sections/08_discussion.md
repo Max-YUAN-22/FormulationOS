@@ -15,11 +15,24 @@
 - Not a replacement for OpenAPI / MCP / Airflow / Galaxy. We extend and complement them.
 - Not a deterministic-model system. We are a **deterministic-evidence** system.
 
-## 8.3 Limitations (v0.1)
+## 8.3 Current state and prototype boundaries (v0.1)
 
-- **Mocks only.** All five tools return deterministic placeholder data. Real model integration is the next milestone.
-- **Small registry.** With 5 tools, retrieval is trivial. We have not yet validated scaling to 50–500 tools (planned).
-- **LLM planner not yet integrated.** v0.1 has tool abstraction + loading only. The Planner (Task 4) will use an LLM with structured output.
+The current prototype implementation provides:
+
+- **Tool abstraction** — `Tool` ABC + STS v0.2 declarative schema + PythonExecutor.
+- **Registry + Rule-based Planner** — token + capability matching, embedding-retrieval scaffolded.
+- **LLM Planner** — opt-in via `LLM_PLANNER=1`. Supports MiniMax M3 (Anthropic-compatible) and OpenAI. Mock client for tests.
+- **Orchestrator** — top-k tool execution, error-tolerant (status="partial" on tool failure).
+- **Report generator** — dataclass + Markdown rendering, warnings surfaced.
+- **Streamlit UI** — end-to-end demo, no API key required in rule-based mode.
+- **5 built-in mock tools** — FormulationAI, PreformulationAI, PBPK-AI, FormulationDT, Literature. All clearly labeled `mock: true`.
+- **151 tests passing**, end-to-end smoke test, 18 commits on `main`.
+
+Areas under active exploration (prototype boundaries, not production-ready):
+
+- **Mock tools.** The 5 built-in backends return deterministic placeholder data, clearly labeled in their output. Real model integration is the next major milestone (HTTP executor against `formulationai.computpharm.org` is the first target).
+- **Small registry.** With 5 tools, retrieval is trivial. Scaling to 50–500 tools will require validation of embedding-based retrieval quality.
+- **Scientific Workspace (Layer 4).** Persistence, replay, refinement, and provenance UI are prototype-stage features planned for a later phase.
 - **Single-user, single-machine.** No multi-tenant Workspace, no distributed Runtime.
 
 ## 8.4 Future work

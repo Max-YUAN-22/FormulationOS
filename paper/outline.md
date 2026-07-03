@@ -56,7 +56,7 @@ Seven evaluations:
 
 ## 8. Discussion (~0.5 page)
 
-- Limitations: mocks only; small registry; LLM planner not yet implemented.
+- Current state (v0.1 prototype): Tool abstraction, Registry, Rule-based + LLM Planner, Orchestrator, Report, Streamlit UI, and 5 mock tools are live. Active exploration: real model integration, Scientific Workspace, evaluation suite, larger-registry validation.
 - Future work: real model integration; cost-aware scheduling;
   automated capability induction; cross-domain generalization
   (materials, protein, climate).

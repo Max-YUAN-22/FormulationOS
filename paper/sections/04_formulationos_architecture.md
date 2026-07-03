@@ -1,6 +1,6 @@
 # §4. FormulationOS Architecture
 
-> **TODO.** Finalize after Tasks 3–7 land.
+> **Note.** The 5-layer organization below is the current conceptual stack. As the prototype evolves, layers may be refined, merged, or split; the abstraction surface (Workflow, Tool, Executor) remains the stable contract.
 
 ## 4.1 Five layers
 

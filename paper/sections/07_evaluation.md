@@ -1,7 +1,6 @@
 # §7. Evaluation
 
-> **TODO.** Implement and run all 7 evaluations; populate this section
-> with numbers. Plan is in `paper/experiments/plan.md`.
+> **Note.** This section describes the planned evaluation framework. Numbers will be populated as the 7 evaluations are run. The detailed methodology is in `paper/experiments/plan.md`.
 
 ## 7.1 Functional Evaluation (Planner accuracy + Dependency Enforcer)
 

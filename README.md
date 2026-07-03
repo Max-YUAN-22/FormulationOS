@@ -18,11 +18,19 @@ execution graphs (DAGs).
 See the [architecture diagram](docs/architecture.md) for the one-page
 overview of the 5-layer stack and the query data flow.
 
+> **FormulationOS is designed as an evolving scientific operating
+> layer.** Its abstractions (Scientific Workflow, Tool, Executor) are
+> intentionally underspecified to support future scientific workflows,
+> tool types, and execution backends. The current implementation uses
+> a DAG-based Workflow; future implementations may extend to graphs
+> with branches, loops, and agent iterations without changing the
+> abstraction surface.
+
 ---
 
 ## Status
 
-🚧 **v0.1 MVP — architecture frozen.** End-to-end demo is wired:
+🚧 **v0.1 MVP — initial prototype, abstractions designed for extensibility.** End-to-end demo is wired:
 Planner → Registry → Orchestrator → Report → Streamlit UI, with 5
 built-in mock Tools and 151 passing tests. See the [roadmap
 section](#roadmap) for what's next.

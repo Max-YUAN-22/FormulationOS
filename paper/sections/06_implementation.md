@@ -1,7 +1,6 @@
 # §6. Implementation
 
-> **TODO.** Expand after all Tasks land. v0.1 snapshot is in
-> `docs/sts_specification.md` and the codebase.
+> **Note.** This section reflects the v0.1 implementation snapshot. It will evolve as the prototype grows beyond the initial release.
 
 ## 6.1 Code organization (5 packages)
 

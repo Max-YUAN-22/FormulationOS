@@ -1,7 +1,5 @@
 # §1. Introduction
 
-> **TODO.** Write after Tasks 1–3 land (Tool abstraction, Registry, Planner).
-
 ## Sketch
 
 1. **Motivation.** Scientific Foundation Models are exploding. Each lab

@@ -1,6 +1,6 @@
-# §3. Scientific Workflow Abstraction ★
+# §3. Scientific Workflow Abstraction
 
-> **TODO.** Core paper section. Write after Tasks 1–4 land.
+> **Note.** The Workflow Abstraction defined in this section is conceptual and intended to be extensible. The current implementation uses a DAG-based execution model (see §3.2); future implementations may extend to graphs with branches, loops, and agent iterations without changing the abstraction surface. The separation between abstraction (stable contract) and representation (current or future internal model) is the central design point.
 
 ## 3.1 Definition
 
