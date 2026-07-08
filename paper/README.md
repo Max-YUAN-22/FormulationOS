@@ -37,7 +37,3 @@ For each Task that lands in the codebase:
 2. Add or update the corresponding figure description in `figures/`.
 3. If the Task contributes an evaluation, update `experiments/plan.md`.
 4. Note the commit hash that implements the Task in the section.
-
-## Target venue
-
-AI Systems venue (TBD). Targeting ~8 pages main + unlimited references and supplementary.
