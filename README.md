@@ -204,19 +204,6 @@ Phase 1 (this MVP) is complete. Phase 2 work:
 
 ---
 
-## Paper
-
-This project is being prepared as a submission to an AI Systems venue.
-See [`paper/`](paper/) for the working draft.
-
-**Slogan:**
-> *FormulationOS elevates Scientific Workflows to first-class citizens, enabling heterogeneous scientific foundation models to be executed, persisted, refined, replayed, and traced under a unified operating layer.*
-
-**Anti-deterministic-models principle:**
-> *FormulationOS does not promise deterministic models. It promises deterministic evidence.*
-
----
-
 ## License
 
 MIT — see [LICENSE](LICENSE).
