@@ -12,10 +12,10 @@ Ouyang-lab scientific platforms that FormulationOS aims to wrap. Each
 row captures the **current state of the upstream platform** and
 identifies the **most realistic integration mode** for FormulationOS.
 
-The matrix is the working artefact for the discussion with 师兄 / the
-Ouyang lab. It is intentionally explicit about uncertainty: cells
-marked ❓ or TBD represent information that requires primary research
-or direct lab contact, not assumptions.
+The matrix is the working artefact for stakeholder discussion. It is
+intentionally explicit about uncertainty: cells marked ❓ or TBD
+represent information that requires primary research or direct
+upstream contact, not assumptions.
 
 ## The 5 platforms
 
@@ -24,7 +24,7 @@ Throughout this matrix, claims are tagged:
 - **[CONFIRMED]** — verified via direct probe (GitHub API, web curl)
   or committed docs (with sources cited inline).
 - **[NEEDS CONFIRMATION]** — based on committed docs or plausible
-  inference, but not directly verified; requires supervisor or lab
+  inference, but not directly verified; requires stakeholder
   confirmation.
 
 | Platform | URL | What it predicts | Pipeline stage |
@@ -216,9 +216,9 @@ Requires **one of**:
 2. Re-train from `Code/` + `Data/` (compute-intensive; dataset access uncertain), **OR**
 3. API access to a deployed `formulationdt.computpharm.org` service (URL currently unverified).
 
-### Phase 2.3 — FormulationAI / PreformulationAI integration (depends on lab)
+### Phase 2.3 — FormulationAI / PreformulationAI integration (depends on upstream access)
 
-- Choose based on what the lab exposes first.
+- Choose based on what the upstream team exposes first.
 - HTTP executor is the natural fit (assuming the web service has an internal API).
 - Requires API spec + credentials.
 - **Highest scientific value** of the 5 platforms (most-cited, most-mature).
@@ -265,7 +265,7 @@ real integration             to FormulationAI /
 
 ---
 
-## Open questions for 师兄 / the lab
+## Open questions for the upstream team
 
 1. **FormulationDT web service.** Is `formulationdt.computpharm.org`
    currently deployed? At what URL? Is there a programmatic API
@@ -276,9 +276,10 @@ real integration             to FormulationAI /
 3. **Public code scope.** Are `Code/`, `Data/`, `TrainingRecords_MLP/`
    in `NamanWang/FormulationDT` sufficient to retrain from scratch,
    or is the curated training dataset not fully public?
-4. **Inference API packaging.** Would the lab be willing to package
-   `predict_decisions(smiles, formulation_type)` as a pip-installable
-   Python module? (Smallest possible Phase 2.2 enabler.)
+4. **Inference API packaging.** Would the upstream team be willing to
+   package `predict_decisions(smiles, formulation_type)` as a
+   pip-installable Python module? (Smallest possible Phase 2.2
+   enabler.)
 5. **FormulationAI / PreformulationAI APIs.** Do these platforms
    expose a programmatic API (e.g., to power their own web UI)?
    Could FormulationOS access it under a research collaboration?

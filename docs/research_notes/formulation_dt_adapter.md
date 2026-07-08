@@ -14,7 +14,7 @@
 > Throughout this note, claims are tagged **[CONFIRMED]** (verified via
 > direct probe or committed docs, with sources cited) or
 > **[NEEDS CONFIRMATION]** (inherited from committed docs or plausible
-> inference, but not directly verified; requires supervisor or lab
+> inference, but not directly verified; requires stakeholder
 > confirmation).
 
 ---
@@ -238,12 +238,12 @@ The repository README claims availability at
 
 [NEEDS CONFIRMATION] The reason this URL serves a mirror rather than
 the documented FormulationDT deployment is **not clear from public
-sources**. Possibilities to be ruled out by supervisor / lab
+sources**. Possibilities to be ruled out by stakeholder / upstream
 verification include: (a) the domain is parked / aliased to a sibling
 site, (b) the actual deployment is at a different URL, (c) the
 deployment is auth-gated at a different domain, (d) the deployment is
-offline or under maintenance. Each requires lab confirmation; we do
-not assume any of them.
+offline or under maintenance. Each requires upstream confirmation; we
+do not assume any of them.
 
 **Practical implication.** The HTTP executor pathway against
 `formulationdt.computpharm.org` is **not directly verifiable from
@@ -255,12 +255,12 @@ this URL and remains viable.
 | Option | Feasibility | Source of status |
 |---|---|---|
 | **HTTP executor** against `formulationdt.computpharm.org` | Blocked from public probing | [CONFIRMED] URL serves a 2023 mirror; [NEEDS CONFIRMATION] whether an alternate URL or auth-gated API exists |
-| **Python executor (Adapter)** wrapping `formulation_dt` package | Partially blocked | [CONFIRMED] code present, no `setup.py`, no packaged inference API, no pretrained weights; [NEEDS CONFIRMATION] whether the lab will package an API or share weights |
+| **Python executor (Adapter)** wrapping `formulation_dt` package | Partially blocked | [CONFIRMED] code present, no `setup.py`, no packaged inference API, no pretrained weights; [NEEDS CONFIRMATION] whether the upstream team will package an API or share weights |
 | **Adapter pathway (Phase 2.1)** demonstrating interface + status contracts | Available | [CONFIRMED] no upstream dependency; tests can be written and run locally |
 
 ---
 
-## Appendix B — Open questions for the lab / 师兄
+## Appendix B — Open questions for the upstream team
 
 These are the concrete questions to bring to the discussion:
 
@@ -273,9 +273,10 @@ These are the concrete questions to bring to the discussion:
 3. **Public code scope.** Are `Code/`, `Data/`, `TrainingRecords_MLP/`
    in `NamanWang/FormulationDT` sufficient to retrain from scratch, or
    is the curated training dataset not fully public?
-4. **Inference API packaging.** Would the lab be willing to package
-   `predict_decisions(smiles, formulation_type)` as a pip-installable
-   Python module? (Smallest possible Phase 2.2 enabler.)
+4. **Inference API packaging.** Would the upstream team be willing to
+   package `predict_decisions(smiles, formulation_type)` as a
+   pip-installable Python module? (Smallest possible Phase 2.2
+   enabler.)
 5. **FormulationAI / PreformulationAI.** Do these platforms expose a
    programmatic API (e.g., to power their own web UI)? Could
    FormulationOS access it under a research collaboration?

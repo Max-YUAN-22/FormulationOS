@@ -1,53 +1,50 @@
-# Supervisor Discussion — Phase 2 Scientific Model Integration
+# Phase 2 Integration Strategy — Decision Document
 
-**Status:** Draft for supervisor meeting
+**Status:** Draft for stakeholder review
 **Date:** 2026-07-07 / 2026-07-08
 **Author:** Max + Mavis
 
 ## Purpose
 
-Document the current state of FormulationOS, the integration challenges
-faced when moving from mocks to real scientific models, and the
-specific questions to bring to the supervisor. This document is the
-**discussion agenda** — not a commitment to any particular integration
-path.
+Document the strategic decision points for moving FormulationOS from
+mock-only v0.1 toward real scientific model integration (Phase 2).
+This is the **decision document** — not a survey of every platform.
+The goal is to identify the binding bottlenecks, present the realistic
+integration strategies, and surface the choices that need explicit
+stakeholder input.
 
 Throughout this document, claims are tagged:
 
 - **[CONFIRMED]** — verified via direct probe (GitHub API, web curl)
   or unambiguous committed doc (sources cited inline).
 - **[NEEDS CONFIRMATION]** — based on committed docs or plausible
-  inference, but not directly verified; requires supervisor or lab
+  inference, but not directly verified; requires stakeholder
   confirmation.
 
 ---
 
 ## 1. Current FormulationOS status
 
-### 1.1 What is shipped on `main`
+### 1.1 Integration readiness — the relevant question
 
-| Item | Status | Source |
+The question for Phase 2 is not "does the system have tests?" but
+"**is the OS layer ready to carry a real scientific model?**" The
+answer, by layer:
+
+| Layer | Component | Ready for real-model integration? |
 |---|---|---|
-| HEAD commit | `4ac26ee docs: remove internal meeting prep from public repo` | [CONFIRMED — `git log --oneline -1`] |
-| Working tree | Clean apart from untracked docs/research_notes/ and docs/memory/2026-07-07.md | [CONFIRMED — `git status`] |
-| Test suite | 151 passing on `main` | [CONFIRMED — `make test`, 2026-07-07] |
-| Code size | ~3300 lines Python | [CONFIRMED — `find src -name '*.py' | xargs wc -l`] |
-| Commits | 13 on `main` since bootstrap | [CONFIRMED — `git log --oneline`] |
+| 1 (Models) | 5 mock tools | ❌ All `mock: true`; placeholder outputs only |
+| 2 (Registry + Runtime) | ToolRegistry + PythonExecutor + Orchestrator | ✅ Plumbing works; only `python` executor type is implemented (HTTP / CLI / MCP / gRPC / Docker reserved in STS v0.2) |
+| 3 (Planner) | RuleBasedPlanner + LLMPlanner (MiniMax M3 / OpenAI) | ✅ Routes queries to registered tools; embedding-based retrieval is keyword-only today (Task 3 v2 planned) |
+| 4 (Workspace) | empty directory | ⏸ Planned (Phase 2+); not needed for one-shot integration |
+| 5 (UI) | Streamlit app | ✅ End-to-end demo with mocks; will surface real outputs once any tool returns them |
 
-### 1.2 Architecture and code support
+**Bottom line.** The OS layer is ready to wrap a real model. The
+binding gap is **Layer 1**: no real scientific model has been
+integrated yet. The Phase 2 question is therefore not "build more
+plumbing" but "which model to wrap, under what access conditions".
 
-The 5-layer architecture is committed in `docs/architecture.md` and
-`paper/sections/04_formulationos_architecture.md`. Code support:
-
-| Layer | Component | Code | Status |
-|---|---|---|---|
-| 1 | Scientific Models | `src/formulation_os/tools/builtins/*/` (5 mocks) | Live (mock-only) |
-| 2 | Registry + Runtime | `registry/registry.py`, `runtime/executor.py`, `orchestrator/orchestrator.py` | Live (PythonExecutor only) |
-| 3 | Workflow Planner | `planner/rule_based.py`, `planner/llm.py`, `planner/base.py` | Live (Rule-based default + LLM opt-in) |
-| 4 | Scientific Workspace | `workspace/` (empty) | Planned (Phase 2+) |
-| 5 | User Interface | `ui/app.py` (Streamlit) | Live |
-
-### 1.3 Paper claim → code support
+### 1.2 Code support for paper claims
 
 | Paper concept | Code support | [CONFIRMED] |
 |---|---|---|
@@ -55,277 +52,327 @@ The 5-layer architecture is committed in `docs/architecture.md` and
 | Tool abstraction | `Tool` ABC + `ToolSpec` (Pydantic, STS v0.2, `extra="forbid"`) | `core/tool.py` |
 | Runtime / Executor | `Executor` ABC + `PythonExecutor` | `runtime/executor.py` |
 | Planner pluggability | `Planner` ABC + 2 implementations | `planner/base.py` |
-| STS v0.2 schema | `ToolSpec` enforces `extra="forbid"`; 4 extension models (ScientificSemantics, PlanningHints, ScientificDependencies, ProvenanceSpec) | `core/tool.py`, `docs/sts_specification.md` |
-| Streamlit UI demo | `ui/app.py` end-to-end | Manual launch |
+| STS v0.2 schema | 4 extension models (ScientificSemantics, PlanningHints, ScientificDependencies, ProvenanceSpec) | `core/tool.py`, `docs/sts_specification.md` |
 
-### 1.4 What is NOT yet shipped
+### 1.3 What is NOT yet shipped
 
-- **Real scientific models.** All 5 built-in tools are mocks
-  (`mock: true`, output includes `warnings: ["MOCK OUTPUT..."]`).
+- **Real scientific models** — all 5 built-in tools are mocks.
   [CONFIRMED — each `tools/builtins/*/backend.py`]
-- **HTTP / CLI / MCP / gRPC / Docker executors.** Only `python`
-  executor is implemented. [CONFIRMED — `runtime/executor.py`,
-  `tools/loader.py`]
-- **Scientific Workspace (Layer 4).** Directory exists but is empty.
-  [CONFIRMED — `ls src/formulation_os/workspace/`]
-- **Full provenance emission.** Paper §6.3 shows the full
+- **HTTP / CLI / MCP / gRPC / Docker executors** — only `python`
+  executor is implemented. [CONFIRMED — `runtime/executor.py`]
+- **Full provenance emission** — paper §6.3 shows the full
   `execution_id / tool_version / input_hash / output_hash / ...`
   schema, but v0.1 Orchestrator captures only `duration_ms` and
   `warnings`. [CONFIRMED — `orchestrator/orchestrator.py:_run_one`]
-- **Embedding-based retriever.** Keyword-only matching today; vector
-  index planned for Task 3 v2. [CONFIRMED —
-  `planner/rule_based.py` docstring]
 
-### 1.5 Position relative to the maturity bar
+### 1.4 Reference maturity bar
 
-The supervisor's reference bar (Prof. Ouyang's lab platforms,
-documented in `docs/maturity/ouyang_platforms.md`) lists 7 maturity
-characteristics: real ML models, curated datasets, multi-paper
-track record, task-focused web UI, account system, application-domain
-analysis, experimental validation. FormulationOS v0.1 satisfies **0
-of 7**. The gap is the Phase 2+ work — but the bar is per-platform,
-not per-OS. FormulationOS's path is to **wrap** real platforms
-rather than build them, so the question is which platform to wrap
-first, and under what conditions.
+Prof. Ouyang's published platforms (documented in
+`docs/maturity/ouyang_platforms.md`) define the maturity target:
+real ML models behind every prediction, multi-paper track record,
+account system, application-domain analysis, citation metadata,
+experimental validation. FormulationOS's path is to **wrap** real
+platforms rather than build them, so the maturity target for
+FormulationOS is set by which platform it integrates first.
 
 ---
 
 ## 2. Why scientific model integration is challenging
 
-### 2.1 Five distinct platforms, five distinct interfaces
+The challenges below are framed academically: each is a class of
+problem that motivates the STS / Scientific Workflow contribution.
 
-The Ouyang portfolio covers 5 pipeline stages:
+### 2.1 Challenge 1 — Heterogeneous execution interfaces
 
-```
-PreformulationAI → FormulationAI → FormulationDT
-                                 → FormulationMM → AI-PBPK
-```
+Scientific tools in pharmaceutics ship under **at least five
+distinct execution modalities**:
 
-Each platform is **independent** in interface, license, deployment
-mode, and scientific methodology. There is no common API, no shared
-SDK, no unified authentication system across the 5 platforms.
+| Modality | Example | Executor type needed |
+|---|---|---|
+| Python package (in-process) | a scikit-learn / PyTorch module | `python` (✅ v0.1) |
+| REST API | a hosted prediction service | `http` (🚧 Task 5 / Phase 2) |
+| CLI executable | a GROMACS / Amber binary | `cli` (🚧 Task 5) |
+| MCP server | a Model-Context-Protocol tool | `mcp` (📋 future) |
+| Containerized simulation | a Docker image with full MD stack | `docker` (📋 future) |
 
-[NEEDS CONFIRMATION] The absence of a shared API is inferred from
-probed public URLs and `docs/ouyang_platforms_summary.md` (which
-documents each platform's web UI as the only documented interface).
-The lab may have internal APIs not surfaced in either source.
+A real integration must accommodate **at least two** of these in a
+single workflow (e.g., a Python-package pre-formulation tool feeding
+a Docker-based MD simulation). STS v0.2 declares all five executor
+types in `executor.type`, but only `python` is implemented in v0.1.
 
-### 2.2 Three artefacts matter for integration
+### 2.2 Challenge 2 — Scientific artifact heterogeneity
 
-For any platform, integration requires **at least one** of:
+Inputs and outputs are not generic tensors. Each platform has its
+own scientific schema:
 
-1. **Public source code** — to wrap a Python executor around it.
-2. **Deployed service with programmatic API** — to wrap an HTTP
-   executor against it.
-3. **Pretrained model weights** — to actually run inference (vs.
-   retraining from scratch, which is compute-prohibitive).
+- **FormulationAI**: `drug_smiles + experimental conditions`
+  → `excipient set + composition + process parameters` (structured
+  JSON; ≥16 properties across 6 formulation systems).
+- **FormulationMM**: `molecular structure (SMILES / .mol / .pdb)`
+  → `MD trajectory + topology + binding free energies` (multi-file,
+  GB-scale; not JSON).
+- **AI-PBPK**: `dose + compound + route + simulation_time`
+  → `PK curve + tissue distribution across 15 organs + AUC/Cmax`
+  (numeric time series + structured metadata).
+- **Literature**: `query string` → `paper list + abstracts + DOI`
+  (text + structured citation metadata).
 
-Most platforms have **at most one** of these three. See §3 for the
-matrix.
+A Scientific OS must carry these heterogeneous artifacts through a
+single Workflow — typed via the `input_schema` and `output_schema`
+of STS, and persisted via the Workspace (Layer 4, Phase 2+). This
+artifact heterogeneity is exactly what STS's Scientific Semantics +
+Scientific Dependencies extensions are designed to express.
 
-### 2.3 No public inference API observed (probed 2026-07-07)
+### 2.3 Challenge 3 — Deterministic evidence, not deterministic models
 
-[CONFIRMED] Direct curl probes of `formulationai.computpharm.org` and
-`formulationdt.computpharm.org` returned:
+FormulationOS does **not** promise that two runs of the same
+workflow produce identical model outputs. It does promise that two
+runs produce **identical evidence chains** (tool version, input hash,
+output hash, executor type, timestamps, compute environment). This
+is the load-bearing principle of paper §1, §6.3, §8: reviewers
+expect reproducibility of the **trace**, not of the prediction.
 
-- `/api`, `/swagger`, `/openapi.json`, `/docs` paths: 301 redirect
-  to home page; no public REST surface observed.
-- HTTP 200 on the homepage returns the web UI HTML; no JSON API
-  endpoints visible in the response body.
+Operationally, this means a Phase 2 integration must:
 
-[NEEDS CONFIRMATION] The other three platforms (PreformulationAI,
-FormulationMM, AI-PBPK) were **not directly probed** on 2026-07-07;
-their API status is inferred from `docs/ouyang_platforms_summary.md`
-which documents "no programmatic API" for each.
+- Record `tool_version`, `tool_spec_hash`, `input_hash`, `output_hash`
+  on every execution (paper §6.3 schema; v0.1 partial — see §1.3).
+- Surface a `warnings` field whenever a tool returns placeholder /
+  unavailable output (so downstream consumers cannot mistake
+  heuristic output for a real prediction).
+- Be explicit about **what is and is not** reproducible across runs.
 
 ### 2.4 Risk of fabricating predictions
 
-A natural temptation when wrapping a platform without weights is to
-provide a **heuristic fallback** that returns plausible-looking
-results. This was the anti-pattern in a discarded working tree
-(2026-07-07): an "adapter" that computed MW / logP / Lipinski rules
-and emitted 12 fake "decisions" labeled as FormulationDT predictions.
-This violates AGENTS.md §12 (mock-as-production) and would draw
-immediate reviewer attack.
+A naive integration may substitute a heuristic fallback (e.g.,
+Lipinski-rule Ro5) when the real model is unavailable, and label
+the heuristic output as the real prediction. This is the
+"mock-as-production" anti-pattern (AGENTS.md §12); it would draw
+immediate reviewer attack and break the deterministic-evidence
+contract.
 
-The **safe pattern** is: adapter returns explicit `model_unavailable`
-status when upstream is missing, with no fabricated predictions.
-Phase 2.1 ships this safe pattern; Phase 2.2 (real inference) is
-blocked on upstream cooperation.
+The **safe pattern** is: integration returns explicit
+`model_unavailable` status when upstream is missing, with no
+fabricated predictions. Phase 2.1 ships this safe pattern; Phase 2.2
+(real inference) is blocked on upstream access conditions.
 
-### 2.5 License and collaboration boundary
+### 2.5 License boundary
 
-[NEEDS CONFIRMATION] Ouyang's published platforms are documented as
-CC BY-NC-SA 4.0 in `docs/maturity/ouyang_platforms.md`. Whether this
-license covers integration into a third-party tool, or whether a
-separate collaboration agreement is required for academic /
-non-commercial redistribution, requires supervisor / lab confirmation.
+[NEEDS CONFIRMATION] The published Ouyang platforms are documented
+as CC BY-NC-SA 4.0 in `docs/maturity/ouyang_platforms.md`. Whether
+this license covers integration into a third-party tool, or whether
+a separate collaboration agreement is required for academic /
+non-commercial redistribution, requires stakeholder confirmation.
 The **NC** (Non-Commercial) clause is the binding constraint for
 FormulationOS distribution.
 
 ---
 
-## 3. Five platform integration matrix
+## 3. Five-platform integration matrix
 
 See `docs/research_notes/scientific_model_integration_matrix.md` for
-the full matrix with verification tags per cell. Summary (verification
-status in brackets):
+the full matrix with per-cell verification tags. Summary:
 
-| Platform | Code | API | Weights | Realistic mode | Verification |
+| Platform | Code | API | Weights | Verification |
+|---|---|---|---|---|
+| FormulationAI | [NEEDS CONFIRMATION] | [CONFIRMED no public REST] | [NEEDS CONFIRMATION] | Low |
+| PreformulationAI | [NEEDS CONFIRMATION] | [NEEDS CONFIRMATION] | [NEEDS CONFIRMATION] | Very low |
+| FormulationMM | [NEEDS CONFIRMATION] | [NEEDS CONFIRMATION] | [NEEDS CONFIRMATION] | Very low |
+| **FormulationDT** | [CONFIRMED] MIT | [CONFIRMED absent] | [CONFIRMED absent in repo] | **High** |
+| AI-PBPK | [NEEDS CONFIRMATION] partial | [NEEDS CONFIRMATION] | [NEEDS CONFIRMATION] | Low |
+
+**Highest-confidence target** (public evidence base is strongest):
+**FormulationDT**, where the GitHub repository state is fully
+documented and probe-verified.
+
+---
+
+## 4. FormulationDT — candidate first integration target
+
+See `docs/research_notes/formulation_dt_adapter.md` for full
+investigation. Summary of probe 2026-07-07:
+
+### 4.1 What is confirmed about the candidate
+
+| Asset | Status | Evidence |
+|---|---|---|
+| Public source code | [CONFIRMED] present (MIT, ~1.6 MB) | GitHub API |
+| Per-decision training scripts (DT, KNN, LR, LightGBM, NN, RF, SVM, nBayes) | [CONFIRMED] present | GitHub repo `Code/` directory |
+| Packaged `predict_decisions()` API | [CONFIRMED absent] | No `setup.py` / `pyproject.toml` |
+| Pretrained weights in public repo | [CONFIRMED absent] | GitHub code search returned no large model files in tracked history |
+| Deployed web service at `formulationdt.computpharm.org` | [CONFIRMED unreliable] | URL returns 200 but body is a 2023 HTTrack mirror of `formulationai.computpharm.org`; `/api`, `/predict`, `/swagger`, `/docs` paths 404 |
+
+### 4.2 What requires confirmation
+
+1. **Pretrained weights.** The Wang et al. 2024/2025 paper reports
+   ROC_AUC 0.78–0.98 (per `docs/ouyang_platforms_summary.md`),
+   implying trained models exist somewhere — but where? In the
+   upstream team's private storage? On a non-public deployment?
+   [NEEDS CONFIRMATION]
+2. **Packaged inference API.** Would the upstream team accept a
+   collaboration to package `predict_decisions(smiles, formulation_type)`
+   as a pip-installable module? [NEEDS CONFIRMATION]
+3. **Actual deployment URL.** Where is the FormulationDT web service
+   actually deployed (if anywhere)? The canonical
+   `formulationdt.computpharm.org` is a mirror; the real deployment
+   may be auth-gated at a different domain. [NEEDS CONFIRMATION]
+4. **Code scope for retraining.** Are `Code/`, `Data/`,
+   `TrainingRecords_MLP/` in `NamanWang/FormulationDT` sufficient to
+   retrain from scratch, or is the curated training dataset only
+   partial? [NEEDS CONFIRMATION]
+5. **Citation correctness.** Is the canonical paper Wang et al.
+   2024/2025 (*J Control Release* 378:619–636, DOI:
+   10.1016/j.jconrel.2024.12.043)? DOI not directly verified 2026-07-07;
+   documented in `docs/ouyang_platforms_summary.md`. [NEEDS CONFIRMATION]
+
+### 4.3 Conclusion
+
+**FormulationDT is currently the most accessible candidate for the
+first integration**, because its public repository state is fully
+documented and probe-verified, with an MIT license. However,
+**production integration requires model packaging**: either (a)
+pretrained weights + a packaged `predict_decisions()` API from the
+upstream team, or (b) a self-hosted retraining pipeline built on
+the public `Code/` + `Data/`.
+
+Without either, only the **adapter pathway** (Phase 2.1) is
+shippable — demonstrating the STS integration contract and
+returning `model_unavailable` when upstream is absent. The adapter
+pathway is itself a paper-worthy contribution (proves STS can
+carry a real-world tool contract), but does **not** make any
+prediction claim.
+
+---
+
+## 5. Strategic decision points (5 core questions)
+
+These are the decisions that need explicit input. Other open
+questions are downstream of these.
+
+### Q1 — Integration philosophy
+
+Should FormulationOS aim to **wrap existing models** as the primary
+integration strategy, or **rebuild models into a unified backend**?
+
+- **Option A — Wrapper (recommended).** Each platform remains
+  authoritative at its own lab; FormulationOS adds a thin STS /
+  Executor layer on top. Lower cost; preserves each platform's
+  independence; matches STS's role as an extension schema over
+  existing tools (paper §5).
+- **Option B — Unified backend.** Port or reimplement each platform's
+  model inside FormulationOS. Higher cost; tighter coupling;
+  diverges from "operating layer over scientific models" framing.
+
+### Q2 — Access to existing platforms
+
+For each of the 5 Ouyang platforms, which of the following are
+available **for the project**?
+
+| Platform | Code | Weights | Public API | Auth-gated API | Internal call |
 |---|---|---|---|---|---|
-| FormulationAI | [NEEDS CONFIRMATION] | [CONFIRMED no public REST] | [NEEDS CONFIRMATION] | HTTP executor + UI demo fallback | Low |
-| PreformulationAI | [NEEDS CONFIRMATION] | [NEEDS CONFIRMATION — not probed] | [NEEDS CONFIRMATION] | HTTP executor + UI demo fallback | Very low |
-| FormulationMM | [NEEDS CONFIRMATION] | [NEEDS CONFIRMATION — not probed] | [NEEDS CONFIRMATION] | docker executor (Phase 3) | Very low |
-| **FormulationDT** | [CONFIRMED] MIT | [CONFIRMED absent] | [CONFIRMED absent in repo] | **Adapter pathway (Phase 2.1)** | **High** |
-| AI-PBPK | [NEEDS CONFIRMATION] partial | [NEEDS CONFIRMATION] | [NEEDS CONFIRMATION] | HTTP + auth | Low |
+| FormulationAI | ? | ? | ? | ? | ? |
+| PreformulationAI | ? | ? | ? | ? | ? |
+| FormulationMM | ? | ? | ? | ? | ? |
+| FormulationDT | ✅ MIT [CONFIRMED] | ? | ❌ [CONFIRMED] | ? | ? |
+| AI-PBPK | ? | ? | ❌ [per docs] | ? | ? |
 
-**Highest-confidence target** (where the public evidence base is
-strongest): **FormulationDT**, where the GitHub repository state is
-fully documented and probe-verified.
+**This table is the binding input.** Filling it determines which
+integration strategies are realistic.
 
----
+### Q3 — First milestone scope
 
-## 4. FormulationDT investigation
+Is the first Phase 2 milestone:
 
-See `docs/research_notes/formulation_dt_adapter.md` for full details.
-Summary of probe 2026-07-07:
+- **A.** "FormulationOS + **adapter pathway only** for FormulationDT"
+  (Phase 2.1; ships immediately; no model claim) — or
+- **B.** "FormulationOS + **one fully-integrated real model**"
+  (Phase 2.1 + 2.2; requires upstream cooperation on weights + API)?
 
-### 4.1 Confirmed facts
+The example pipeline below shows what a one-real-model milestone
+would look like end-to-end:
 
-| Fact | Source |
-|---|---|
-| Repo exists at `NamanWang/FormulationDT` | [CONFIRMED — GitHub API] |
-| MIT license | [CONFIRMED — GitHub API] |
-| ~1.6 MB, primary language Jupyter Notebook | [CONFIRMED — GitHub API] |
-| 0 stars, last updated 2025-08-09 | [CONFIRMED — GitHub API] |
-| README is 180 bytes — minimal | [CONFIRMED — GitHub API] |
-| Top-level layout: `Code/`, `Data/`, `TrainingRecords_MLP/`, `LICENSE` | [CONFIRMED — GitHub API] |
-| **No `setup.py` / `pyproject.toml`** — not pip-installable | [CONFIRMED — GitHub API] |
-| **No large model files** (`.pkl`, `.h5`, `.pt`, `.joblib`) in tracked history | [CONFIRMED — GitHub code search; caveat: code search needs auth for full coverage] |
-| **Paper exists**: Wang et al. 2024/2025, *J Control Release* 378:619–636, DOI: 10.1016/j.jconrel.2024.12.043 | [NEEDS CONFIRMATION — DOI not directly verified 2026-07-07; documented in `docs/ouyang_platforms_summary.md`] |
-| **Canonical URL is unreliable**: `formulationdt.computpharm.org` returns 200 but body is a 2023 HTTrack mirror of `formulationai.computpharm.org` | [CONFIRMED — direct curl 2026-07-07] |
+```
+User query:
+  "I want oral formulation for drug X"
+        ↓
+Planner (routes to relevant tools)
+        ↓
+PreformulationAI     (solubility / BCS / pKa)
+        ↓
+FormulationAI        (excipient design)
+        ↓
+PBPK                 (in-vivo prediction)
+        ↓
+Report (with provenance)
+```
 
-### 4.2 Open questions (requires supervisor / lab)
+### Q4 — Research positioning
 
-1. Where is the **actual** FormulationDT web deployment?
-2. Are pretrained weights for the 12 decisions **available outside
-   the published paper**? (The paper claims ROC_AUC 0.78–0.98 per
-   `docs/ouyang_platforms_summary.md`; this implies trained models
-   exist somewhere — but where?)
-3. Would the lab **package** `predict_decisions(smiles, formulation_type)`
-   as a pip-installable Python module? (Smallest possible Phase 2.2
-   enabler.)
-4. Are `Code/`, `Data/`, `TrainingRecords_MLP/` sufficient to
-   **retrain** from scratch, or is the curated training dataset
-   only partial?
-5. Is the Wang et al. 2024/2025 DOI correct, or is the canonical
-   paper published under a different DOI / venue?
+Is the paper's headline framing:
 
-### 4.3 Phase 2.1 deliverable (does not depend on lab answers)
+- **A.** "Scientific Agent System" (LLM-centric; emphasizes planner
+  and natural-language interface), or
+- **B.** "Scientific Workflow Operating System" (OS-centric;
+  emphasizes Scientific Workflow Abstraction, STS, deterministic
+  evidence, heterogeneous executors)?
 
-Even without lab answers, FormulationOS can ship a **Phase 2.1
-adapter** that:
+Current paper draft (`paper/sections/01_introduction.md`,
+`03_scientific_workflow_abstraction.md`, `04_formulationos_architecture.md`)
+leans toward B. Confirming this is important before the paper
+abstract is finalised.
 
-- Implements the STS v0.2 contract for `FormulationDTReal`.
-- Returns `status="model_unavailable"` when upstream is absent.
-- Returns `status="error"` on invalid input.
-- **Never fabricates predictions.**
-- Ships with 6 tests (T1–T6 in research note).
-- Adds a row to paper §6.5 implementation table.
+### Q5 — Validation strategy
 
-This is a **proof of pattern**, not a claim of model integration.
-Reviewers can verify the integration pathway without depending on
-upstream cooperation.
+How should the system's effectiveness be demonstrated?
 
----
+- **A. Case study comparison.** Drug formulation optimization
+  *without* orchestration (manual stage-by-stage) *vs.* *with*
+  FormulationOS. Quantitative metric: time-to-decision, error
+  rate across manual transfer, evidence-chain completeness.
+- **B. Adapter pathway validation.** Demonstrate that the
+  FormulationDT adapter handles (1) valid input → `model_unavailable`
+  with clear message, (2) invalid input → `error`, (3) when
+  upstream is granted access → real predictions. This validates
+  STS + Python Executor on a real-world contract.
+- **C. Workflow benchmark.** Run a fixed multi-tool workflow
+  (e.g., PreformulationAI → FormulationAI) repeatedly and
+  measure evidence-chain reproducibility under varying inputs.
 
-## 5. Open questions for supervisor meeting
-
-### 5.1 Strategy questions
-
-1. **Phase 2 sequencing.** Recommended sequence:
-   - Phase 2.1 = FormulationDT adapter pathway (no model claim;
-     immediately shippable).
-   - Phase 2.3 = FormulationAI / PreformulationAI HTTP executor
-     (highest scientific value, but requires API access).
-   - Phase 2.5 = AI-PBPK (final validation step; highest integration
-     cost).
-   Is this sequencing consistent with the supervisor's view?
-
-2. **Adapter alone vs broader scope.** Is shipping a FormulationDT
-   adapter (without model integration) sufficient for the paper's
-   "real model integration" claim, or does the paper require at
-   least one fully-integrated real model?
-
-3. **OS-layer vs model-layer split.** Should the paper focus on the
-   OS layer (workflow abstraction, STS, provenance, deterministic
-   evidence) and treat real model integration as future work, or
-   should it demonstrate end-to-end real-model workflow as the
-   headline result?
-
-### 5.2 Lab cooperation questions
-
-4. **FormulationDT deployment.** Where is the actual web service?
-   Is there a programmatic API behind the UI?
-5. **Pretrained weights access.** Under what conditions (if any)
-   can FormulationOS access the 12-decision pretrained weights?
-6. **Inference API packaging.** Would the lab accept a collaboration
-   to package `predict_decisions()` as a pip module?
-7. **FormulationAI / PreformulationAI APIs.** Do these have any
-   programmatic surface (public or auth-gated)?
-8. **AI-PBPK.** What credentials are required for integration?
-
-### 5.3 License / collaboration questions
-
-9. **License scope.** Does CC BY-NC-SA 4.0 cover integration into
-   FormulationOS, or does a separate collaboration agreement apply?
-10. **Co-authorship / acknowledgement.** Would supervisor
-    collaboration with the Ouyang lab be in scope (paper
-    acknowledgement, joint publication)?
-
-### 5.4 Practical questions
-
-11. **Compute for retraining.** If retraining is required, what
-    compute is available? (FormulationDT's training scale per
-    `docs/ouyang_platforms_summary.md` suggests a 700K-sample dataset
-    — unclear if the full dataset is public.)
-12. **Paper timeline.** What is the supervisor's view on the
-    publication timeline for the current paper draft?
+A combination is likely: B + C validate the OS layer; A is needed
+only if B+C alone are insufficient for the publication venue.
 
 ---
 
-## 6. Proposed discussion points (30-min meeting agenda)
+## 6. Proposed discussion agenda (30 minutes)
 
-1. **(5 min) FormulationOS status walk-through.** Show the Streamlit
-   UI; demo the rule-based planner picking tools; show the 151 tests
-   passing; show the 5-layer architecture in `docs/architecture.md`.
+1. **(5 min) FormulationOS walk-through.** Streamlit UI; rule-based
+   planner; the 5-layer architecture in `docs/architecture.md`.
 
-2. **(5 min) Adapter pathway concept.** Walk through
-   `docs/research_notes/formulation_dt_adapter.md` — explain why
-   the adapter does NOT fabricate predictions, why `model_unavailable`
-   is the safe pattern, what T1–T6 tests verify.
+2. **(5 min) Integration challenges.** Walk through §2 — heterogeneous
+   execution interfaces, scientific artifact heterogeneity,
+   deterministic-evidence contract. These motivate the STS
+   contribution.
 
-3. **(5 min) FormulationDT probe findings.** Show the GitHub probe
-   results (training code only, no API, no weights) and the
-   web-probe finding (canonical URL is a 2023 mirror).
+3. **(5 min) FormulationDT as candidate first target.** §4 — show
+   the GitHub + web probe results, the [CONFIRMED] matrix,
+   the 5 [NEEDS CONFIRMATION] questions.
 
-4. **(10 min) Five-platform integration matrix.** Walk through
-   `docs/research_notes/scientific_model_integration_matrix.md` —
-   discuss which platform the supervisor sees as the highest-value
-   first integration target.
+4. **(10 min) Decisions on Q1–Q5.** Walk through §5. The output of
+   this session is a decision on Phase 2.1 scope (adapter only vs.
+   one-real-model) and an access-level assessment for each of the
+   5 platforms.
 
-5. **(5 min) Open questions and decision.** Decide on Phase 2.1
-   scope (adapter only vs. requiring real model) and lab cooperation
-   strategy.
+5. **(5 min) Action items.** Decide on (a) what fills the Q2 access
+   matrix, (b) next-step commitments, (c) whether slides (10-page
+   internal deck) are needed before any further code.
 
 ---
 
 ## Appendix — Source documents
 
-### Committed docs that inform this document
+### Committed docs
 
 - `docs/maturity/ouyang_platforms.md` — Ouyang portfolio analysis
-  (2026-07-03, commit `ba0c0b0`).
+  (2026-07-03).
 - `docs/ouyang_platforms_summary.md` — scientific summary of the
   5 platforms.
 - `docs/sts_specification.md` — STS v0.2 schema.
@@ -339,7 +386,7 @@ upstream cooperation.
 
 - `docs/research_notes/README.md` — index.
 - `docs/research_notes/formulation_dt_adapter.md` — FormulationDT
-  adapter research note (5-question reviewer checklist).
+  adapter research note.
 - `docs/research_notes/scientific_model_integration_matrix.md` —
   5-platform integration matrix.
 
