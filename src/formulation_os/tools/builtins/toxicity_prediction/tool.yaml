@@ -1,0 +1,62 @@
+name: ToxicityPrediction
+version: 0.1.0
+description: >-
+  Predict toxicity profiles including organ toxicity (hepato/cardio/nephrotoxicity),
+  mutagenicity, carcinogenicity, and ADMET properties to assess drug safety.
+
+semantics:
+  domain: drug_safety
+  capabilities:
+    - toxicity_prediction
+    - admet_profiling
+    - ld50_estimation
+    - safety_assessment
+  keywords:
+    - toxicity
+    - safety
+    - admet
+    - hepatotoxicity
+    - cardiotoxicity
+    - ld50
+    - mutagenicity
+
+dependencies:
+  scientific:
+    upstream_capabilities_required:
+      - molecular_structure
+    upstream_capabilities_optional:
+      - drug_property_lookup
+    downstream_capabilities:
+      - risk_assessment
+      - formulation_optimization
+
+input_schema:
+  type: object
+  properties:
+    drug_name:
+      type: string
+      description: Name of the drug
+    smiles:
+      type: string
+      description: SMILES molecular structure (optional)
+  required:
+    - drug_name
+  additionalProperties: false
+
+output_schema:
+  type: object
+  properties:
+    drug_name:
+      type: string
+    toxicity_profile:
+      type: object
+    ld50_oral_mg_kg:
+      type: number
+    admet_profile:
+      type: object
+    safety_warnings:
+      type: array
+    summary:
+      type: string
+    warnings:
+      type: array

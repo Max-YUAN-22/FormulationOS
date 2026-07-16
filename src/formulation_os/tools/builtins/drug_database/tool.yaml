@@ -1,0 +1,73 @@
+name: DrugDatabase
+version: 0.1.0
+description: >-
+  Query drug databases (DrugBank, ChEMBL, PubChem) for comprehensive drug information
+  including molecular properties, therapeutic targets, indications, and drug interactions.
+
+semantics:
+  domain: drug_information
+  capabilities:
+    - drug_property_lookup
+    - target_identification
+    - indication_retrieval
+    - interaction_checking
+  keywords:
+    - drug
+    - database
+    - drugbank
+    - chembl
+    - pubchem
+    - properties
+    - targets
+    - interactions
+    - indications
+
+dependencies:
+  scientific:
+    upstream_capabilities_optional:
+      - literature_search
+    downstream_capabilities:
+      - formulation_design
+      - toxicity_prediction
+
+input_schema:
+  type: object
+  properties:
+    drug_name:
+      type: string
+      description: Name of the drug to query
+    query_type:
+      type: string
+      enum:
+        - properties
+        - targets
+        - indications
+        - interactions
+      description: Type of information to retrieve
+  required:
+    - drug_name
+  additionalProperties: false
+
+output_schema:
+  type: object
+  properties:
+    drug_name:
+      type: string
+    molecular_formula:
+      type: string
+    molecular_weight:
+      type: number
+    smiles:
+      type: string
+    targets:
+      type: array
+    indications:
+      type: array
+    interactions:
+      type: array
+    summary:
+      type: string
+    warnings:
+      type: array
+      items:
+        type: string

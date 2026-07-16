@@ -138,17 +138,47 @@ _MINIMAX_DEFAULT_MODEL = "MiniMax-M3"
 # guarantees a structured ``input`` block on the response.
 _PLAN_TOOL: dict[str, Any] = {
     "name": "return_plan",
-    "description": "Return the workflow plan as a JSON object.",
+    "description": "Return the complete workflow plan as a JSON object with workflow steps and rationale.",
     "input_schema": {
         "type": "object",
         "properties": {
-            "selected_tools": {
+            "workflow": {
                 "type": "array",
-                "items": {"type": "string"},
-                "description": "Tool names in priority order.",
+                "description": "List of workflow steps in execution order",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "step_id": {
+                            "type": "string",
+                            "description": "Unique identifier for this step (e.g., 'step_1')"
+                        },
+                        "tool": {
+                            "type": "string",
+                            "description": "Name of the tool to invoke"
+                        },
+                        "goal": {
+                            "type": "string",
+                            "description": "What this step aims to achieve"
+                        },
+                        "depends_on": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "List of step IDs that must complete before this step"
+                        },
+                        "justification": {
+                            "type": "string",
+                            "description": "Scientific reasoning for why this tool is needed"
+                        }
+                    },
+                    "required": ["step_id", "tool", "goal", "depends_on"]
+                }
+            },
+            "rationale": {
+                "type": "string",
+                "description": "Brief explanation of the overall workflow strategy"
             }
         },
-        "required": ["selected_tools"],
+        "required": ["workflow", "rationale"],
     },
 }
 

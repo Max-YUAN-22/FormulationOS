@@ -1,0 +1,76 @@
+version: '3.8'
+
+services:
+  # Preformulation AI Service
+  preformulation-ai:
+    build:
+      context: /Users/Apple/Desktop/Preformulation
+      dockerfile: Dockerfile
+    container_name: preformulation-ai
+    ports:
+      - "8000:8000"
+    environment:
+      - ENV=production
+      - LOG_LEVEL=info
+    volumes:
+      - preformulation-data:/app/data
+      - preformulation-models:/app/runner/src/files
+    networks:
+      - formulation-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Formulation AI Service
+  formulation-ai:
+    build:
+      context: /Users/Apple/Desktop/Formulation-AI
+      dockerfile: Dockerfile
+    container_name: formulation-ai
+    ports:
+      - "8001:8000"
+    environment:
+      - ENV=production
+      - LOG_LEVEL=info
+    volumes:
+      - formulation-data:/app/data
+    networks:
+      - formulation-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # FormulationOS (Optional - API server)
+  formulation-os:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.formulation-os
+    container_name: formulation-os
+    ports:
+      - "8080:8080"
+    environment:
+      - PREFORMULATION_AI_BASE_URL=http://preformulation-ai:8000
+      - FORMULATION_AI_BASE_URL=http://formulation-ai:8000
+      - MINIMAX_API_KEY=${MINIMAX_API_KEY}
+      - USE_REAL_FORMULATION_TOOLS=true
+    depends_on:
+      - preformulation-ai
+      - formulation-ai
+    networks:
+      - formulation-network
+    restart: unless-stopped
+
+networks:
+  formulation-network:
+    driver: bridge
+
+volumes:
+  preformulation-data:
+  preformulation-models:
+  formulation-data:
