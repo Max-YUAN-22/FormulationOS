@@ -495,10 +495,16 @@ elif st.session_state.view_mode == "workspace":
         query = st.session_state.quick_start_query
         st.session_state.quick_start_query = None
 
-        # Only process if not already in memory
-        if not memory.messages or memory.messages[-1].content != query:
+        # Check if this query was already processed
+        last_user_msg = None
+        for msg in reversed(memory.messages):
+            if msg.role == "user":
+                last_user_msg = msg.content
+                break
+
+        # Only process if this is a new query
+        if last_user_msg != query:
             try:
-                # Show processing indicator
                 with st.spinner("🧠 Analyzing..."):
                     resp, tool_calls, _, _ = st.session_state.llm_manager.generate_with_tools_loop(
                         user_query=query,
@@ -506,15 +512,16 @@ elif st.session_state.view_mode == "workspace":
                         max_iterations=5
                     )
 
-                # Save both messages to memory (they will be displayed by history loop)
+                # Save messages
                 memory.add_message("user", query)
                 memory.add_message("assistant", resp)
 
-                # Store tool calls for display
+                # Store tool calls with the assistant message index
                 if tool_calls:
                     session = get_session()
                     if "tool_calls" not in session:
                         session["tool_calls"] = {}
+                    # Assistant message is always at len(messages) - 1 after we just added it
                     session["tool_calls"][len(memory.messages) - 1] = tool_calls
 
             except Exception as e:
@@ -524,18 +531,21 @@ elif st.session_state.view_mode == "workspace":
         st.rerun()
 
     # Display conversation history
+    session = get_session()
     for i, msg in enumerate(memory.messages):
         message_id = f"msg_{i}"
-        with st.chat_message(msg.role):
-            content = re.sub(r'<think>.*?</think>', '', msg.content, flags=re.DOTALL).strip()
-            st.markdown(content)
 
-            # Display tool calls if this was an assistant message with tools
-            if msg.role == "assistant" and i > 0:
-                session = get_session()
+        with st.chat_message(msg.role):
+            # For assistant messages, show reasoning BEFORE content
+            if msg.role == "assistant":
                 if "tool_calls" in session and i in session["tool_calls"]:
                     tool_calls = session["tool_calls"][i]
                     display_reasoning(tool_calls, status="success")
+
+            # Display message content
+            content = re.sub(r'<think>.*?</think>', '', msg.content, flags=re.DOTALL).strip()
+            if content:  # Only display if there's actual content
+                st.markdown(content)
 
             # Add feedback buttons for assistant messages
             if msg.role == "assistant":
