@@ -33,6 +33,7 @@ from formulation_os.tools.visualization_tools import (
     plot_formulation_comparison,
     visualize_molecule_2d
 )
+from formulation_os.tools.auto_visualization import generate_visualizations_from_response
 
 # Configuration
 def get_config(key: str, default: str = "") -> str:
@@ -767,12 +768,90 @@ elif st.session_state.view_mode == "workspace":
                 with reasoning_placeholder.container():
                     st.markdown("🧠 **Analyzing your query...**")
 
-                # Generate response with tools
-                resp, tool_calls, _, _ = st.session_state.llm_manager.generate_with_tools_loop(
-                    user_query=prompt,
-                    model=DEFAULT_MODEL,
-                    max_iterations=5
-                )
+                # Check analysis mode
+                analysis_mode = st.session_state.get("analysis_mode", "fast")
+
+                if analysis_mode == "fast":
+                    # Fast Mode: Single AI agent
+                    resp, tool_calls, _, _ = st.session_state.llm_manager.generate_with_tools_loop(
+                        user_query=prompt,
+                        model=DEFAULT_MODEL,
+                        max_iterations=5
+                    )
+                else:
+                    # Deep Analysis Mode: Multi-agent workflow
+                    with reasoning_placeholder.container():
+                        st.markdown("🧠 **Deep Analysis Mode** - Launching multi-agent workflow...")
+
+                    # Use Workflow tool for comprehensive analysis
+                    workflow_script = f"""
+export const meta = {{
+    name: 'deep-formulation-analysis',
+    description: 'Multi-agent deep analysis for pharmaceutical formulation',
+    phases: [
+        {{ title: 'Property Analysis', detail: 'Compute physicochemical properties' }},
+        {{ title: 'Strategy Evaluation', detail: 'Evaluate formulation strategies' }},
+        {{ title: 'Synthesis', detail: 'Synthesize recommendations' }}
+    ]
+}};
+
+// Phase 1: Parallel property analysis
+phase('Property Analysis');
+const property_agents = await parallel([
+    () => agent('Analyze fundamental properties: LogP, LogS, MW, pKa for: {prompt}', {{
+        label: 'Fundamentals',
+        phase: 'Property Analysis'
+    }}),
+    () => agent('Analyze solubility behavior for: {prompt}', {{
+        label: 'Solubility',
+        phase: 'Property Analysis'
+    }}),
+    () => agent('Analyze pH stability for: {prompt}', {{
+        label: 'pH Profile',
+        phase: 'Property Analysis'
+    }})
+]);
+
+// Phase 2: Strategy evaluation
+phase('Strategy Evaluation');
+const strategies = await parallel([
+    () => agent('Evaluate solid dispersion strategy for: {prompt}', {{
+        label: 'Solid Dispersion',
+        phase: 'Strategy Evaluation'
+    }}),
+    () => agent('Evaluate nanocrystallization for: {prompt}', {{
+        label: 'Nanocrystal',
+        phase: 'Strategy Evaluation'
+    }}),
+    () => agent('Evaluate advanced delivery systems (SEDDS, liposomes) for: {prompt}', {{
+        label: 'Advanced Systems',
+        phase: 'Strategy Evaluation'
+    }})
+]);
+
+// Phase 3: Synthesis
+phase('Synthesis');
+const synthesis = await agent(
+    'Synthesize all findings into comprehensive recommendations. Properties: ' +
+    JSON.stringify(property_agents) + '. Strategies: ' + JSON.stringify(strategies),
+    {{
+        label: 'Final Synthesis',
+        phase: 'Synthesis'
+    }}
+);
+
+return synthesis;
+"""
+                    # For now, fall back to fast mode with a note
+                    # TODO: Implement actual Workflow integration
+                    with reasoning_placeholder.container():
+                        st.info("🚧 Multi-agent workflow is under development. Using enhanced single-agent mode with comprehensive analysis...")
+
+                    resp, tool_calls, _, _ = st.session_state.llm_manager.generate_with_tools_loop(
+                        user_query=f"[DEEP ANALYSIS MODE] Please provide comprehensive, detailed analysis with multiple perspectives: {prompt}",
+                        model=DEFAULT_MODEL,
+                        max_iterations=10  # More iterations for deep mode
+                    )
 
                 # Update with reasoning process
                 if tool_calls:
@@ -785,6 +864,28 @@ elif st.session_state.view_mode == "workspace":
                 content = re.sub(r'<think>.*?</think>', '', resp, flags=re.DOTALL).strip()
                 if content:
                     response_placeholder.markdown(content)
+
+                # 🧬 Auto-visualize molecule if SMILES detected
+                smiles_match = re.search(r'SMILES[：:是]?\s*[\'"]?([A-Za-z0-9@+\-\[\]()=#$]+)[\'"]?', prompt, re.IGNORECASE)
+                if smiles_match:
+                    smiles = smiles_match.group(1)
+                    st.markdown("---")
+                    st.markdown("### 🧬 Molecular Structure")
+                    mol_img = visualize_molecule_2d(smiles)
+                    if mol_img:
+                        st.image(f"data:image/png;base64,{mol_img}", width=400)
+                    else:
+                        st.info("💡 Install RDKit to visualize molecular structures: `pip install rdkit`")
+
+                # 📊 Auto-generate relevant plots
+                if tool_calls:
+                    auto_viz = generate_visualizations_from_response(resp, tool_calls, prompt)
+                    if auto_viz:
+                        st.markdown("---")
+                        st.markdown("### 📊 Analysis Visualizations")
+                        for viz in auto_viz:
+                            with st.expander(f"📈 {viz['title']}", expanded=True):
+                                st.image(f"data:image/png;base64,{viz['image']}", use_container_width=True)
 
                 # Add feedback buttons
                 add_feedback_buttons(f"msg_{len(memory.messages)}")
