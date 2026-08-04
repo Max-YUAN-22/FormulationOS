@@ -49,7 +49,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Clean CSS
+# Enhanced CSS with GPT-style chat bubbles
 st.markdown("""
 <style>
     header[data-testid="stHeader"] {display: none;}
@@ -63,6 +63,35 @@ st.markdown("""
         padding: 0.6rem 1.5rem !important;
         border-radius: 8px !important;
         font-weight: 600 !important;
+    }
+
+    /* Chat message improvements */
+    [data-testid="stChatMessageContent"] {
+        background: white;
+        border-radius: 12px;
+        padding: 1rem 1.25rem;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        border: 1px solid #e5e7eb;
+    }
+
+    /* User messages - light gray background */
+    [data-testid="stChatMessage"][data-testid*="user"] [data-testid="stChatMessageContent"] {
+        background: #f3f4f6;
+        border-color: #d1d5db;
+    }
+
+    /* Tool call card styling */
+    .stExpander {
+        background: #eff6ff;
+        border-left: 3px solid #3b82f6;
+        border-radius: 8px;
+        margin: 0.5rem 0;
+    }
+
+    /* Chat input styling */
+    .stChatInputContainer {
+        border-top: 1px solid #e5e7eb;
+        padding-top: 1rem;
     }
 </style>
 """, unsafe_allow_html=True)
