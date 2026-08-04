@@ -857,17 +857,6 @@ elif st.session_state.view_mode == "workspace":
 
         # Rerun to display in history
         st.rerun()
-            memory.add_message("user", prompt)
-            memory.add_message("assistant", f"Error: {str(e)}")
-
-            # Still save error to database for debugging
-            kb = st.session_state.kb
-            session_id = st.session_state.current_session_id
-            kb.create_session(session_id)
-            kb.save_message(session_id, "user", prompt)
-            kb.save_message(session_id, "assistant", f"Error: {str(e)}", model_used=DEFAULT_MODEL)
-
-        st.rerun()
 
 # KNOWLEDGE BASE
 elif st.session_state.view_mode == "knowledge_base":
