@@ -38,7 +38,9 @@ MINIMAX_API_KEY = get_config("MINIMAX_API_KEY")
 CLAUDE_BASE_URL = get_config("CLAUDE_BASE_URL", "https://www.cun.ai")
 GPT_BASE_URL = get_config("GPT_BASE_URL", "https://api.openai.com/v1")
 MINIMAX_BASE_URL = get_config("MINIMAX_BASE_URL", "https://api.minimaxi.com/v1")
-DEFAULT_MODEL = "MiniMax-M3"
+
+# Use GPT-4o by default for better tool calling support
+DEFAULT_MODEL = "gpt-4o" if GPT_API_KEY else "MiniMax-M3"
 
 st.set_page_config(
     page_title="FormulationOS - AI Scientist",
