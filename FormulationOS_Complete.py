@@ -501,41 +501,29 @@ elif st.session_state.view_mode == "workspace":
                 st.markdown(content)
 
         if prompt := st.chat_input("💭 Describe your research objective..."):
-            memory.add_message("user", prompt)
-
             with st.chat_message("user"):
                 st.markdown(prompt)
 
             with st.chat_message("assistant"):
                 with st.spinner("🧠 Analyzing..."):
                     try:
-                        resp, tool_calls, _, _ = st.session_state.llm_manager.generate_response(
+                        # Use the full tool-use loop
+                        resp, tool_calls, _, _ = st.session_state.llm_manager.generate_with_tools_loop(
                             user_query=prompt,
-                            model=DEFAULT_MODEL
+                            model=DEFAULT_MODEL,
+                            max_iterations=5
                         )
 
-                        # Execute tool calls if any
+                        # Display tool calls summary if any were made
                         if tool_calls:
-                            st.info(f"🔧 调用 {len(tool_calls)} 个工具...")
+                            with st.expander(f"🔧 调用了 {len(tool_calls)} 个工具", expanded=False):
+                                for i, tool_call in enumerate(tool_calls, 1):
+                                    st.markdown(f"**{i}. {tool_call['name']}**")
+                                    st.json(tool_call["input"])
 
-                            for tool_call in tool_calls:
-                                tool_name = tool_call["name"]
-                                tool_input = tool_call["input"]
-
-                                with st.expander(f"📊 {tool_name}"):
-                                    st.json(tool_input)
-
-                                    # Execute tool
-                                    result = st.session_state.llm_manager.execute_tool_call(
-                                        tool_name, tool_input
-                                    )
-                                    st.json(result)
-
-                            st.success("✅ 工具调用完成")
-
+                        # Display final response
                         display = re.sub(r'<think>.*?</think>', '', resp, flags=re.DOTALL).strip()
                         st.markdown(display)
-                        memory.add_message("assistant", resp)
                     except Exception as e:
                         err = f"❌ Error: {str(e)}"
                         st.error(err)

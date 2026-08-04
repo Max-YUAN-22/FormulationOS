@@ -715,6 +715,78 @@ Based on the analysis, I'll generate computational hypotheses with evidence and 
         except Exception as e:
             return {"error": str(e)}
 
+    def generate_with_tools_loop(
+        self,
+        user_query: str,
+        model: str,
+        max_iterations: int = 5
+    ) -> Tuple[str, List[Dict], int, int]:
+        """Generate response with full tool-use loop
+
+        Implements complete agentic cycle:
+        1. User query → AI generates (may include tool_calls)
+        2. Execute all tools and collect results
+        3. Send tool results back to AI
+        4. AI generates comprehensive final analysis
+        5. Return complete response
+
+        Args:
+            user_query: User's question
+            model: Model ID to use
+            max_iterations: Maximum tool-use iterations (default: 5)
+
+        Returns:
+            (final_response, all_tool_calls, total_input_tokens, total_output_tokens)
+        """
+        all_tool_calls = []
+        total_input_tokens = 0
+        total_output_tokens = 0
+
+        # Add user message to memory
+        self.memory.add_message("user", user_query)
+
+        current_query = user_query
+
+        for iteration in range(max_iterations):
+            # Generate response
+            resp, tool_calls, in_tok, out_tok = self.generate_response(current_query, model)
+            total_input_tokens += in_tok
+            total_output_tokens += out_tok
+
+            # If no tool calls, we're done
+            if not tool_calls:
+                return resp, all_tool_calls, total_input_tokens, total_output_tokens
+
+            # Execute all tool calls
+            all_tool_calls.extend(tool_calls)
+            tool_results = []
+
+            for tool_call in tool_calls:
+                result = self.execute_tool_call(tool_call["name"], tool_call["input"])
+                tool_results.append({
+                    "tool_name": tool_call["name"],
+                    "result": result
+                })
+
+            # Add assistant message with tool calls to memory
+            self.memory.add_message("assistant", resp)
+
+            # Format tool results for next iteration
+            import json
+            results_text = "Tool execution results:\n\n"
+            for tr in tool_results:
+                results_text += f"**{tr['tool_name']}**:\n```json\n{json.dumps(tr['result'], indent=2)}\n```\n\n"
+            results_text += "Based on these results, please provide a comprehensive analysis including:\n"
+            results_text += "1. BCS classification and reasoning\n"
+            results_text += "2. Key physicochemical properties interpretation\n"
+            results_text += "3. Developability assessment\n"
+            results_text += "4. Formulation strategy recommendations\n"
+
+            current_query = results_text
+
+        # If we hit max iterations, return what we have
+        return resp, all_tool_calls, total_input_tokens, total_output_tokens
+
     @classmethod
     def get_available_models(cls) -> List[Dict[str, Any]]:
         """Get list of available models"""
