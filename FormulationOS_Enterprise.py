@@ -10,7 +10,11 @@ Enterprise Features:
 - Robust error handling
 - Session management
 - Complete tool-use loop
+
+Version: 3.5.1 (2026-08-05) - Enhanced Knowledge Base & Platform Descriptions
 """
+
+__version__ = "3.5.1"
 
 import streamlit as st
 from pathlib import Path
@@ -347,6 +351,7 @@ with st.sidebar:
 col1, col2, col3, col4, col5 = st.columns([2, 1, 1, 1, 1])
 with col1:
     st.title("🧬 FormulationOS")
+    st.caption(f"v{__version__}")
 with col2:
     if st.button("🏠 Home", use_container_width=True):
         st.session_state.view_mode = "home"
