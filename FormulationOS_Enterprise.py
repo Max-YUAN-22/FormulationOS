@@ -635,15 +635,33 @@ elif st.session_state.view_mode == "workspace":
                                     session["tool_calls"] = {}
                                 session["tool_calls"][len(memory.messages) - 1] = tool_calls
 
+                                # Extract drug info from query prompt
+                                import re
+                                smiles_match = re.search(r'SMILES[：:是]?\s*[\'"]?([A-Za-z0-9@+\-\[\]()=#$]+)[\'"]?', query, re.IGNORECASE)
+                                smiles = smiles_match.group(1) if smiles_match else ""
+
+                                # Try to extract drug name
+                                drug_name_patterns = [
+                                    r'分析\s*([A-Za-z一-龥]+)[（(]',
+                                    r'药物[是为]?\s*([A-Za-z一-龥]+)',
+                                    r'Ibuprofen|布洛芬',  # Common drug names
+                                    r'compound[：:是]?\s*([A-Za-z一-龥]+)',
+                                ]
+                                drug_name = "Unknown"
+                                for pattern in drug_name_patterns:
+                                    match = re.search(pattern, query, re.IGNORECASE)
+                                    if match:
+                                        if match.lastindex and match.lastindex >= 1:
+                                            drug_name = match.group(1)
+                                        else:
+                                            drug_name = match.group(0)
+                                        break
+
                                 # Save to database
                                 drug_analysis_id = None
                                 for tc in tool_calls:
                                     tool_name = tc.get("name", "")
                                     if "preformulation" in tool_name.lower() or "formulation" in tool_name.lower():
-                                        args = tc.get("arguments", {})
-                                        smiles = args.get("smiles", args.get("SMILES", ""))
-                                        drug_name = args.get("drug_name", "Unknown")
-
                                         if not drug_analysis_id:
                                             drug_analysis_id = kb.save_drug_analysis(
                                                 session_id=session_id,
@@ -654,8 +672,8 @@ elif st.session_state.view_mode == "workspace":
                                         kb.save_tool_call(
                                             drug_analysis_id=drug_analysis_id,
                                             tool_name=tc.get("name"),
-                                            module=args.get("module", ""),
-                                            input_params=args,
+                                            module="",
+                                            input_params={"smiles": smiles, "drug_name": drug_name},
                                             output_result=tc.get("result", {})
                                         )
 
@@ -733,17 +751,29 @@ elif st.session_state.view_mode == "workspace":
                     session["tool_calls"] = {}
                 session["tool_calls"][len(memory.messages) - 1] = tool_calls
 
-                # Create drug analysis record if drug detected
-                # (Simple heuristic: check if SMILES is in prompt or tool calls involve drug analysis)
+                # Extract drug info from user prompt (more reliable than tool arguments)
+                import re
+                smiles_match = re.search(r'SMILES[：:是]?\s*[\'"]?([A-Za-z0-9@+\-\[\]()=#$]+)[\'"]?', prompt, re.IGNORECASE)
+                smiles = smiles_match.group(1) if smiles_match else ""
+
+                # Try to extract drug name from prompt
+                drug_name_patterns = [
+                    r'分析\s*([A-Za-z一-龥]+)[（(]',  # "分析Ibuprofen（"
+                    r'药物[是为]?\s*([A-Za-z一-龥]+)',  # "药物是XX"
+                    r'compound[：:是]?\s*([A-Za-z一-龥]+)',  # "compound: XX"
+                ]
+                drug_name = "Unknown"
+                for pattern in drug_name_patterns:
+                    match = re.search(pattern, prompt, re.IGNORECASE)
+                    if match:
+                        drug_name = match.group(1)
+                        break
+
+                # Create drug analysis record
                 drug_analysis_id = None
                 for tc in tool_calls:
                     tool_name = tc.get("name", "")
                     if "preformulation" in tool_name.lower() or "formulation" in tool_name.lower():
-                        # Extract drug info from tool call
-                        args = tc.get("arguments", {})
-                        smiles = args.get("smiles", args.get("SMILES", ""))
-                        drug_name = args.get("drug_name", "Unknown")
-
                         if not drug_analysis_id:
                             drug_analysis_id = kb.save_drug_analysis(
                                 session_id=session_id,
@@ -755,8 +785,8 @@ elif st.session_state.view_mode == "workspace":
                         kb.save_tool_call(
                             drug_analysis_id=drug_analysis_id,
                             tool_name=tc.get("name"),
-                            module=args.get("module", ""),
-                            input_params=args,
+                            module="",
+                            input_params={"smiles": smiles, "drug_name": drug_name},
                             output_result=tc.get("result", {})
                         )
 
