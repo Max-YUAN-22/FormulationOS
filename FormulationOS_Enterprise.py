@@ -857,36 +857,6 @@ elif st.session_state.view_mode == "workspace":
 
         # Rerun to display in history
         st.rerun()
-                ]
-                drug_name = "Unknown"
-                for pattern in drug_name_patterns:
-                    match = re.search(pattern, prompt, re.IGNORECASE)
-                    if match:
-                        drug_name = match.group(1)
-                        break
-
-                # Create drug analysis record
-                drug_analysis_id = None
-                for tc in tool_calls:
-                    tool_name = tc.get("name", "")
-                    if "preformulation" in tool_name.lower() or "formulation" in tool_name.lower():
-                        if not drug_analysis_id:
-                            drug_analysis_id = kb.save_drug_analysis(
-                                session_id=session_id,
-                                drug_name=drug_name,
-                                smiles=smiles
-                            )
-
-                        # Save tool call record
-                        kb.save_tool_call(
-                            drug_analysis_id=drug_analysis_id,
-                            tool_name=tc.get("name"),
-                            module="",
-                            input_params={"smiles": smiles, "drug_name": drug_name},
-                            output_result=tc.get("result", {})
-                        )
-
-        except Exception as e:
             memory.add_message("user", prompt)
             memory.add_message("assistant", f"Error: {str(e)}")
 
