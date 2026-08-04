@@ -26,6 +26,8 @@ sys.path.insert(0, str(Path(__file__).parent / "src"))
 from formulation_os.agent.conversation_memory import ConversationMemory
 from formulation_os.agent.unified_llm_manager import UnifiedLLMManager
 from formulation_os.agent.scientific_state import ScientificState
+from formulation_os.agent.hypothesis_ranker import HypothesisRanker
+from formulation_os.agent.evidence_manager import EvidenceManager
 from formulation_os.knowledge_base import KnowledgeBaseDB
 from formulation_os.tools.visualization_tools import (
     plot_solubility_profile,
@@ -196,6 +198,12 @@ def init():
             "created_at": datetime.now(),
             "feedback": {}  # message_id -> {"type": "like/dislike", "comment": ""}
         }
+    if "evidence_manager" not in st.session_state:
+        st.session_state.evidence_manager = EvidenceManager()
+    if "hypothesis_ranker" not in st.session_state:
+        st.session_state.hypothesis_ranker = HypothesisRanker(
+            evidence_manager=st.session_state.evidence_manager
+        )
     if "llm_manager" not in st.session_state:
         memory = st.session_state.sessions[st.session_state.current_session_id]["memory"]
         st.session_state.llm_manager = UnifiedLLMManager(
@@ -205,7 +213,8 @@ def init():
             minimax_api_key=MINIMAX_API_KEY,
             anthropic_base_url=CLAUDE_BASE_URL,
             openai_base_url=GPT_BASE_URL,
-            minimax_base_url=MINIMAX_BASE_URL
+            minimax_base_url=MINIMAX_BASE_URL,
+            evidence_manager=st.session_state.evidence_manager
         )
     if "kb" not in st.session_state:
         st.session_state.kb = KnowledgeBaseDB()
@@ -335,7 +344,7 @@ with st.sidebar:
     """)
 
 # Top navigation
-col1, col2, col3, col4 = st.columns([2, 1, 1, 1])
+col1, col2, col3, col4, col5 = st.columns([2, 1, 1, 1, 1])
 with col1:
     st.title("🧬 FormulationOS")
 with col2:
@@ -349,6 +358,10 @@ with col3:
 with col4:
     if st.button("📚 Knowledge Base", use_container_width=True):
         st.session_state.view_mode = "knowledge_base"
+        st.rerun()
+with col5:
+    if st.button("🔬 Research", use_container_width=True):
+        st.session_state.view_mode = "research"
         st.rerun()
 
 st.markdown("---")
@@ -379,6 +392,53 @@ if st.session_state.view_mode == "home":
         st.metric("🔧 AI Tool Calls", stats['total_tool_calls'])
     with col_stat4:
         st.metric("📁 Active Sessions", stats['total_sessions'])
+
+    st.markdown("---")
+
+    # Demo cases showcase
+    st.markdown("## 🎯 Try Demo Cases")
+    st.caption("Pre-loaded AI-generated analyses - click to explore in AI Workspace")
+
+    demo_col1, demo_col2, demo_col3 = st.columns(3)
+
+    with demo_col1:
+        st.markdown("""
+        <div style='background: white; padding: 2rem; border-radius: 12px; border: 2px solid #3b82f6; box-shadow: 0 2px 8px rgba(0,0,0,0.1);'>
+            <h4 style='color: #1e40af; margin-bottom: 0.5rem;'>💊 Ibuprofen</h4>
+            <p style='color: #64748b; font-size: 0.85rem; margin-bottom: 0.5rem;'>BCS II | MW: 206 Da</p>
+            <p style='color: #475569; font-size: 0.9rem;'>Solid dispersion strategy<br/>Classic solubility enhancement</p>
+        </div>
+        """, unsafe_allow_html=True)
+        if st.button("🚀 View Analysis", key="demo_ibu", use_container_width=True):
+            st.session_state.view_mode = "workspace"
+            st.session_state.demo_query = "Ibuprofen"
+            st.rerun()
+
+    with demo_col2:
+        st.markdown("""
+        <div style='background: white; padding: 2rem; border-radius: 12px; border: 2px solid #10b981; box-shadow: 0 2px 8px rgba(0,0,0,0.1);'>
+            <h4 style='color: #059669; margin-bottom: 0.5rem;'>🧪 Paclitaxel</h4>
+            <p style='color: #64748b; font-size: 0.85rem; margin-bottom: 0.5rem;'>BCS IV | MW: 854 Da</p>
+            <p style='color: #475569; font-size: 0.9rem;'>Nanocrystal technology<br/>High MW challenge</p>
+        </div>
+        """, unsafe_allow_html=True)
+        if st.button("🚀 View Analysis", key="demo_pac", use_container_width=True):
+            st.session_state.view_mode = "workspace"
+            st.session_state.demo_query = "Paclitaxel"
+            st.rerun()
+
+    with demo_col3:
+        st.markdown("""
+        <div style='background: white; padding: 2rem; border-radius: 12px; border: 2px solid #f59e0b; box-shadow: 0 2px 8px rgba(0,0,0,0.1);'>
+            <h4 style='color: #d97706; margin-bottom: 0.5rem;'>💉 Celecoxib</h4>
+            <p style='color: #64748b; font-size: 0.85rem; margin-bottom: 0.5rem;'>BCS II | MW: 381 Da</p>
+            <p style='color: #475569; font-size: 0.9rem;'>PVP solid dispersion<br/>Mature process</p>
+        </div>
+        """, unsafe_allow_html=True)
+        if st.button("🚀 View Analysis", key="demo_cel", use_container_width=True):
+            st.session_state.view_mode = "workspace"
+            st.session_state.demo_query = "Celecoxib"
+            st.rerun()
 
     st.markdown("---")
 
@@ -462,54 +522,145 @@ if st.session_state.view_mode == "home":
 
     st.markdown("---")
 
-    # Platform introductions
+    # Platform introductions - Detailed
     st.markdown("## 🔗 Integrated AI Platforms")
+
+    st.markdown("""
+    <div style='text-align: center; margin-bottom: 2rem;'>
+        <p style='color: #64748b; font-size: 1.05rem;'>
+            FormulationOS integrates two comprehensive AI platforms covering the complete
+            preformulation-to-formulation pipeline with 12 specialized modules.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
 
     col1, col2 = st.columns(2)
 
     with col1:
         st.markdown("""
-        <div style='background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); padding: 2rem; border-radius: 12px; border: 1px solid #bfdbfe;'>
+        <div style='background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); padding: 2rem; border-radius: 12px; border: 2px solid #3b82f6;'>
             <h3 style='color: #1e40af; margin-bottom: 1rem;'>🔬 PreformulationAI</h3>
-            <p style='color: #1e3a8a; margin-bottom: 1rem;'>
-                <strong>5 AI Modules for Drug Characterization</strong>
+            <p style='color: #1e3a8a; margin-bottom: 0.5rem; font-size: 1.05rem;'>
+                <strong>AI-driven preformulation for small-molecule drug development</strong>
             </p>
-            <ul style='color: #1e3a8a; line-height: 1.8;'>
-                <li><strong>Fundamentals</strong>: LogP, LogS, MW, pKa, HBD/HBA</li>
-                <li><strong>Solubility</strong>: Temperature and solvent-dependent behavior</li>
-                <li><strong>pH Profile</strong>: pH-dependent stability analysis</li>
-                <li><strong>Developability</strong>: BCS classification, druglikeness, formulatability</li>
-                <li><strong>IF Descriptors</strong>: Interpretable formulation descriptors</li>
-            </ul>
+            <p style='color: #475569; font-size: 0.95rem; margin-bottom: 1.5rem;'>
+                From SMILES to full developability dossier in seconds — fundamental properties,
+                temperature/pH-resolved profiles, and interpretable formulation descriptors.
+            </p>
         </div>
         """, unsafe_allow_html=True)
+
+        with st.expander("📋 Five Prediction Modules", expanded=False):
+            st.markdown("""
+            Every module outputs **actionable numbers** — not just classifications — backed by
+            interpretable ML and confidence estimates.
+
+            **01 — Fundamentals**
+            *Fundamental preformulation prediction & critical property calculation*
+            - Density, MP, Tg
+            - logP, logD₇.₄, logPapp
+            - Acidic/Basic pKa
+            - logS, kinetic solubility
+            - FractionCSP3, TPSA, NumHAcceptors
+
+            **02 — Solubility**
+            *Conditional solubility prediction across solvents and temperatures*
+            - Temperature-dependent solubility curves
+            - Organic solvent solubility
+            - Binary solvent systems
+
+            **03 — pH Profile**
+            *pH-dependent preformulation estimation*
+            - pH-Species fraction profile
+            - pH-dependent logS profile
+            - pH-dependent logD profile
+
+            **04 — Developability**
+            *Interpretable developability assessment for drug design*
+            - BCS classification
+            - Druglikeness
+            - Oral & injectable formulatability index
+            - Fully interpretable
+
+            **05 — IF-Descriptors**
+            *Interpretable formulation descriptors*
+            - Preformulation properties
+            - Interpretable RDKit descriptors
+            - Highly interpretable & information-rich
+            - Batch generation support
+            """)
+
+        st.caption("""
+        **Developed by:** Computational Pharmaceutical Group, State Key Laboratory
+        Of Quality Research in Chinese Medicine, ICMS, University of Macau
+        """)
 
         st.markdown("")
         if st.button("🔗 Visit PreformulationAI Platform", use_container_width=True):
-            st.markdown("[PreformulationAI](https://preformulationai.computpharm.org/)")
+            st.link_button("Open PreformulationAI", "https://preformulationai.computpharm.org/")
 
     with col2:
         st.markdown("""
-        <div style='background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); padding: 2rem; border-radius: 12px; border: 1px solid #bbf7d0;'>
+        <div style='background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); padding: 2rem; border-radius: 12px; border: 2px solid #10b981;'>
             <h3 style='color: #15803d; margin-bottom: 1rem;'>💊 FormulationAI</h3>
-            <p style='color: #14532d; margin-bottom: 1rem;'>
-                <strong>7 AI Modules for Formulation Design</strong>
+            <p style='color: #14532d; margin-bottom: 0.5rem; font-size: 1.05rem;'>
+                <strong>The pioneer providing best solutions for in silico drug formulation design</strong>
             </p>
-            <ul style='color: #14532d; line-height: 1.8;'>
-                <li><strong>Strategy Recommendation</strong>: Overall formulation strategy ranking</li>
-                <li><strong>Solid Dispersion</strong>: Physical stability prediction</li>
-                <li><strong>Nanocrystal</strong>: Particle size and PDI prediction</li>
-                <li><strong>Cyclodextrin</strong>: Complexation free energy (ΔG)</li>
-                <li><strong>Phospholipid Complex</strong>: Permeability enhancement</li>
-                <li><strong>SEDDS</strong>: Self-emulsifying system design</li>
-                <li><strong>Liposome</strong>: Targeted delivery parameters</li>
-            </ul>
+            <p style='color: #475569; font-size: 0.95rem; margin-bottom: 1.5rem;'>
+                FormulationAI keeps the most comprehensive data and AI models up to date,
+                serving you with accurate predictions and easy-to-use interface.
+            </p>
         </div>
         """, unsafe_allow_html=True)
 
+        with st.expander("📋 Seven Formulation Modules", expanded=False):
+            st.markdown("""
+            **01 — Drug/Cyclodextrin Complex**
+            - Complexation free energy (ΔG)
+            - Solubility enhancement prediction
+            - CD type recommendation
+
+            **02 — Solid Dispersion**
+            - Physical stability prediction
+            - Polymer selection guidance
+            - Manufacturing method recommendation
+
+            **03 — Phospholipid Complex**
+            - Lipophilicity improvement
+            - Bioavailability enhancement
+            - Complex formation assessment
+
+            **04 — Drug Nanocrystals**
+            - Particle size prediction
+            - PDI estimation
+            - Manufacturing methods (BWM, HPH, Antisolvent)
+
+            **05 — Self-Emulsifying System (SEDDS)**
+            - Oil phase recommendation
+            - Surfactant selection
+            - Droplet size prediction
+            - Formulation composition optimization
+
+            **06 — Liposome**
+            - Lipid selection
+            - Size optimization
+            - Encapsulation efficiency
+            - Release profile prediction
+
+            **07 — Strategy Recommendation**
+            - Optimal formulation approach selection
+            - Score-based ranking
+            - Structure-property guided strategy
+            """)
+
+        st.caption("""
+        **Citation:** FormulationAI: a novel web-based platform for drug formulation design
+        driven by artificial intelligence, *Brief Bioinform.* 2023; **25(1)**:bbad419
+        """)
+
         st.markdown("")
         if st.button("🔗 Visit FormulationAI Platform", use_container_width=True):
-            st.markdown("[FormulationAI](https://formulationai.computpharm.org/)")
+            st.link_button("Open FormulationAI", "https://formulationai.computpharm.org/")
 
     st.markdown("---")
 
@@ -593,235 +744,386 @@ elif st.session_state.view_mode == "workspace":
     # Initialize scientific components
     if "scientific_planner" not in st.session_state:
         from formulation_os.agent.scientific_planner import ScientificPlanner
-        from formulation_os.agent.hypothesis_ranker import HypothesisRanker
         st.session_state.scientific_planner = ScientificPlanner()
-        st.session_state.hypothesis_ranker = HypothesisRanker()
 
-    # Three-column layout: Memory | Chat | Scientific State
-    col_left, col_main, col_right = st.columns([1, 2, 1])
+    # Initialize sidebar collapsed state
+    if "sidebar_collapsed" not in st.session_state:
+        st.session_state.sidebar_collapsed = False
 
-    # LEFT PANEL: Research Memory
-    with col_left:
-        st.markdown("### 📚 Research Memory")
+    # Simple top bar with collapse button
+    top_col1, top_col2 = st.columns([5, 1])
+    with top_col1:
+        st.markdown("### 💬 AI Scientist")
+    with top_col2:
+        if st.button("📚" if st.session_state.sidebar_collapsed else "◀", use_container_width=True):
+            st.session_state.sidebar_collapsed = not st.session_state.sidebar_collapsed
+            st.rerun()
 
-        with st.expander("💊 Drug Profile", expanded=True):
-            session = get_session()
-            if hasattr(session.get("memory"), "scientific_state"):
-                state = session["memory"].scientific_state
-                if state.drug_name:
-                    st.markdown(f"**Drug**: {state.drug_name}")
-                    if state.smiles:
-                        st.code(state.smiles, language=None)
+    # Fixed height layout CSS + Keep Streamlit's main sidebar always visible
+    st.markdown("""
+    <style>
+    .main .block-container {
+        padding-top: 2rem;
+        padding-bottom: 1rem;
+        max-height: 100vh;
+        overflow: hidden;
+    }
+    .stChatFloatingInputContainer {
+        bottom: 20px;
+    }
+    div[data-testid="stChatMessageContainer"] {
+        max-height: calc(100vh - 300px);
+        overflow-y: auto;
+    }
+    /* Force Streamlit's main sidebar to stay open */
+    [data-testid="collapsedControl"] {
+        display: none !important;
+    }
+    button[kind="header"] {
+        display: none !important;
+    }
+    section[data-testid="stSidebar"] {
+        width: 250px !important;
+        min-width: 250px !important;
+    }
+    section[data-testid="stSidebar"][aria-expanded="false"] {
+        width: 250px !important;
+        transform: none !important;
+        margin-left: 0 !important;
+    }
+    section[data-testid="stSidebar"] > div {
+        width: 250px !important;
+    }
+    /* Hide the collapse arrow button */
+    section[data-testid="stSidebar"] button[kind="header"],
+    section[data-testid="stSidebar"] button[aria-label*="collapse"],
+    section[data-testid="stSidebar"] button[aria-label*="Close"],
+    [data-testid="baseButton-header"] {
+        display: none !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    # Two-column layout: Research Context (collapsible) | Main Chat
+    if not st.session_state.sidebar_collapsed:
+        col_sidebar, col_chat = st.columns([1, 3])
+    else:
+        col_sidebar = None
+        col_chat = st.container()
+
+    # SIDEBAR: Research Context (collapsible)
+    if col_sidebar is not None:
+        with col_sidebar:
+            st.markdown("#### 📊 Research Context")
+
+            with st.expander("💊 Drug Profile", expanded=False):
+                evidence_count = 0
+                if hasattr(st.session_state, 'evidence_manager'):
+                    evidence_count = len(st.session_state.evidence_manager.evidence_pool)
+
+                if evidence_count > 0:
+                    memory_data = get_session()["memory"]
+                    drug_name = "Unknown Drug"
+                    smiles = ""
+
+                    for msg in reversed(memory_data.messages):
+                        if msg.role == "user" and msg.content:
+                            if "Ibuprofen" in msg.content or "布洛芬" in msg.content:
+                                drug_name = "Ibuprofen (布洛芬)"
+
+                            import re
+                            smiles_match = re.search(r'SMILES[：:]\s*([A-Za-z0-9@+\-\[\]()=#$]{10,})', msg.content)
+                            if smiles_match:
+                                smiles = smiles_match.group(1)
+
+                            if drug_name != "Unknown Drug":
+                                break
+
+                    st.markdown(f"**{drug_name}**")
+                    if smiles:
+                        st.code(smiles[:40] + "..." if len(smiles) > 40 else smiles, language="text")
+                    st.caption(f"📊 {evidence_count} evidence items")
                 else:
                     st.caption("No drug analyzed yet")
-            else:
-                st.caption("No drug analyzed yet")
 
-        with st.expander("🔬 Previous Hypotheses"):
-            if st.session_state.hypothesis_ranker.hypotheses:
-                for i, hyp in enumerate(st.session_state.hypothesis_ranker.rank_hypotheses()[:3], 1):
-                    st.markdown(f"**{i}. {hyp.strategy_name}**")
-                    st.progress(hyp.confidence)
-                    st.caption(f"Confidence: {hyp.confidence:.2f}")
-            else:
-                st.caption("No hypotheses generated yet")
+            with st.expander("🔬 Evidence", expanded=False):
+                if hasattr(st.session_state, 'evidence_manager'):
+                    evidence_pool = st.session_state.evidence_manager.evidence_pool
 
-        with st.expander("💡 Key Insights"):
-            st.caption("Accumulated insights will appear here")
+                    if evidence_pool:
+                        for ev in evidence_pool[:5]:
+                            st.markdown(f"• {ev.observation}")
+                    else:
+                        st.caption("No evidence collected")
+                else:
+                    st.caption("No evidence collected")
 
-    # MAIN PANEL: AI Scientist Conversation
-    with col_main:
-        st.subheader("💬 AI Scientist Chat")
-        st.caption("Collaborative research interface")
+            with st.expander("💡 Strategies", expanded=False):
+                if hasattr(st.session_state, 'evidence_manager') and st.session_state.evidence_manager.evidence_pool:
+                    strategies = st.session_state.evidence_manager.get_strategies_for_evidence()
 
-        # Mode selection
-        col_mode1, col_mode2 = st.columns(2)
-        with col_mode1:
-            if "analysis_mode" not in st.session_state:
-                st.session_state.analysis_mode = "fast"
+                    if strategies:
+                        sorted_strategies = sorted(strategies.items(), key=lambda x: x[1], reverse=True)[:3]
 
-            fast_selected = st.session_state.analysis_mode == "fast"
-            if st.button("⚡ Fast Mode", use_container_width=True, type="primary" if fast_selected else "secondary"):
-                st.session_state.analysis_mode = "fast"
-                st.rerun()
+                        for strategy, conf in sorted_strategies:
+                            st.markdown(f"**{strategy.replace('_', ' ').title()}**")
+                            st.progress(conf)
+                else:
+                    st.caption("No strategies yet")
 
-        with col_mode2:
-            deep_selected = st.session_state.analysis_mode == "deep"
-            if st.button("🧠 Deep Analysis", use_container_width=True, type="primary" if deep_selected else "secondary"):
-                st.session_state.analysis_mode = "deep"
-                st.rerun()
+    # MAIN CHAT AREA
+    with col_chat:
+        # Check if there's a demo query to load
+        if "demo_query" in st.session_state and st.session_state.demo_query:
+            demo_query = st.session_state.demo_query
+            st.session_state.demo_query = None  # Clear after use
 
-        st.markdown("---")
+            # Extract drug name from query
+            drug_name = None
+            if "Ibuprofen" in demo_query:
+                drug_name = "Ibuprofen"
+            elif "Paclitaxel" in demo_query:
+                drug_name = "Paclitaxel"
+            elif "Celecoxib" in demo_query:
+                drug_name = "Celecoxib"
+            elif "Aspirin" in demo_query:
+                drug_name = "Aspirin"
 
-    # Quick start examples (only show when no messages)
-    if len(memory.messages) == 0:
-        st.info("💡 **Quick Start** - Choose an example or describe your research goal")
+            if drug_name:
+                # Fetch from knowledge base
+                kb = st.session_state.kb
+                training_data = kb.get_training_dataset(limit=50)
 
-        col1, col2, col3 = st.columns(3)
+                # Find matching drug
+                demo_case = None
+                for example in training_data:
+                    if example['drug_name'] == drug_name:
+                        demo_case = example
+                        break
 
-        example_queries = {
-            "col1": ("📊 Analyze Ibuprofen", "帮我分析Ibuprofen（布洛芬）的制剂挑战，SMILES: CC(C)Cc1ccc(cc1)C(C)C(=O)O，我想改善其口服生物利用度"),
-            "col2": ("🔬 Evaluate Compound", "我有一个新化合物，SMILES是CC(=O)Oc1ccccc1C(=O)O，请帮我评估它的BCS分类和可制剂性"),
-            "col3": ("💊 Solid Dispersion", "我的药物是BCS II类化合物，溶解度很低，请推荐合适的固体分散体策略")
-        }
-
-        for col_name, (button_text, query) in example_queries.items():
-            with locals()[col_name]:
-                if st.button(button_text, use_container_width=True, key=f"quickstart_{col_name}"):
-                    # Check if this query is already in memory (prevent duplicates)
-                    already_exists = False
-                    for msg in memory.messages:
-                        if msg.role == "user" and msg.content == query:
-                            already_exists = True
-                            break
-
-                    if not already_exists:
-                        try:
-                            with st.spinner("🧠 Analyzing..."):
-                                resp, tool_calls, _, _ = st.session_state.llm_manager.generate_with_tools_loop(
-                                    user_query=query,
-                                    model=DEFAULT_MODEL,
-                                    max_iterations=5
-                                )
-
-                            # Save to memory
-                            memory.add_message("user", query)
-                            memory.add_message("assistant", resp)
-
-                            # 💾 Persist to knowledge base database
-                            kb = st.session_state.kb
-                            session_id = st.session_state.current_session_id
-                            kb.create_session(session_id)
-                            kb.save_message(session_id, "user", query)
-                            kb.save_message(session_id, "assistant", resp, model_used=DEFAULT_MODEL)
-
-                            # Store tool calls
-                            if tool_calls:
-                                session = get_session()
-                                if "tool_calls" not in session:
-                                    session["tool_calls"] = {}
-                                session["tool_calls"][len(memory.messages) - 1] = tool_calls
-
-                                # Extract drug info from query prompt
-                                import re
-                                smiles_match = re.search(r'SMILES[：:是]?\s*[\'"]?([A-Za-z0-9@+\-\[\]()=#$]+)[\'"]?', query, re.IGNORECASE)
-                                smiles = smiles_match.group(1) if smiles_match else ""
-
-                                # Try to extract drug name
-                                drug_name_patterns = [
-                                    r'分析\s*([A-Za-z一-龥]+)[（(]',
-                                    r'药物[是为]?\s*([A-Za-z一-龥]+)',
-                                    r'Ibuprofen|布洛芬',  # Common drug names
-                                    r'compound[：:是]?\s*([A-Za-z一-龥]+)',
-                                ]
-                                drug_name = "Unknown"
-                                for pattern in drug_name_patterns:
-                                    match = re.search(pattern, query, re.IGNORECASE)
-                                    if match:
-                                        if match.lastindex and match.lastindex >= 1:
-                                            drug_name = match.group(1)
-                                        else:
-                                            drug_name = match.group(0)
-                                        break
-
-                                # Save to database
-                                drug_analysis_id = None
-                                for tc in tool_calls:
-                                    tool_name = tc.get("name", "")
-                                    if "preformulation" in tool_name.lower() or "formulation" in tool_name.lower():
-                                        if not drug_analysis_id:
-                                            drug_analysis_id = kb.save_drug_analysis(
-                                                session_id=session_id,
-                                                drug_name=drug_name,
-                                                smiles=smiles
-                                            )
-
-                                        kb.save_tool_call(
-                                            drug_analysis_id=drug_analysis_id,
-                                            tool_name=tc.get("name"),
-                                            module="",
-                                            input_params={"smiles": smiles, "drug_name": drug_name},
-                                            output_result=tc.get("result", {})
-                                        )
-
-                        except Exception as e:
-                            memory.add_message("user", query)
-                            memory.add_message("assistant", f"Error: {str(e)}")
-
-                            # Still save error to database
-                            kb = st.session_state.kb
-                            session_id = st.session_state.current_session_id
-                            kb.create_session(session_id)
-                            kb.save_message(session_id, "user", query)
-                            kb.save_message(session_id, "assistant", f"Error: {str(e)}", model_used=DEFAULT_MODEL)
-
-                    # Single rerun to display the saved messages
+                if demo_case:
+                    # Add to current session memory
+                    memory.add_message("user", demo_case['user_query'])
+                    memory.add_message("assistant", demo_case['ai_response'])
                     st.rerun()
 
-    # Display conversation history
-    session = get_session()
-    for i, msg in enumerate(memory.messages):
-        message_id = f"msg_{i}"
+        # Quick start examples (only show when no messages)
+        if len(memory.messages) == 0:
+            st.info("💡 **Quick Start** - Choose an example or describe your research goal")
 
-        # Pre-check: skip empty assistant messages BEFORE creating chat_message container
-        if msg.role == "assistant":
-            content_preview = re.sub(r'<think>.*?</think>', '', msg.content, flags=re.DOTALL).strip()
-            if not content_preview:
-                continue  # Skip this message entirely - don't create the chat box
+            col1, col2, col3 = st.columns(3)
 
-        with st.chat_message(msg.role):
-            # For assistant messages, show reasoning BEFORE content
+            example_queries = {
+                "col1": ("📊 Analyze Ibuprofen", "帮我分析Ibuprofen（布洛芬）的制剂挑战，SMILES: CC(C)Cc1ccc(cc1)C(C)C(=O)O，我想改善其口服生物利用度"),
+                "col2": ("🔬 Evaluate Compound", "我有一个新化合物，SMILES是CC(=O)Oc1ccccc1C(=O)O，请帮我评估它的BCS分类和可制剂性"),
+                "col3": ("💊 Solid Dispersion", "我的药物是BCS II类化合物，溶解度很低，请推荐合适的固体分散体策略")
+            }
+
+            for col_name, (button_text, query) in example_queries.items():
+                with locals()[col_name]:
+                    if st.button(button_text, use_container_width=True, key=f"quickstart_{col_name}"):
+                        # Check if this query is already in memory (prevent duplicates)
+                        already_exists = False
+                        for msg in memory.messages:
+                            if msg.role == "user" and msg.content == query:
+                                already_exists = True
+                                break
+
+                        if not already_exists:
+                            try:
+                                # Check if we have any valid API key
+                                has_api_key = bool(CLAUDE_API_KEY or GPT_API_KEY or MINIMAX_API_KEY)
+
+                                if not has_api_key:
+                                    st.error("⚠️ **API Key 未配置** - 请在 `.streamlit/secrets.toml` 中配置 GPT_API_KEY、CLAUDE_API_KEY 或 MINIMAX_API_KEY")
+                                    st.stop()
+
+                                with st.spinner("🧠 Analyzing..."):
+                                    resp, tool_calls, _, _ = st.session_state.llm_manager.generate_with_tools_loop(
+                                        user_query=query,
+                                        model=DEFAULT_MODEL,
+                                        max_iterations=5
+                                    )
+
+                                # Save to memory
+                                memory.add_message("user", query)
+                                memory.add_message("assistant", resp)
+
+                                # 💾 Persist to knowledge base database
+                                kb = st.session_state.kb
+                                session_id = st.session_state.current_session_id
+                                kb.create_session(session_id)
+                                kb.save_message(session_id, "user", query)
+                                kb.save_message(session_id, "assistant", resp, model_used=DEFAULT_MODEL)
+
+                                # Store tool calls
+                                if tool_calls:
+                                    session = get_session()
+                                    if "tool_calls" not in session:
+                                        session["tool_calls"] = {}
+                                    session["tool_calls"][len(memory.messages) - 1] = tool_calls
+
+                                    # Extract drug info from query prompt
+                                    import re
+                                    smiles_match = re.search(r'SMILES[：:是]?\s*[\'"]?([A-Za-z0-9@+\-\[\]()=#$]+)[\'"]?', query, re.IGNORECASE)
+                                    smiles = smiles_match.group(1) if smiles_match else ""
+
+                                    # Try to extract drug name
+                                    drug_name_patterns = [
+                                        r'分析\s*([A-Za-z一-龥]+)[（(]',
+                                        r'药物[是为]?\s*([A-Za-z一-龥]+)',
+                                        r'Ibuprofen|布洛芬',  # Common drug names
+                                        r'compound[：:是]?\s*([A-Za-z一-龥]+)',
+                                    ]
+                                    drug_name = "Unknown"
+                                    for pattern in drug_name_patterns:
+                                        match = re.search(pattern, query, re.IGNORECASE)
+                                        if match:
+                                            if match.lastindex and match.lastindex >= 1:
+                                                drug_name = match.group(1)
+                                            else:
+                                                drug_name = match.group(0)
+                                            break
+
+                                    # Save to database
+                                    drug_analysis_id = None
+                                    for tc in tool_calls:
+                                        tool_name = tc.get("name", "")
+                                        if "preformulation" in tool_name.lower() or "formulation" in tool_name.lower():
+                                            if not drug_analysis_id:
+                                                drug_analysis_id = kb.save_drug_analysis(
+                                                    session_id=session_id,
+                                                    drug_name=drug_name,
+                                                    smiles=smiles
+                                                )
+
+                                            kb.save_tool_call(
+                                                drug_analysis_id=drug_analysis_id,
+                                                tool_name=tc.get("name"),
+                                                module="",
+                                                input_params={"smiles": smiles, "drug_name": drug_name},
+                                                output_result=tc.get("result", {})
+                                            )
+
+                            except Exception as e:
+                                memory.add_message("user", query)
+                                memory.add_message("assistant", f"Error: {str(e)}")
+
+                                # Still save error to database
+                                kb = st.session_state.kb
+                                session_id = st.session_state.current_session_id
+                                kb.create_session(session_id)
+                                kb.save_message(session_id, "user", query)
+                                kb.save_message(session_id, "assistant", f"Error: {str(e)}", model_used=DEFAULT_MODEL)
+
+                        # Single rerun to display the saved messages
+                        st.rerun()
+
+        # Display conversation history
+        session = get_session()
+        for i, msg in enumerate(memory.messages):
+            message_id = f"msg_{i}"
+
+            # Pre-check: skip empty assistant messages BEFORE creating chat_message container
             if msg.role == "assistant":
-                if "tool_calls" in session and i in session["tool_calls"]:
-                    tool_calls = session["tool_calls"][i]
-                    display_reasoning(tool_calls, status="success")
+                if msg.content is None:
+                    continue  # Skip if content is None
+                content_preview = re.sub(r'<think>.*?</think>', '', msg.content, flags=re.DOTALL).strip()
+                if not content_preview:
+                    continue  # Skip this message entirely - don't create the chat box
 
-            # Display message content
-            content = re.sub(r'<think>.*?</think>', '', msg.content, flags=re.DOTALL).strip()
-            if content:
-                st.markdown(content)
+            with st.chat_message(msg.role):
+                # For assistant messages, show reasoning BEFORE content
+                if msg.role == "assistant":
+                    if "tool_calls" in session and i in session["tool_calls"]:
+                        tool_calls = session["tool_calls"][i]
+                        display_reasoning(tool_calls, status="success")
 
-            # Add feedback buttons ONLY for assistant messages with content
-            if msg.role == "assistant" and content:
-                add_feedback_buttons(message_id)
-
-    # Chat input
-    if prompt := st.chat_input("💭 Describe your research objective..."):
-        # Immediately display user message
-        memory.add_message("user", prompt)
-
-        # Show user message in chat
-        with st.chat_message("user"):
-            st.markdown(prompt)
-
-        # Show assistant thinking process
-        with st.chat_message("assistant"):
-            # Create placeholder for streaming updates
-            reasoning_placeholder = st.empty()
-            response_placeholder = st.empty()
-
-            try:
-                # Show initial thinking status
-                with reasoning_placeholder.container():
-                    st.markdown("🧠 **Analyzing your query...**")
-
-                # Check analysis mode
-                analysis_mode = st.session_state.get("analysis_mode", "fast")
-
-                if analysis_mode == "fast":
-                    # Fast Mode: Single AI agent
-                    resp, tool_calls, _, _ = st.session_state.llm_manager.generate_with_tools_loop(
-                        user_query=prompt,
-                        model=DEFAULT_MODEL,
-                        max_iterations=5
-                    )
+                # Display message content
+                if msg.content is None:
+                    content = ""
                 else:
-                    # Deep Analysis Mode: Multi-agent workflow
-                    with reasoning_placeholder.container():
-                        st.markdown("🧠 **Deep Analysis Mode** - Launching multi-agent workflow...")
+                    content = re.sub(r'<think>.*?</think>', '', msg.content, flags=re.DOTALL).strip()
+                if content:
+                    st.markdown(content)
 
-                    # Use Workflow tool for comprehensive analysis
-                    workflow_script = f"""
+                # Add feedback buttons ONLY for assistant messages with content
+                if msg.role == "assistant" and content:
+                    add_feedback_buttons(message_id)
+
+        # Chat input
+        if prompt := st.chat_input("💭 Describe your research objective..."):
+            # Immediately display user message
+            memory.add_message("user", prompt)
+
+            # Show user message in chat
+            with st.chat_message("user"):
+                st.markdown(prompt)
+
+            # Show assistant thinking process
+            with st.chat_message("assistant"):
+                # Create placeholder for streaming updates
+                reasoning_placeholder = st.empty()
+                response_placeholder = st.empty()
+
+                try:
+                    # Check if we have any valid API key
+                    has_api_key = bool(CLAUDE_API_KEY or GPT_API_KEY or MINIMAX_API_KEY)
+
+                    if not has_api_key:
+                        # No API key available - show helpful message
+                        reasoning_placeholder.empty()
+                        response_placeholder.markdown("""
+### ⚠️ API Key 未配置
+
+FormulationOS 需要配置 LLM API Key 才能正常工作。
+
+**配置方法：**
+
+1. 编辑文件：`.streamlit/secrets.toml`
+2. 添加以下任一 API Key：
+   ```toml
+   # OpenAI GPT-4
+   GPT_API_KEY = "sk-..."
+
+   # 或 Anthropic Claude
+   CLAUDE_API_KEY = "sk-ant-..."
+
+   # 或 MiniMax
+   MINIMAX_API_KEY = "..."
+   ```
+3. 重启应用
+
+**临时演示模式：**
+目前系统无法调用真实 AI 模型。如需演示，请配置有效的 API Key。
+
+---
+📧 需要帮助？请联系管理员获取 API Key。
+                        """)
+                        memory.add_message("assistant", "⚠️ API Key 未配置 - 请查看上方说明")
+                        st.stop()
+
+                    # Show initial thinking status
+                    with reasoning_placeholder.container():
+                        st.markdown("🧠 **Analyzing your query...**")
+
+                    # Check analysis mode
+                    analysis_mode = st.session_state.get("analysis_mode", "fast")
+
+                    if analysis_mode == "fast":
+                        # Fast Mode: Single AI agent
+                        resp, tool_calls, _, _ = st.session_state.llm_manager.generate_with_tools_loop(
+                            user_query=prompt,
+                            model=DEFAULT_MODEL,
+                            max_iterations=5
+                        )
+                    else:
+                        # Deep Analysis Mode: Multi-agent workflow
+                        with reasoning_placeholder.container():
+                            st.markdown("🧠 **Deep Analysis Mode** - Launching multi-agent workflow...")
+
+                        # Use Workflow tool for comprehensive analysis
+                        workflow_script = f"""
 export const meta = {{
     name: 'deep-formulation-analysis',
     description: 'Multi-agent deep analysis for pharmaceutical formulation',
@@ -879,122 +1181,122 @@ const synthesis = await agent(
 
 return synthesis;
 """
-                    # For now, fall back to fast mode with a note
-                    # TODO: Implement actual Workflow integration
-                    with reasoning_placeholder.container():
-                        st.info("🚧 Multi-agent workflow is under development. Using enhanced single-agent mode with comprehensive analysis...")
+                        # For now, fall back to fast mode with a note
+                        # TODO: Implement actual Workflow integration
+                        with reasoning_placeholder.container():
+                            st.info("🚧 Multi-agent workflow is under development. Using enhanced single-agent mode with comprehensive analysis...")
 
-                    resp, tool_calls, _, _ = st.session_state.llm_manager.generate_with_tools_loop(
-                        user_query=f"[DEEP ANALYSIS MODE] Please provide comprehensive, detailed analysis with multiple perspectives: {prompt}",
-                        model=DEFAULT_MODEL,
-                        max_iterations=10  # More iterations for deep mode
-                    )
-
-                # Update with reasoning process
-                if tool_calls:
-                    with reasoning_placeholder.container():
-                        display_reasoning(tool_calls, status="success")
-                else:
-                    reasoning_placeholder.empty()
-
-                # Display response
-                content = re.sub(r'<think>.*?</think>', '', resp, flags=re.DOTALL).strip()
-                if content:
-                    response_placeholder.markdown(content)
-
-                # 🧬 Auto-visualize molecule if SMILES detected
-                smiles_match = re.search(r'SMILES[：:是]?\s*[\'"]?([A-Za-z0-9@+\-\[\]()=#$]+)[\'"]?', prompt, re.IGNORECASE)
-                if smiles_match:
-                    smiles = smiles_match.group(1)
-                    st.markdown("---")
-                    st.markdown("### 🧬 Molecular Structure")
-                    mol_img = visualize_molecule_2d(smiles)
-                    if mol_img:
-                        st.image(f"data:image/png;base64,{mol_img}", width=400)
-                    else:
-                        st.info("💡 Install RDKit to visualize molecular structures: `pip install rdkit`")
-
-                # 📊 Auto-generate relevant plots
-                if tool_calls:
-                    auto_viz = generate_visualizations_from_response(resp, tool_calls, prompt)
-                    if auto_viz:
-                        st.markdown("---")
-                        st.markdown("### 📊 Analysis Visualizations")
-                        for viz in auto_viz:
-                            with st.expander(f"📈 {viz['title']}", expanded=True):
-                                st.image(f"data:image/png;base64,{viz['image']}", use_container_width=True)
-
-                # Add feedback buttons
-                add_feedback_buttons(f"msg_{len(memory.messages)}")
-
-            except Exception as e:
-                reasoning_placeholder.empty()
-                response_placeholder.error(f"Error: {str(e)}")
-                resp = f"Error: {str(e)}"
-
-        # Save messages to memory
-        memory.add_message("assistant", resp)
-
-        # 💾 Persist to knowledge base database
-        kb = st.session_state.kb
-        session_id = st.session_state.current_session_id
-
-        # Create session if first message
-        kb.create_session(session_id)
-
-        # Save messages to database
-        kb.save_message(session_id, "user", prompt)
-        kb.save_message(session_id, "assistant", resp, model_used=DEFAULT_MODEL)
-
-        # Save tool calls to database
-        if tool_calls:
-            # Store in session state for display
-            session = get_session()
-            if "tool_calls" not in session:
-                session["tool_calls"] = {}
-            session["tool_calls"][len(memory.messages) - 1] = tool_calls
-
-            # Extract drug info from user prompt (more reliable than tool arguments)
-            import re
-            smiles_match = re.search(r'SMILES[：:是]?\s*[\'"]?([A-Za-z0-9@+\-\[\]()=#$]+)[\'"]?', prompt, re.IGNORECASE)
-            smiles = smiles_match.group(1) if smiles_match else ""
-
-            # Try to extract drug name from prompt
-            drug_name_patterns = [
-                r'分析\s*([A-Za-z一-龥]+)[（(]',  # "分析Ibuprofen（"
-                r'药物[是为]?\s*([A-Za-z一-龥]+)',  # "药物是XX"
-                r'compound[：:是]?\s*([A-Za-z一-龥]+)',  # "compound: XX"
-            ]
-            drug_name = "Unknown"
-            for pattern in drug_name_patterns:
-                match = re.search(pattern, prompt, re.IGNORECASE)
-                if match:
-                    drug_name = match.group(1)
-                    break
-
-            # Create drug analysis record
-            drug_analysis_id = None
-            for tc in tool_calls:
-                tool_name = tc.get("name", "")
-                if "preformulation" in tool_name.lower() or "formulation" in tool_name.lower():
-                    if not drug_analysis_id:
-                        drug_analysis_id = kb.save_drug_analysis(
-                            session_id=session_id,
-                            drug_name=drug_name,
-                            smiles=smiles
+                        resp, tool_calls, _, _ = st.session_state.llm_manager.generate_with_tools_loop(
+                            user_query=f"[DEEP ANALYSIS MODE] Please provide comprehensive, detailed analysis with multiple perspectives: {prompt}",
+                            model=DEFAULT_MODEL,
+                            max_iterations=10  # More iterations for deep mode
                         )
 
-                    # Save tool call record
-                    kb.save_tool_call(
-                        drug_analysis_id=drug_analysis_id,
-                        tool_name=tc.get("name"),
-                        module="",
-                        input_params={"smiles": smiles, "drug_name": drug_name},
-                        output_result=tc.get("result", {})
-                    )
+                    # Update with reasoning process
+                    if tool_calls:
+                        with reasoning_placeholder.container():
+                            display_reasoning(tool_calls, status="success")
+                    else:
+                        reasoning_placeholder.empty()
 
-        # Rerun to display in history
-        st.rerun()
+                    # Display response
+                    content = re.sub(r'<think>.*?</think>', '', resp, flags=re.DOTALL).strip()
+                    if content:
+                        response_placeholder.markdown(content)
+
+                    # 🧬 Auto-visualize molecule if SMILES detected
+                    smiles_match = re.search(r'SMILES[：:是]?\s*[\'"]?([A-Za-z0-9@+\-\[\]()=#$]+)[\'"]?', prompt, re.IGNORECASE)
+                    if smiles_match:
+                        smiles = smiles_match.group(1)
+                        st.markdown("---")
+                        st.markdown("### 🧬 Molecular Structure")
+                        mol_img = visualize_molecule_2d(smiles)
+                        if mol_img:
+                            st.image(f"data:image/png;base64,{mol_img}", width=400)
+                        else:
+                            st.info("💡 Install RDKit to visualize molecular structures: `pip install rdkit`")
+
+                    # 📊 Auto-generate relevant plots
+                    if tool_calls:
+                        auto_viz = generate_visualizations_from_response(resp, tool_calls, prompt)
+                        if auto_viz:
+                            st.markdown("---")
+                            st.markdown("### 📊 Analysis Visualizations")
+                            for viz in auto_viz:
+                                with st.expander(f"📈 {viz['title']}", expanded=True):
+                                    st.image(f"data:image/png;base64,{viz['image']}", use_container_width=True)
+
+                    # Add feedback buttons
+                    add_feedback_buttons(f"msg_{len(memory.messages)}")
+
+                except Exception as e:
+                    reasoning_placeholder.empty()
+                    response_placeholder.error(f"Error: {str(e)}")
+                    resp = f"Error: {str(e)}"
+
+            # Save messages to memory
+            memory.add_message("assistant", resp)
+
+            # 💾 Persist to knowledge base database
+            kb = st.session_state.kb
+            session_id = st.session_state.current_session_id
+
+            # Create session if first message
+            kb.create_session(session_id)
+
+            # Save messages to database
+            kb.save_message(session_id, "user", prompt)
+            kb.save_message(session_id, "assistant", resp, model_used=DEFAULT_MODEL)
+
+            # Save tool calls to database
+            if tool_calls:
+                # Store in session state for display
+                session = get_session()
+                if "tool_calls" not in session:
+                    session["tool_calls"] = {}
+                session["tool_calls"][len(memory.messages) - 1] = tool_calls
+
+                # Extract drug info from user prompt (more reliable than tool arguments)
+                import re
+                smiles_match = re.search(r'SMILES[：:是]?\s*[\'"]?([A-Za-z0-9@+\-\[\]()=#$]+)[\'"]?', prompt, re.IGNORECASE)
+                smiles = smiles_match.group(1) if smiles_match else ""
+
+                # Try to extract drug name from prompt
+                drug_name_patterns = [
+                    r'分析\s*([A-Za-z一-龥]+)[（(]',  # "分析Ibuprofen（"
+                    r'药物[是为]?\s*([A-Za-z一-龥]+)',  # "药物是XX"
+                    r'compound[：:是]?\s*([A-Za-z一-龥]+)',  # "compound: XX"
+                ]
+                drug_name = "Unknown"
+                for pattern in drug_name_patterns:
+                    match = re.search(pattern, prompt, re.IGNORECASE)
+                    if match:
+                        drug_name = match.group(1)
+                        break
+
+                # Create drug analysis record
+                drug_analysis_id = None
+                for tc in tool_calls:
+                    tool_name = tc.get("name", "")
+                    if "preformulation" in tool_name.lower() or "formulation" in tool_name.lower():
+                        if not drug_analysis_id:
+                            drug_analysis_id = kb.save_drug_analysis(
+                                session_id=session_id,
+                                drug_name=drug_name,
+                                smiles=smiles
+                            )
+
+                        # Save tool call record
+                        kb.save_tool_call(
+                            drug_analysis_id=drug_analysis_id,
+                            tool_name=tc.get("name"),
+                            module="",
+                            input_params={"smiles": smiles, "drug_name": drug_name},
+                            output_result=tc.get("result", {})
+                        )
+
+            # Rerun to display in history
+            st.rerun()
 
 # KNOWLEDGE BASE
 elif st.session_state.view_mode == "knowledge_base":
@@ -1016,22 +1318,457 @@ elif st.session_state.view_mode == "knowledge_base":
 
     st.markdown("---")
 
-    # Export options
-    st.subheader("💾 Export Training Data")
-    col1, col2 = st.columns([3, 1])
-    with col1:
-        export_limit = st.number_input("Number of records to export (0 = all)", min_value=0, value=100)
-    with col2:
-        if st.button("📥 Export to JSON", use_container_width=True):
-            output_path = f"training_data_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-            kb.export_to_json(output_path, limit=export_limit if export_limit > 0 else None)
-            st.success(f"✅ Exported to {output_path}")
+    # Tabbed navigation for different knowledge sections
+    tab1, tab2, tab3, tab4 = st.tabs(["🧪 Drug Database", "💊 Formulation Strategies", "📚 Literature Intelligence", "💾 Training Data"])
 
-    st.markdown("---")
+    # TAB 1: Drug Database - BCS Classification
+    with tab1:
+        st.markdown("### 🧪 Drug Knowledge: BCS Classification System")
 
-    # Show recent training examples
-    st.subheader("🔍 Recent Training Examples")
-    training_data = kb.get_training_dataset(limit=10)
+        st.info("""
+        **Biopharmaceutics Classification System (BCS)** - FDA framework classifying drugs based on
+        solubility and intestinal permeability, guiding formulation strategy selection.
+        """)
+
+        # BCS Class I
+        with st.expander("📗 BCS Class I: High Solubility, High Permeability", expanded=False):
+            st.markdown("""
+            **Characteristics:**
+            - Solubility: Dose soluble in ≤250 mL water across pH 1-7.5
+            - Permeability: ≥90% absorbed (Papp > 2×10⁻⁶ cm/s)
+            - Rate-limiting step: Dissolution (usually rapid)
+
+            **Representative Drugs:**
+            - **Metoprolol** (β-blocker, LogP=1.88, MW=267)
+            - **Propranolol** (β-blocker, LogP=3.48, MW=259)
+            - **Caffeine** (stimulant, LogP=-0.07, MW=194)
+            - **Diltiazem** (calcium channel blocker, MW=414)
+
+            **Formulation Strategy:**
+            - ✅ Usually **no formulation challenges**
+            - Immediate-release tablets/capsules sufficient
+            - Focus on stability, content uniformity, disintegration
+            - May consider modified-release for PK optimization
+
+            **Regulatory Advantage:**
+            - Eligible for **biowaiver** (no bioequivalence study needed for generics)
+            """)
+
+        # BCS Class II
+        with st.expander("📙 BCS Class II: Low Solubility, High Permeability", expanded=True):
+            st.markdown("""
+            **Characteristics:**
+            - Solubility: Dose NOT soluble in ≤250 mL (dissolution-limited)
+            - Permeability: ≥90% absorbed (membrane permeability is good)
+            - Rate-limiting step: **Dissolution** (the bottleneck)
+
+            **Representative Drugs:**
+            - **Ibuprofen** (NSAID, LogS=-3.5, MW=206, Dose=400mg)
+            - **Naproxen** (NSAID, LogS=-3.2, MW=230)
+            - **Ketoprofen** (NSAID, LogS=-3.1, MW=254)
+            - **Celecoxib** (COX-2 inhibitor, LogS=-5.8, MW=381)
+            - **Griseofulvin** (antifungal, LogS=-4.6, MW=353)
+
+            **Challenge:**
+            - Poor dissolution → erratic/incomplete absorption
+            - High inter-individual variability in bioavailability
+
+            **Optimal Strategies (ranked by prevalence):**
+            1. **Amorphous Solid Dispersion (ASD)** - Convert to amorphous form with polymer
+            2. **Nanocrystal** - Reduce particle size to 200-400 nm
+            3. **Cyclodextrin Complex** - Host-guest inclusion (limited by dose)
+            4. **Salt Formation** - For ionizable drugs (pKa in range)
+            5. **Lipid-based** - Self-emulsifying systems for lipophilic drugs
+
+            **Context-Aware Selection:**
+            - High dose (>400mg) → Avoid cyclodextrin (dose burden)
+            - High MW (>600 Da) → Prefer ASD over cyclodextrin
+            - High LogP (>4) → Consider lipid-based formulations
+            """)
+
+        # BCS Class III
+        with st.expander("📘 BCS Class III: High Solubility, Low Permeability", expanded=False):
+            st.markdown("""
+            **Characteristics:**
+            - Solubility: Dose soluble in ≤250 mL (dissolution is fine)
+            - Permeability: <90% absorbed (Papp < 2×10⁻⁶ cm/s)
+            - Rate-limiting step: **Permeability** (membrane barrier)
+
+            **Representative Drugs:**
+            - **Atenolol** (β-blocker, LogP=0.16, MW=266)
+            - **Metformin** (antidiabetic, LogP=-2.64, MW=129)
+            - **Ranitidine** (H2-antagonist, MW=314)
+            - **Acyclovir** (antiviral, MW=225)
+
+            **Challenge:**
+            - Low membrane permeability → incomplete absorption
+            - Formulation cannot easily fix permeability
+
+            **Strategies (limited effectiveness):**
+            - **Permeation enhancers** (surfactants, fatty acids)
+            - **Prodrug approach** (increase lipophilicity)
+            - **Phospholipid complex** (improve membrane interaction)
+            - **Nanocarriers** (facilitate transcellular transport)
+
+            **Reality Check:**
+            - Permeability is an **intrinsic molecular property**
+            - Formulation has limited impact vs BCS II
+            - Often requires **chemical modification** (prodrug)
+            """)
+
+        # BCS Class IV
+        with st.expander("📕 BCS Class IV: Low Solubility, Low Permeability", expanded=False):
+            st.markdown("""
+            **Characteristics:**
+            - Solubility: Dose NOT soluble in ≤250 mL
+            - Permeability: <90% absorbed
+            - Rate-limiting step: **Both dissolution AND permeability**
+
+            **Representative Drugs:**
+            - **Hydrochlorothiazide** (diuretic, MW=297)
+            - **Ritonavir** (protease inhibitor, LogP=5.6, MW=721)
+            - **Furosemide** (diuretic, LogS=-3.4, MW=331)
+            - **Amphotericin B** (antifungal, MW=924)
+
+            **Challenge:**
+            - **Most difficult class** to formulate
+            - Poor oral bioavailability (<10% common)
+            - High variability + food effects
+
+            **Advanced Strategies (often combined):**
+            1. **Nanosuspension + Permeation Enhancer**
+            2. **Lipid-based (SEDDS/SNEDDS)** - Addresses both issues
+            3. **Phospholipid Complex** - Improve both solubility & permeability
+            4. **Nanocrystal + Surfactant Co-processing**
+            5. **Alternative route** (IV, inhalation) often preferred
+
+            **Development Reality:**
+            - High development cost & risk
+            - May require **route change** or **chemical modification**
+            - Parenteral formulations often more viable
+            """)
+
+        st.markdown("---")
+        st.caption("💡 **BCS classification guides formulation strategy but context matters**: dose, MW, LogP, and manufacturing constraints shape final decisions.")
+
+    # TAB 2: Formulation Strategies
+    with tab2:
+        st.markdown("### 💊 Formulation Strategies for Solubility Enhancement")
+
+        # ASD
+        with st.expander("🔸 Amorphous Solid Dispersion (ASD)", expanded=True):
+            st.markdown("""
+            **Mechanism:**
+            - Convert **crystalline drug → amorphous form** using polymer carriers
+            - Amorphous form has **higher free energy** → increased dissolution rate
+            - Polymer prevents recrystallization & maintains supersaturation
+
+            **Common Polymers:**
+            - **PVP** (Polyvinylpyrrolidone): Good solubilizer, hygroscopic
+            - **HPMC** (Hydroxypropyl methylcellulose): Low hygroscopicity
+            - **Soluplus**: Self-emulsifying properties
+            - **HPMCAS**: Enteric properties for pH-dependent release
+            - **Eudragit L100-55**: pH-triggered release
+
+            **Manufacturing Methods:**
+            - **Hot Melt Extrusion (HME)**: Continuous, scalable, no solvent
+            - **Spray Drying**: Fast, but solvent removal needed
+            - **Electrospinning**: Nanofiber formation, lab-scale
+
+            **Critical Quality Attributes:**
+            - Drug loading (10-40% typical)
+            - Glass transition temperature (Tg)
+            - Physical stability (crystallization risk)
+
+            **Validation Methods:**
+            - **DSC** (Differential Scanning Calorimetry): Detect crystallinity
+            - **XRPD** (X-ray Powder Diffraction): Crystallinity quantification
+            - **Dissolution testing**: Enhanced rate vs pure drug
+            - **Stability studies**: Recrystallization monitoring (40°C/75%RH)
+
+            **Best For:** BCS II drugs, MW 200-600 Da, moderate LogP
+            """)
+
+        # Nanocrystal
+        with st.expander("🔹 Drug Nanocrystals", expanded=False):
+            st.markdown("""
+            **Mechanism:**
+            - Reduce particle size to **200-400 nm** (nanoscale)
+            - Dramatically increased **surface area** (Noyes-Whitney equation)
+            - Enhanced dissolution rate while maintaining crystalline form
+
+            **Manufacturing Methods:**
+            - **Wet Ball Milling (WBM)**: Mechanical grinding with beads
+            - **High Pressure Homogenization (HPH)**: 1500+ bar pressure
+            - **Bottom-up Precipitation**: Antisolvent/sonocrystallization
+
+            **Stabilizers (prevent aggregation):**
+            - Surfactants: SDS, Tween 80, Poloxamer
+            - Polymers: HPMC, PVP, PEG
+            - Combination approach common
+
+            **Critical Parameters:**
+            - Particle size (d50, d90)
+            - Polydispersity Index (PDI < 0.3 preferred)
+            - Zeta potential (±30 mV for stability)
+
+            **Validation Methods:**
+            - **DLS** (Dynamic Light Scattering): Size distribution
+            - **SEM/TEM**: Morphology visualization
+            - **Dissolution testing**: Rate vs micronized drug
+            - **Stability**: Ostwald ripening monitoring
+
+            **Best For:** BCS II drugs, high dose (>100mg), poorly wettable compounds
+            """)
+
+        # Cyclodextrin
+        with st.expander("🔷 Cyclodextrin Inclusion Complex", expanded=False):
+            st.markdown("""
+            **Mechanism:**
+            - **Host-guest inclusion**: Drug molecule enters CD cavity
+            - Hydrophobic interior + hydrophilic exterior
+            - Increased apparent solubility (phase solubility studies)
+
+            **Cyclodextrin Types:**
+            - **α-CD** (6 glucose units): Cavity 4.7-5.3 Å
+            - **β-CD** (7 glucose units): Cavity 6.0-6.5 Å (most common)
+            - **γ-CD** (8 glucose units): Cavity 7.5-8.3 Å
+            - **HP-β-CD** (hydroxypropyl): Better solubility, less toxicity
+            - **SBE-β-CD** (sulfobutyl ether): Injectable applications
+
+            **Complexation Assessment:**
+            - **Phase solubility diagram** (AL, AP, BS types)
+            - **Complexation constant (Kc)**: Binding affinity
+            - **Complexation efficiency (CE)**: CE = Slope/(1-Slope)
+
+            **Validation Methods:**
+            - **Phase solubility studies**: Gibbs free energy (ΔG)
+            - **DSC**: Endotherm disappearance
+            - **NMR** (¹H, ROESY): Structural evidence of inclusion
+            - **FTIR**: Shift in characteristic peaks
+
+            **Limitations (Context-Aware):**
+            - ⚠️ **Dose burden**: CD:Drug ratio 1:1 to 10:1
+            - ⚠️ **MW limit**: Best for MW < 400 Da
+            - ⚠️ **High dose drugs**: >200mg becomes impractical
+            - Cost: HP-β-CD expensive for chronic use
+
+            **Best For:** Low-dose BCS II drugs (MW<400, Dose<200mg)
+            """)
+
+        # Phospholipid Complex
+        with st.expander("🔶 Phospholipid Complex (Phytosome)", expanded=False):
+            st.markdown("""
+            **Mechanism:**
+            - Drug forms complex with **phosphatidylcholine**
+            - Enhanced lipophilicity → improved membrane permeation
+            - Addresses both solubility AND permeability
+
+            **Phospholipid Types:**
+            - **Soy lecithin** (PC 20-40%)
+            - **Egg lecithin** (PC 60-80%)
+            - **Hydrogenated PC** (chemically defined)
+
+            **Formation Methods:**
+            - Solvent evaporation (THF, ethanol)
+            - Anti-solvent precipitation
+            - Supercritical fluid technology
+
+            **Validation:**
+            - **Lipophilicity increase**: LogP measurement
+            - **Stoichiometry**: Drug:PC molar ratio (1:1 or 1:2)
+            - **Spectroscopy**: ³¹P NMR, FTIR for bonding
+            - **Permeability**: Caco-2 or PAMPA assay
+
+            **Best For:** BCS III/IV drugs, natural products with phenolic groups
+            """)
+
+        # SEDDS
+        with st.expander("🔸 Self-Emulsifying Drug Delivery System (SEDDS)", expanded=False):
+            st.markdown("""
+            **Mechanism:**
+            - Isotropic mixture of **oil, surfactant, co-surfactant, drug**
+            - Spontaneous emulsification in GI tract → fine droplets (<100 nm)
+            - Enhances solubilization & lymphatic transport
+
+            **Formulation Components:**
+            - **Oil phase**: Capryol 90, Labrafil, long-chain triglycerides
+            - **Surfactants**: Tween 80, Cremophor RH40, Labrasol
+            - **Co-surfactants**: PEG 400, Transcutol P, ethanol
+
+            **Design Approach:**
+            - Ternary phase diagram screening
+            - Self-emulsification region identification
+            - Droplet size optimization (<200 nm preferred)
+
+            **Validation:**
+            - **Droplet size**: DLS measurement
+            - **Emulsification time**: <2 min
+            - **Thermodynamic stability**: Freeze-thaw, centrifugation
+            - **In vitro lipolysis**: Simulated GI conditions
+
+            **Best For:** Lipophilic BCS II/IV drugs (LogP>3), low dose (<50mg)
+            """)
+
+        # Liposome
+        with st.expander("🔹 Liposomal Formulation", expanded=False):
+            st.markdown("""
+            **Mechanism:**
+            - Phospholipid bilayer vesicles (unilamellar or multilamellar)
+            - Encapsulate drug in aqueous core or lipid bilayer
+            - Targeted delivery, prolonged circulation (PEGylated)
+
+            **Lipid Composition:**
+            - **Phospholipids**: DSPC, DPPC, egg PC
+            - **Cholesterol**: Membrane stability (30-50 mol%)
+            - **PEG-lipids**: Stealth properties (DSPE-PEG2000)
+
+            **Manufacturing:**
+            - Thin-film hydration
+            - Microfluidic mixing
+            - Remote loading (pH/ion gradient)
+
+            **Critical Parameters:**
+            - Size: 80-200 nm (tumor accumulation), <100 nm (EPR effect)
+            - PDI: <0.2 (monodisperse)
+            - Encapsulation efficiency: >80% target
+            - Zeta potential: -10 to -30 mV
+
+            **Validation:**
+            - **Cryo-TEM**: Structural visualization
+            - **Release kinetics**: Dialysis method
+            - **Stability**: Leakage, aggregation, oxidation
+
+            **Best For:** IV delivery, oncology, targeted delivery, hydrophilic drugs
+            """)
+
+        st.markdown("---")
+        st.caption("💡 **Strategy selection requires context**: BCS class + dose + MW + LogP + manufacturing capability")
+
+    # TAB 3: Literature Intelligence
+    with tab3:
+        st.markdown("### 📚 Literature Intelligence & Emerging Trends")
+
+        st.info("""
+        🔗 **Future Integration**: Literature search functionality will be integrated with PubMed API
+        for real-time retrieval of formulation case studies, clinical data, and regulatory guidance.
+        """)
+
+        col_lit1, col_lit2 = st.columns(2)
+
+        with col_lit1:
+            st.markdown("#### 🤖 Machine Learning in Formulation")
+            st.markdown("""
+            **Recent Applications:**
+            - **Polymer selection prediction** for ASD (random forest, SVM)
+            - **Physical stability forecasting** (neural networks)
+            - **Particle size prediction** for nanocrystals
+            - **Formulation optimization** (Bayesian optimization, genetic algorithms)
+
+            **Key Publications:**
+            - *Mol. Pharm.* 2024: "Deep learning for ASD polymer selection"
+            - *Int. J. Pharm.* 2023: "ML-guided nanocrystal design"
+            - *Pharm. Res.* 2023: "Predictive models for drug-polymer miscibility"
+
+            **Trend:** Move from **trial-and-error → predictive design**
+            """)
+
+        with col_lit2:
+            st.markdown("#### 🎯 Quality by Design (QbD)")
+            st.markdown("""
+            **Core Concepts:**
+            - **Design Space**: Multidimensional space of process/formulation parameters
+            - **Critical Quality Attributes (CQAs)**: Dissolution, stability, content
+            - **Critical Process Parameters (CPPs)**: Temperature, feed rate, screw speed
+
+            **Tools:**
+            - Design of Experiments (DoE): Factorial, response surface
+            - Process Analytical Technology (PAT): Real-time monitoring
+            - Risk assessment: FMEA, Ishikawa diagrams
+
+            **Regulatory Impact:**
+            - ICH Q8/Q9/Q10 guidelines
+            - Enhanced design space flexibility post-approval
+            """)
+
+        st.markdown("---")
+
+        col_trend1, col_trend2 = st.columns(2)
+
+        with col_trend1:
+            st.markdown("#### ⚙️ Continuous Manufacturing")
+            st.markdown("""
+            **Technologies:**
+            - **Hot Melt Extrusion (HME)**: Continuous ASD production
+            - **Spray Drying**: Solvent-based continuous process
+            - **Continuous Granulation**: Twin-screw systems
+            - **3D Printing**: Personalized dosage forms
+
+            **Advantages:**
+            - Reduced batch-to-batch variability
+            - Real-time quality control (PAT integration)
+            - Smaller footprint, lower cost
+
+            **Challenges:**
+            - Regulatory paradigm shift (batch → continuous)
+            - Process control complexity
+            """)
+
+        with col_trend2:
+            st.markdown("#### 🖥️ Digital Twins & In Silico Tools")
+            st.markdown("""
+            **Formulation Prediction Platforms:**
+            - **PreformulationAI**: PhysChem property prediction
+            - **FormulationAI**: Strategy recommendation, stability forecasting
+            - **Molecular dynamics**: Drug-polymer interaction simulation
+            - **PBPK modeling**: PK prediction from formulation parameters
+
+            **Benefits:**
+            - Reduce experimental load (70-80% fewer DoE runs)
+            - Accelerate development timeline (6-12 months saved)
+            - Optimize before synthesis
+
+            **Future:** Fully **automated formulation design workflows**
+            """)
+
+        st.markdown("---")
+
+        st.markdown("#### 📖 Recommended Reading")
+        with st.expander("Key Reviews & Guidelines"):
+            st.markdown("""
+            **Comprehensive Reviews:**
+            1. *Adv. Drug Deliv. Rev.* (2023) - "Amorphous solid dispersions: Theory to practice"
+            2. *J. Control. Release* (2023) - "Lipid-based formulations: Clinical translation"
+            3. *Eur. J. Pharm. Sci.* (2024) - "Nanocrystal technology: Industrial perspective"
+
+            **Regulatory Guidance:**
+            - FDA: Guidance for Industry - Drug Product Chemistry, Manufacturing, and Controls Information
+            - ICH Q6A: Specifications for drug substances and products
+            - ICH Q8(R2): Pharmaceutical development
+
+            **Databases:**
+            - [DrugBank](https://go.drugbank.com/): Comprehensive drug data
+            - [PubChem](https://pubchem.ncbi.nlm.nih.gov/): Chemical structures
+            - [ClinicalTrials.gov](https://clinicaltrials.gov/): Clinical outcomes
+            """)
+
+    # TAB 4: Training Data Export (original functionality)
+    with tab4:
+        st.subheader("💾 Export Training Data")
+        col1, col2 = st.columns([3, 1])
+        with col1:
+            export_limit = st.number_input("Number of records to export (0 = all)", min_value=0, value=100)
+        with col2:
+            if st.button("📥 Export to JSON", use_container_width=True):
+                output_path = f"training_data_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+                kb.export_to_json(output_path, limit=export_limit if export_limit > 0 else None)
+                st.success(f"✅ Exported to {output_path}")
+
+        st.markdown("---")
+
+        # Show recent training examples
+        st.subheader("🔍 Recent Training Examples")
+        training_data = kb.get_training_dataset(limit=10)
 
     if training_data:
         for i, example in enumerate(training_data, 1):
@@ -1067,3 +1804,336 @@ elif st.session_state.view_mode == "knowledge_base":
 
     st.markdown("---")
     st.caption("💡 This knowledge base stores all interactions for future model fine-tuning and retrieval-augmented generation (RAG).")
+
+# RESEARCH ROADMAP PAGE
+elif st.session_state.view_mode == "research":
+    st.markdown("""
+    <div style='text-align: center; padding: 2rem 0;'>
+        <h1 style='font-size: 2.5rem; color: #1e293b;'>
+            🔬 Research & Development
+        </h1>
+        <p style='font-size: 1.1rem; color: #64748b; margin-top: 1rem;'>
+            FormulationOS Evolution: From Single-Agent to Multi-Agent Scientific Team
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Current System Overview
+    st.markdown("## 📊 Current System (v1.0)")
+
+    col_current1, col_current2 = st.columns(2)
+
+    with col_current1:
+        st.markdown("""
+        ### Architecture
+        ```
+        User Query
+            ↓
+        Scientific Planner
+            ↓
+        Tool Calls (PreformulationAI/FormulationAI)
+            ↓
+        Evidence Manager
+            ↓
+        Hypothesis Ranker
+            ↓
+        Final Report
+        ```
+        """)
+
+    with col_current2:
+        st.markdown("""
+        ### Key Features
+        - ✅ Evidence-grounded reasoning
+        - ✅ Context-aware decision making
+        - ✅ Tool-augmented analysis
+        - ✅ Single unified AI agent
+        - ✅ Transparent reasoning display
+
+        ### Limitations
+        - ⚠️ Single perspective analysis
+        - ⚠️ No adversarial validation
+        - ⚠️ Limited debate mechanism
+        """)
+
+    st.markdown("---")
+
+    # Benchmark Results
+    st.markdown("## 🧪 Benchmark Evaluation Results")
+
+    st.info("**Context-Aware Reasoning Validation** - 8 representative drugs evaluated")
+
+    col_bench1, col_bench2, col_bench3 = st.columns(3)
+
+    with col_bench1:
+        st.metric("Top-1 Agreement", "0.56", "+0.37 vs baselines")
+        st.caption("FormulationOS vs LLM-only (0.19)")
+
+    with col_bench2:
+        st.metric("Context Trap Avoidance", "80%", "4/5 cases")
+        st.caption("vs Mechanism-only (60%)")
+
+    with col_bench3:
+        st.metric("Evidence Grounding", "1.00", "+0.70 vs baselines")
+        st.caption("100% evidence-supported reasoning")
+
+    with st.expander("📈 View Detailed Benchmark Report"):
+        st.markdown("""
+        ### Evaluated Drug Cases
+        1. **Ibuprofen** (BCS II, 400mg) - ✅ Avoided cyclodextrin trap
+        2. **Paclitaxel** (BCS IV, 854 Da) - ✅ Correct high-MW strategy
+        3. **Celecoxib** (BCS II, 381 Da) - ✅ Appropriate polymer selection
+        4. **Ritonavir** (LogP=5.6) - ⚠️ Lipid strategy coverage needed
+        5. **Griseofulvin** (500mg dose) - ⚠️ Dose-polymer burden rule needed
+
+        ### Key Finding
+        **Context-aware reasoning prevents practical constraint violations** that
+        mechanism-only and LLM-only approaches miss (e.g., cyclodextrin dose burden).
+
+        📄 Full report: `benchmark_evaluation_report.md`
+        """)
+
+    st.markdown("---")
+
+    # Future: Multi-Agent System
+    st.markdown("## 🚀 Future Development: Multi-Agent Scientific Workflow")
+
+    st.markdown("""
+    <div style='background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); padding: 2rem; border-radius: 12px; border: 2px solid #3b82f6; margin-bottom: 2rem;'>
+        <h3 style='color: #1e40af; margin-bottom: 1rem;'>💡 Core Innovation</h3>
+        <p style='color: #1e3a8a; font-size: 1.05rem; line-height: 1.8;'>
+            <strong>Not just adding more agents — simulating a real pharmaceutical R&D team.</strong><br/>
+            Real drug development involves specialists with different expertise who debate,
+            challenge each other's assumptions, and collaboratively reach robust conclusions.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Multi-Agent Architecture
+    st.markdown("### 🏗️ Proposed Architecture")
+
+    st.markdown("""
+    ```
+                    User Drug Query
+                          |
+                          ↓
+                 Scientific Planner Agent
+                          |
+           ┌──────────────┼──────────────┐
+           ↓              ↓              ↓
+
+    Preformulation   Formulation    Critical Review
+      Scientist       Scientist         Agent
+        Agent           Agent              ↓
+           ↓              ↓          Challenge &
+    PhysChem       Strategy &       Validate
+    Analysis       Excipient        Assumptions
+                   Selection             ↓
+           ↓              ↓              ↓
+           └──────────────┼──────────────┘
+                          ↓
+                 Evidence Synthesizer
+                          ↓
+              Validation Scientist Agent
+                          ↓
+                 Final Hypothesis Report
+    ```
+    """)
+
+    # Agent Roles
+    st.markdown("### 👥 Specialized Agent Roles")
+
+    agent_col1, agent_col2 = st.columns(2)
+
+    with agent_col1:
+        st.markdown("""
+        <div style='background: white; padding: 1.5rem; border-radius: 10px; border-left: 4px solid #3b82f6; margin-bottom: 1rem;'>
+            <h4 style='color: #1e40af; margin-bottom: 0.5rem;'>🔬 Preformulation Scientist Agent</h4>
+            <p style='color: #475569; margin-bottom: 0.5rem;'><strong>Role:</strong> Drug characterization & problem diagnosis</p>
+            <p style='color: #64748b; font-size: 0.9rem;'>
+                <strong>Input:</strong> SMILES, dose, indication<br/>
+                <strong>Output:</strong> Physicochemical properties, BCS class, formulation challenges, risk assessment<br/>
+                <strong>Tools:</strong> PreformulationAI (5 modules)
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.markdown("""
+        <div style='background: white; padding: 1.5rem; border-radius: 10px; border-left: 4px solid #10b981; margin-bottom: 1rem;'>
+            <h4 style='color: #059669; margin-bottom: 0.5rem;'>💊 Formulation Scientist Agent</h4>
+            <p style='color: #475569; margin-bottom: 0.5rem;'><strong>Role:</strong> Strategy design & excipient selection</p>
+            <p style='color: #64748b; font-size: 0.9rem;'>
+                <strong>Input:</strong> Preformulation report<br/>
+                <strong>Output:</strong> Candidate strategies, excipient recommendations, process parameters<br/>
+                <strong>Tools:</strong> FormulationAI (7 modules)
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with agent_col2:
+        st.markdown("""
+        <div style='background: white; padding: 1.5rem; border-radius: 10px; border-left: 4px solid #f59e0b; margin-bottom: 1rem;'>
+            <h4 style='color: #d97706; margin-bottom: 0.5rem;'>⚠️ Critical Reviewer Agent ⭐</h4>
+            <p style='color: #475569; margin-bottom: 0.5rem;'><strong>Role:</strong> Challenge assumptions & identify context violations</p>
+            <p style='color: #64748b; font-size: 0.9rem;'>
+                <strong>Input:</strong> Formulation recommendations<br/>
+                <strong>Output:</strong> Risk assessment, practical constraint analysis, alternative rankings<br/>
+                <strong>Key Innovation:</strong> Prevents mechanism-only traps (e.g., cyclodextrin dose burden)
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.markdown("""
+        <div style='background: white; padding: 1.5rem; border-radius: 10px; border-left: 4px solid #8b5cf6; margin-bottom: 1rem;'>
+            <h4 style='color: #7c3aed; margin-bottom: 0.5rem;'>🧪 Validation Scientist Agent</h4>
+            <p style='color: #475569; margin-bottom: 0.5rem;'><strong>Role:</strong> Experimental validation planning</p>
+            <p style='color: #64748b; font-size: 0.9rem;'>
+                <strong>Input:</strong> Final hypothesis<br/>
+                <strong>Output:</strong> Experimental protocols (DSC, XRPD, dissolution), success criteria, risk mitigation<br/>
+                <strong>Tools:</strong> Validation protocol templates
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown("---")
+
+    # Example Workflow
+    st.markdown("### 📝 Example: Multi-Agent Analysis of Ibuprofen")
+
+    with st.expander("🔍 View Simulated Multi-Agent Debate"):
+        st.markdown("""
+        #### 🔬 Preformulation Scientist Agent:
+        > "Ibuprofen shows **LogP=3.5** and **LogS=-3.97**, indicating moderate lipophilicity with
+        > poor aqueous solubility. **BCS Class II** confirmed. Primary challenge: **dissolution-limited absorption**.
+        > Recommendation: Solubility enhancement required."
+
+        #### 💊 Formulation Scientist Agent:
+        > "Based on preformulation analysis, I recommend three strategies:
+        > 1. **Solid dispersion** (HPMC-AS) - amorphization approach
+        > 2. **Cyclodextrin complexation** - inclusion complex
+        > 3. **Nanocrystal** - particle size reduction
+        >
+        > Initial ranking: Cyclodextrin > Solid dispersion > Nanocrystal"
+
+        #### ⚠️ Critical Reviewer Agent:
+        > "**Challenge on cyclodextrin recommendation:**
+        >
+        > - MW=206 Da ✅ (fits β-CD cavity)
+        > - **BUT: Dose=400mg ❌**
+        > - Required cyclodextrin: 400-2000mg (1:1 to 5:1 ratio)
+        > - **Total tablet weight: >2g — impractical for patient compliance**
+        > - **Cost concern:** Large cyclodextrin amount
+        >
+        > **Revised ranking:** Solid dispersion > Nanocrystal > Cyclodextrin
+        >
+        > **Rationale:** Context-aware reasoning identifies dose-dependent practical constraint
+        > that mechanism-only matching misses."
+
+        #### 🧪 Validation Scientist Agent:
+        > "For solid dispersion approach, validation protocol:
+        > 1. **Solid-state characterization:** DSC, XRPD, FTIR
+        > 2. **Dissolution testing:** pH 1.2, 4.5, 6.8
+        > 3. **Physical stability:** 40°C/75% RH, 6 months
+        > 4. **Bioequivalence study** vs marketed product
+        >
+        > Success criteria: >85% dissolution in 30 min, <5% recrystallization after 6 months."
+        """)
+
+    st.markdown("---")
+
+    # Research Value
+    st.markdown("### 🎓 Research Contribution")
+
+    value_col1, value_col2 = st.columns(2)
+
+    with value_col1:
+        st.markdown("""
+        #### Current Single-Agent Limitations
+        - Single perspective analysis
+        - No self-correction mechanism
+        - Limited adversarial validation
+        - Challenge: How to prevent overconfidence?
+        """)
+
+    with value_col2:
+        st.markdown("""
+        #### Multi-Agent System Advantages
+        - **Diverse expertise** (preformulation, formulation, validation)
+        - **Adversarial validation** (Critical Reviewer challenges assumptions)
+        - **Consensus-based** decision making
+        - **Mimics real R&D team** dynamics
+        """)
+
+    st.markdown("""
+    <div style='background: #fef3c7; padding: 1.5rem; border-radius: 10px; border-left: 4px solid #f59e0b; margin-top: 1.5rem;'>
+        <p style='color: #92400e; font-size: 1.05rem; margin-bottom: 0;'>
+            <strong>💡 Key Insight:</strong> Multi-agent is not about adding more LLM calls.
+            It's about <strong>simulating collaborative scientific reasoning</strong> with role-specific expertise
+            and adversarial validation — the way real pharmaceutical R&D teams work.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("---")
+
+    # Development Timeline
+    st.markdown("### 📅 Development Roadmap")
+
+    timeline_col1, timeline_col2, timeline_col3 = st.columns(3)
+
+    with timeline_col1:
+        st.markdown("""
+        <div style='background: #d1fae5; padding: 1.5rem; border-radius: 10px; text-align: center;'>
+            <h4 style='color: #065f46; margin-bottom: 0.5rem;'>✅ Phase 1</h4>
+            <p style='color: #047857; margin-bottom: 0;'><strong>Current Status</strong></p>
+            <p style='color: #059669; font-size: 0.9rem;'>
+                • Single-agent system<br/>
+                • Context-aware reasoning<br/>
+                • Benchmark validation (8 drugs)<br/>
+                • Evidence grounding
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with timeline_col2:
+        st.markdown("""
+        <div style='background: #fef3c7; padding: 1.5rem; border-radius: 10px; text-align: center;'>
+            <h4 style='color: #92400e; margin-bottom: 0.5rem;'>🔄 Phase 2</h4>
+            <p style='color: #b45309; margin-bottom: 0;'><strong>In Development</strong></p>
+            <p style='color: #d97706; font-size: 0.9rem;'>
+                • Multi-agent core implementation<br/>
+                • 4 specialized agents<br/>
+                • Debate mechanism<br/>
+                • Consensus synthesis
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with timeline_col3:
+        st.markdown("""
+        <div style='background: #dbeafe; padding: 1.5rem; border-radius: 10px; text-align: center;'>
+            <h4 style='color: #1e40af; margin-bottom: 0.5rem;'>🚀 Phase 3</h4>
+            <p style='color: #1e3a8a; margin-bottom: 0;'><strong>Future</strong></p>
+            <p style='color: #2563eb; font-size: 0.9rem;'>
+                • Scientific Research Mode UI<br/>
+                • Comparative evaluation<br/>
+                • Multi-agent benchmark<br/>
+                • Publication
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown("---")
+
+    # Call to Action
+    st.markdown("""
+    <div style='text-align: center; padding: 2rem 0;'>
+        <p style='font-size: 1.1rem; color: #475569;'>
+            <strong>This is not just a technical upgrade — it's a research contribution.</strong>
+        </p>
+        <p style='color: #64748b; margin-top: 1rem;'>
+            By simulating pharmaceutical R&D team dynamics, FormulationOS aims to demonstrate
+            how multi-agent AI can enhance scientific reasoning quality beyond single-agent systems.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)

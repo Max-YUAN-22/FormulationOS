@@ -1,22 +1,28 @@
 services:
   - type: web
     name: formulationos
-    runtime: python
+    env: python
+    region: oregon
     plan: free
+    branch: main
     buildCommand: pip install -r requirements.txt
-    startCommand: streamlit run FormulationOS_Complete.py --server.port $PORT --server.address 0.0.0.0 --server.headless true
+    startCommand: streamlit run FormulationOS_Enterprise.py --server.port=$PORT --server.address=0.0.0.0 --server.headless=true
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
-      - key: CLAUDE_API_KEY
-        sync: false
-      - key: CLAUDE_BASE_URL
-        value: https://www.cun.ai
       - key: GPT_API_KEY
         sync: false
-      - key: GPT_BASE_URL
-        value: https://api.openai.com/v1
+      - key: CLAUDE_API_KEY
+        sync: false
       - key: MINIMAX_API_KEY
         sync: false
+      - key: GPT_BASE_URL
+        value: https://www.cun.ai/v1
+      - key: CLAUDE_BASE_URL
+        value: https://www.cun.ai
       - key: MINIMAX_BASE_URL
         value: https://api.minimaxi.com/v1
+      - key: PREFORMULATION_AI_API_KEY
+        sync: false
+      - key: FORMULATION_AI_API_KEY
+        sync: false

@@ -1,7 +1,30 @@
+# Core Framework
+streamlit>=1.28.0
 pydantic>=2.6
 pyyaml>=6.0
 typing-extensions>=4.9
-streamlit>=1.28.0
+
+# AI/LLM
 anthropic>=0.18.0
 openai>=1.12.0
 httpx>=0.25.0
+
+# Data Processing
+pandas>=2.0.0
+numpy>=1.24.0
+
+# Visualization
+matplotlib>=3.7.0
+plotly>=5.14.0
+
+# Chemistry (optional, for molecule visualization)
+# rdkit-pypi>=2023.9.0
+
+# HTTP & API
+requests>=2.31.0
+
+# File Formats
+toml>=0.10.2
+
+# Utilities
+python-dateutil>=2.8.0
