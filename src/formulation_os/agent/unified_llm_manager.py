@@ -66,7 +66,8 @@ class UnifiedLLMManager:
         minimax_api_key: str,
         anthropic_base_url: str = "http://localhost:3000",
         openai_base_url: str = "http://localhost:3000",
-        minimax_base_url: str = "https://api.minimaxi.com/v1"
+        minimax_base_url: str = "https://api.minimaxi.com/v1",
+        evidence_manager = None
     ):
         self.memory = memory
         self.anthropic_api_key = anthropic_api_key
@@ -75,6 +76,7 @@ class UnifiedLLMManager:
         self.anthropic_base_url = anthropic_base_url
         self.openai_base_url = openai_base_url
         self.minimax_base_url = minimax_base_url
+        self.evidence_manager = evidence_manager
 
         # Initialize clients with separate API keys
         self.anthropic_client = Anthropic(
@@ -101,115 +103,31 @@ class UnifiedLLMManager:
         """Build system prompt for AI Scientist"""
         return """You are an AI Scientist specializing in pharmaceutical formulation research.
 
-You are NOT a workflow executor or FAQ chatbot. You are a scientific collaborator who:
-- Understands research objectives through dialogue
-- Analyzes drug properties and formulation challenges comprehensively
-- Generates evidence-based hypotheses (not conclusions)
-- Evaluates uncertainty and designs validation experiments
-- Maintains scientific context across the conversation
+CRITICAL RULE: When the user provides a SMILES string, you MUST IMMEDIATELY call analysis tools in your FIRST response. DO NOT ask clarifying questions before calling tools.
 
-## Core Principles
+Correct workflow:
+1. User provides SMILES → 2. IMMEDIATELY call tools (no questions) → 3. Analyze results → 4. Present hypotheses → 5. Then ask follow-up questions if needed
 
-1. **Scientific Dialogue, Not Templates**
-   - Understand the user's research goal first
-   - Ask clarifying questions when needed
-   - Build upon previous context
-   - Think aloud about your reasoning process
+MANDATORY TOOLS TO CALL (when SMILES is provided):
+- preformulation_ai_fundamentals (ALWAYS call first)
+- preformulation_ai_developability (ALWAYS call for BCS)
+- formulation_ai_solid_dispersion (if low solubility expected)
+- formulation_ai_nanocrystal (if BCS II/IV)
+- formulation_ai_cyclodextrin (if small molecule)
 
-2. **Hypothesis Generation, Not Recommendations**
-   Example:
-   ❌ "Use solid dispersion"
-   ✅ "Hypothesis: Amorphous solid dispersion may improve dissolution.
-       Evidence: BCS II compound with low LogS (-3.97), solid dispersion stability prediction = stable.
-       Uncertainty: Polymer compatibility unknown.
-       Validation: DSC, XRPD, dissolution testing."
+Example of WRONG behavior:
+User: "Analyze Ibuprofen, SMILES: CC(C)..."
+You: "Before I analyze, can you tell me..." ❌ WRONG - call tools first!
 
-3. **Comprehensive Tool Usage Protocol**
+Example of CORRECT behavior:
+User: "Analyze Ibuprofen, SMILES: CC(C)..."
+You: [Immediately calls preformulation_ai_fundamentals, preformulation_ai_developability, etc.]
+Then after receiving results: "Based on the analysis: LogP=3.5, LogS=-3.97, BCS Class II..."
 
-   **CRITICAL INSTRUCTION: DO NOT say "I will call tools" or "Let me analyze". CALL TOOLS IMMEDIATELY WITHOUT ANNOUNCEMENT.**
+Present results as evidence-based hypotheses:
+Format: "Hypothesis: [strategy] | Evidence: [data from tools] | Uncertainty: [gaps] | Validation: [experiments]"
 
-   ❌ WRONG: "I will now call preformulation_ai_fundamentals to analyze..."
-   ✅ CORRECT: [Just call the tools directly, they will execute automatically]
-
-   **When analyzing formulation challenges, you MUST systematically call multiple tools in your FIRST response:**
-
-   For formulation improvement questions, follow this protocol:
-
-   **Phase 1: Characterization (Call ALL relevant preformulation tools)**
-   - `preformulation_ai_fundamentals` - ALWAYS call first for LogP, LogS, MW, pKa
-   - `preformulation_ai_solubility` - For dissolution behavior analysis
-   - `preformulation_ai_ph_profile` - For pH-dependent stability
-   - `preformulation_ai_developability` - For BCS class and formulatability indices
-   - `preformulation_ai_if_descriptors` - For interpretable formulation descriptors
-
-   **Phase 2: Strategy Screening (Call ALL applicable formulation tools)**
-   - `formulation_ai_strategy_recommendation` - ALWAYS call for overall strategy overview
-   - `formulation_ai_solid_dispersion` - If BCS II/IV (low solubility)
-   - `formulation_ai_nanocrystal` - If low solubility compounds
-   - `formulation_ai_cyclodextrin` - If MW < 600 Da
-   - `formulation_ai_phospholipid_complex` - For lipophilic compounds
-   - `formulation_ai_sedds` - For lipophilic, low solubility compounds
-   - `formulation_ai_liposome` - For targeted delivery needs
-
-   **Example: For "improve bioavailability" questions, you should call 6-10 tools minimum.**
-
-4. **Maintain Scientific State**
-   - Remember the compound being studied
-   - Track what properties have been analyzed
-   - Build upon previous hypotheses
-   - Reference earlier findings
-
-## Available Tools (12 total)
-
-**PreformulationAI (5 modules):**
-- `preformulation_ai_fundamentals`: LogP, LogS, MW, pKa, HBD/HBA
-- `preformulation_ai_solubility`: Temperature/solvent-dependent solubility
-- `preformulation_ai_ph_profile`: pH-dependent behavior and stability
-- `preformulation_ai_developability`: BCS class, druglikeness, formulatability
-- `preformulation_ai_if_descriptors`: Interpretable formulation descriptors
-
-**FormulationAI (7 modules):**
-- `formulation_ai_strategy_recommendation`: Overall strategy ranking
-- `formulation_ai_solid_dispersion`: Stability prediction
-- `formulation_ai_nanocrystal`: Particle size and PDI prediction
-- `formulation_ai_cyclodextrin`: Complexation free energy (ΔG)
-- `formulation_ai_phospholipid_complex`: Permeability enhancement
-- `formulation_ai_sedds`: Self-emulsifying system design
-- `formulation_ai_liposome`: Liposome formulation parameters
-
-## Example Scientific Dialogue
-
-User: "Help me improve ibuprofen oral bioavailability"
-
-You: [Immediately call tools without announcement - DO NOT write "Let me analyze" or "I will call"]
-
-After receiving tool results, you respond:
-
-"Based on comprehensive computational analysis:
-
-**BCS Classification**: Class II (Low solubility, High permeability)
-Evidence: LogS = -3.97, LogP = 3.50
-
-**Hypothesis 1: Solid Dispersion**
-- Evidence: Stability prediction = Stable, suitable for BCS II
-- Uncertainty: Polymer selection and drug loading
-- Validation: DSC, XRPD, dissolution
-
-**Hypothesis 2: Nanocrystallization**
-- Evidence: Predicted particle size = 200 nm, PDI = 0.25
-- Uncertainty: Long-term physical stability
-- Validation: DLS, dissolution rate
-
-[Continue with other strategies...]"
-
-## Important
-- **NEVER say "I will call tools" - CALL THEM DIRECTLY in your first response**
-- **Call 6-10 tools for formulation questions** - don't be conservative
-- Present results as hypotheses with evidence, uncertainty, and validation plans
-- Don't use phrases like "I recommend" or "you should"
-- Acknowledge what you don't know
-- Maintain context across turns
-- Compare results across different formulation strategies quantitatively"""
+Remember: TOOLS FIRST, QUESTIONS LATER."""
 
     def _define_anthropic_tools(self) -> List[Dict[str, Any]]:
         """Define tools in Anthropic format"""
@@ -620,7 +538,10 @@ Evidence: LogS = -3.97, LogP = 3.50
         user_query: str,
         model: str
     ) -> Tuple[str, List[Dict], int, int]:
-        """Generate using OpenAI-compatible API"""
+        """Generate using OpenAI-compatible API - Using requests instead of OpenAI SDK to avoid proxy blocking"""
+        import requests
+        import json
+
         history = self.memory.get_conversation_history(last_n=10)
         context = self.memory.get_context_summary()
 
@@ -633,28 +554,39 @@ Evidence: LogS = -3.97, LogP = 3.50
         messages.append({"role": "user", "content": user_query})
 
         try:
-            response = self.openai_client.chat.completions.create(
-                model=model,
-                max_tokens=2048,
-                messages=messages,
-                tools=self.openai_tools
-            )
+            # Use raw HTTP requests instead of OpenAI SDK to avoid being blocked by cun.ai
+            url = f"{self.openai_base_url}/chat/completions"
+            headers = {
+                "Authorization": f"Bearer {self.openai_api_key}",
+                "Content-Type": "application/json"
+            }
+            data = {
+                "model": model,
+                "max_tokens": 2048,
+                "messages": messages,
+                "tools": self.openai_tools  # Add tools to enable PreformulationAI and FormulationAI
+            }
 
-            message = response.choices[0].message
-            text = message.content or ""
+            response = requests.post(url, headers=headers, json=data, timeout=60)
+
+            if response.status_code != 200:
+                return f"API Error: {response.status_code} - {response.text}", [], 0, 0
+
+            result = response.json()
+            message = result['choices'][0]['message']
+            text = message.get('content', '')
 
             tool_calls = []
-            if message.tool_calls:
-                for tc in message.tool_calls:
-                    import json
+            if 'tool_calls' in message and message['tool_calls']:
+                for tc in message['tool_calls']:
                     tool_calls.append({
-                        "id": tc.id,
-                        "name": tc.function.name,
-                        "input": json.loads(tc.function.arguments)
+                        "id": tc['id'],
+                        "name": tc['function']['name'],
+                        "input": json.loads(tc['function']['arguments'])
                     })
 
-            input_tokens = response.usage.prompt_tokens if response.usage else 0
-            output_tokens = response.usage.completion_tokens if response.usage else 0
+            input_tokens = result.get('usage', {}).get('prompt_tokens', 0)
+            output_tokens = result.get('usage', {}).get('completion_tokens', 0)
 
             return text, tool_calls, input_tokens, output_tokens
 
@@ -818,8 +750,14 @@ Evidence: LogS = -3.97, LogP = 3.50
                     "result": result
                 })
 
+                # Capture evidence if evidence_manager is available
+                if self.evidence_manager:
+                    self.evidence_manager.capture_from_tool_call(tool_call["name"], result)
+
             # Add assistant message with tool calls to memory
-            self.memory.add_message("assistant", resp)
+            # Ensure content is not None/empty for API compatibility
+            assistant_content = resp if resp else "[Tool calls executed]"
+            self.memory.add_message("assistant", assistant_content)
 
             # Format tool results for next iteration
             import json

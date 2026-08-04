@@ -1,195 +1,482 @@
-"""Hypothesis Ranking System for FormulationOS
+"""
+Hypothesis Ranking System for FormulationOS
 
-Ranks formulation strategies with:
-1. Confidence scores
-2. Supporting evidence
-3. Risk factors
-4. Validation methods
+REFACTORED ARCHITECTURE (Phase 32 + Context Reasoning):
+    Evidence → Mechanism → Hypothesis → Context Reasoning → Validation
+
+This module implements evidence-grounded hypothesis generation and ranking:
+1. Consumes Evidence objects from EvidenceManager (not LLM generation)
+2. Matches evidence mechanisms to formulation strategies
+3. Assesses drug-strategy compatibility via Context Reasoning
+4. Calculates confidence = Evidence strength × Mechanism relevance × Context compatibility - Uncertainty
+5. Outputs ranked hypotheses with transparent reasoning trace
+
+Key transformation:
+    OLD: LLM generates hypotheses → score them
+    NEW: Evidence → Mechanism → Candidates → Context Reasoning → Ranking
+
+Example workflow:
+    Evidence: LogS=-3.97, BCS II, MW=206, LogP=3.8
+    → Mechanism: DISSOLUTION_LIMITATION, SOLUBILITY_LIMITATION
+    → Candidates: [solid_dispersion, nanocrystal, cyclodextrin, SEDDS]
+    → Context Assessment: cyclodextrin (MW suitable, LogP moderate) = 0.85
+    → Ranked by evidence × mechanism × context compatibility
 """
 
-from typing import List, Dict, Optional
 from dataclasses import dataclass, field
+from typing import List, Dict, Optional
 from datetime import datetime
 
+# Import the Evidence system
+from .evidence_manager import (
+    Evidence,
+    EvidenceManager,
+    ScientificMechanism,
+    MechanismKnowledgeBase
+)
+
+# Import Context Reasoning
+from .context_reasoner import (
+    DrugContext,
+    ContextReasoner,
+    CompatibilityAssessment
+)
+
+
 @dataclass
-class Evidence:
-    """Single piece of supporting or contradicting evidence"""
-    type: str  # 'supporting' or 'risk'
+class UncertaintyFactor:
+    """
+    Unresolved uncertainty that reduces hypothesis confidence
+
+    Example:
+        UncertaintyFactor(
+            description="Polymer compatibility unknown",
+            impact=0.2,  # -20% confidence penalty
+            resolution="In vitro compatibility screening"
+        )
+    """
     description: str
-    source: str  # 'literature' | 'model_prediction' | 'physicochemical'
-    strength: float  # 0-1
+    impact: float  # 0-1, penalty to confidence
+    resolution: str  # How to resolve this uncertainty
+
 
 @dataclass
 class Hypothesis:
-    """Scientific hypothesis with ranking"""
+    """
+    Scientific hypothesis for formulation strategy
+
+    NEW ARCHITECTURE (with Context Reasoning):
+    - Generated FROM evidence and mechanisms (not by LLM)
+    - Confidence calculated from evidence × mechanism × context compatibility
+    - Includes reasoning trace (WHY this hypothesis)
+    - Links to validation experiments
+    """
     strategy_name: str
     description: str
-    confidence: float  # 0-1
+
+    # Evidence-based scoring
+    supporting_mechanisms: List[ScientificMechanism] = field(default_factory=list)
     supporting_evidence: List[Evidence] = field(default_factory=list)
-    risks: List[Evidence] = field(default_factory=list)
+    uncertainties: List[UncertaintyFactor] = field(default_factory=list)
+
+    # Context compatibility (NEW)
+    context_assessment: Optional[CompatibilityAssessment] = None
+
+    # Calculated scores
+    evidence_strength: float = 0.0  # Raw evidence support (0-1)
+    mechanism_compatibility: float = 0.0  # How well strategy matches mechanisms (0-1)
+    context_compatibility: float = 1.0  # Drug-strategy fit (0-1) - NEW
+    uncertainty_penalty: float = 0.0  # Reduction from unresolved questions (0-1)
+    final_confidence: float = 0.0  # Final score after all factors
+
+    # Validation
     validation_methods: List[str] = field(default_factory=list)
-    rationale: str = ""
+    validation_rationale: str = ""
+
+    # Reasoning transparency
+    reasoning_trace: str = ""  # WHY this hypothesis was generated and ranked
+
     created_at: datetime = field(default_factory=datetime.now)
 
     def calculate_confidence(self) -> float:
-        """Calculate confidence based on evidence"""
+        """
+        Calculate final confidence score with context reasoning
+
+        REFACTORED Formula:
+            confidence = evidence_strength × mechanism_compatibility × context_compatibility - weighted_uncertainty
+
+        Components:
+        - Evidence strength: Quality and quantity of supporting evidence
+        - Mechanism compatibility: How well strategy addresses identified mechanisms
+        - Context compatibility: Drug-strategy fit based on molecular properties (NEW)
+        - Weighted uncertainty: Typical vs critical uncertainties
+
+        Returns:
+            Final confidence score (0-1)
+        """
         if not self.supporting_evidence:
-            return 0.3  # Default low confidence
+            return 0.2  # No evidence = very low confidence
 
-        # Weight by evidence strength
-        support_score = sum(e.strength for e in self.supporting_evidence) / len(self.supporting_evidence)
+        # 1. Evidence strength (average confidence + count bonus)
+        base_strength = sum(e.confidence for e in self.supporting_evidence) / len(self.supporting_evidence)
+        evidence_count = len(self.supporting_evidence)
+        evidence_count_bonus = min(0.2, (evidence_count - 1) * 0.08)
+        self.evidence_strength = min(1.0, base_strength + evidence_count_bonus)
 
-        # Penalty for risks
-        risk_penalty = sum(e.strength for e in self.risks) * 0.2 if self.risks else 0
+        # 2. Mechanism compatibility
+        total_mechanisms = len(self.supporting_mechanisms)
+        if total_mechanisms >= 2:
+            self.mechanism_compatibility = 1.0
+        elif total_mechanisms == 1:
+            self.mechanism_compatibility = 0.75
+        else:
+            self.mechanism_compatibility = 0.5
 
-        confidence = min(1.0, max(0.0, support_score - risk_penalty))
-        return round(confidence, 2)
+        # 3. Context compatibility (NEW - from ContextReasoner)
+        if self.context_assessment:
+            self.context_compatibility = self.context_assessment.compatibility_score
+        else:
+            self.context_compatibility = 0.8  # Default if no context assessment
 
-    def to_markdown(self, rank: int) -> str:
-        """Format hypothesis as markdown for display"""
-        md = f"### Hypothesis {rank}: {self.strategy_name}\n\n"
-        md += f"**Confidence Score**: {self.confidence:.2f}/1.00\n\n"
+        # 4. Weighted uncertainty penalty
+        typical_uncertainty_keywords = ["polymer", "stability", "scalability"]
+        weighted_penalty = 0.0
 
-        if self.rationale:
-            md += f"**Rationale**: {self.rationale}\n\n"
+        for uncertainty in self.uncertainties:
+            is_typical = any(keyword in uncertainty.description.lower()
+                           for keyword in typical_uncertainty_keywords)
+            if is_typical:
+                weighted_penalty += uncertainty.impact * 0.5
+            else:
+                weighted_penalty += uncertainty.impact
 
-        if self.supporting_evidence:
-            md += "**Supporting Evidence**:\n"
-            for ev in self.supporting_evidence:
-                md += f"- ✅ {ev.description} ({ev.source}, strength: {ev.strength:.2f})\n"
-            md += "\n"
+        self.uncertainty_penalty = min(0.4, weighted_penalty)
 
-        if self.risks:
-            md += "**Risks & Challenges**:\n"
-            for risk in self.risks:
-                md += f"- ⚠️ {risk.description} ({risk.source})\n"
-            md += "\n"
+        # Final calculation: multiplicative for factors, subtractive for uncertainty
+        base_confidence = self.evidence_strength * self.mechanism_compatibility * self.context_compatibility
+        self.final_confidence = max(0.0, base_confidence * (1 - self.uncertainty_penalty))
 
+        return self.final_confidence
+
+    def generate_reasoning_trace(self) -> str:
+        """
+        Generate transparent reasoning explanation with context assessment
+
+        Format:
+            WHY this hypothesis:
+            - Mechanism: DISSOLUTION_LIMITATION (2 evidence)
+            - Evidence strength: 0.85
+            - Context compatibility: 0.72 (from drug properties)
+            - Uncertainties: 1 unresolved
+
+            Evidence:
+            - LogS=-3.97 (poor solubility) [0.9]
+            - BCS II [0.95]
+
+            Context Assessment:
+            [Drug-strategy compatibility reasoning]
+
+            Validation needed:
+            - DSC (detect amorphous conversion)
+            - XRPD (confirm crystallinity reduction)
+        """
+        lines = ["**WHY this hypothesis:**\n"]
+
+        # Mechanisms
+        for mechanism in self.supporting_mechanisms:
+            evidence_count = sum(1 for e in self.supporting_evidence if e.mechanism == mechanism)
+            lines.append(f"- Mechanism: {mechanism.value} ({evidence_count} evidence)")
+
+        # Scores
+        lines.append(f"- Evidence strength: {self.evidence_strength:.2f}")
+        lines.append(f"- Mechanism compatibility: {self.mechanism_compatibility:.2f}")
+        lines.append(f"- Context compatibility: {self.context_compatibility:.2f}")
+        if self.uncertainties:
+            lines.append(f"- Uncertainties: {len(self.uncertainties)} unresolved")
+
+        # Evidence details
+        lines.append("\n**Supporting Evidence:**")
+        for evidence in self.supporting_evidence:
+            lines.append(f"- {evidence.observation} ({evidence.interpretation}) [{evidence.confidence:.2f}]")
+
+        # Context Assessment (NEW)
+        if self.context_assessment:
+            lines.append("\n**Context Assessment:**")
+            lines.append(self.context_assessment.reasoning_summary)
+
+        # Uncertainties
+        if self.uncertainties:
+            lines.append("\n**Unresolved Uncertainties:**")
+            for unc in self.uncertainties:
+                lines.append(f"- {unc.description} (impact: -{unc.impact*100:.0f}%)")
+                lines.append(f"  Resolution: {unc.resolution}")
+
+        # Validation
         if self.validation_methods:
-            md += "**Validation Methods**:\n"
+            lines.append("\n**Validation Required:**")
             for method in self.validation_methods:
-                md += f"- 🔬 {method}\n"
-            md += "\n"
+                lines.append(f"- {method}")
+            if self.validation_rationale:
+                lines.append(f"\n{self.validation_rationale}")
 
-        return md
+        self.reasoning_trace = "\n".join(lines)
+        return self.reasoning_trace
 
 
 class HypothesisRanker:
-    """Ranks and manages formulation hypotheses"""
+    """
+    Evidence-grounded hypothesis generation and ranking system with context reasoning
 
-    def __init__(self):
+    NEW WORKFLOW (Phase 32 + Context):
+    1. Consume Evidence from EvidenceManager
+    2. Identify mechanisms from evidence
+    3. Generate candidate strategies for each mechanism
+    4. Assess drug-strategy compatibility via ContextReasoner (NEW)
+    5. Calculate confidence from evidence × mechanism × context
+    6. Rank hypotheses
+    7. Generate reasoning trace for transparency
+
+    This is NOT a scoring system for pre-generated hypotheses.
+    This GENERATES hypotheses from evidence and reasons about their suitability.
+    """
+
+    def __init__(self, evidence_manager: EvidenceManager, drug_context: Optional[DrugContext] = None):
+        self.evidence_manager = evidence_manager
+        self.mechanism_kb = MechanismKnowledgeBase()
+        self.context_reasoner = ContextReasoner()
+        self.drug_context = drug_context
         self.hypotheses: List[Hypothesis] = []
 
-    def add_hypothesis(self, hypothesis: Hypothesis):
-        """Add a hypothesis to the ranking system"""
-        # Recalculate confidence
-        hypothesis.confidence = hypothesis.calculate_confidence()
-        self.hypotheses.append(hypothesis)
+    def generate_hypotheses_from_evidence(self) -> List[Hypothesis]:
+        """
+        Generate hypotheses directly from collected evidence with context reasoning
+
+        This is the core method that implements:
+            Evidence → Mechanism → Strategy Candidates → Context Assessment → Hypotheses
+
+        Returns:
+            List of Hypothesis objects with context compatibility assessed
+        """
+        self.hypotheses.clear()
+
+        # Get all mechanisms identified from evidence
+        mechanisms = self.evidence_manager.get_all_mechanisms()
+
+        if not mechanisms:
+            return []
+
+        # For each mechanism, generate candidate strategies
+        strategy_to_mechanisms = {}  # Group mechanisms by strategy
+
+        for mechanism in mechanisms:
+            # Skip mechanisms that don't indicate a problem
+            if mechanism == ScientificMechanism.BIOAVAILABILITY_LOSS:
+                continue
+
+            strategies = self.mechanism_kb.get_strategies_for_mechanism(mechanism)
+            for strategy in strategies:
+                if strategy not in strategy_to_mechanisms:
+                    strategy_to_mechanisms[strategy] = []
+                strategy_to_mechanisms[strategy].append(mechanism)
+
+        # Create Hypothesis objects with context assessment
+        for strategy_name, mechanisms_list in strategy_to_mechanisms.items():
+            # Get all evidence supporting these mechanisms
+            supporting_evidence = []
+            for mechanism in mechanisms_list:
+                supporting_evidence.extend(self.evidence_manager.get_evidence_by_mechanism(mechanism))
+
+            # Remove duplicates manually
+            seen = []
+            unique_evidence = []
+            for evidence in supporting_evidence:
+                key = (evidence.observation, evidence.source.value)
+                if key not in seen:
+                    seen.append(key)
+                    unique_evidence.append(evidence)
+            supporting_evidence = unique_evidence
+
+            # Create hypothesis
+            hypothesis = Hypothesis(
+                strategy_name=strategy_name,
+                description=self._generate_strategy_description(strategy_name),
+                supporting_mechanisms=mechanisms_list,
+                supporting_evidence=supporting_evidence,
+                validation_methods=self._get_validation_methods(strategy_name)
+            )
+
+            # Context compatibility assessment (NEW)
+            if self.drug_context:
+                context_assessment = self.context_reasoner.assess_compatibility(
+                    strategy_name,
+                    self.drug_context
+                )
+                hypothesis.context_assessment = context_assessment
+
+            # Add uncertainties
+            hypothesis.uncertainties = self._identify_uncertainties(strategy_name, supporting_evidence)
+
+            # Calculate confidence (now includes context compatibility)
+            hypothesis.calculate_confidence()
+
+            # Generate reasoning
+            hypothesis.generate_reasoning_trace()
+
+            self.hypotheses.append(hypothesis)
+
+        return self.hypotheses
 
     def rank_hypotheses(self) -> List[Hypothesis]:
-        """Return hypotheses sorted by confidence"""
-        return sorted(self.hypotheses, key=lambda h: h.confidence, reverse=True)
+        """
+        Rank hypotheses by final confidence score
+
+        Returns:
+            Hypotheses sorted by confidence (highest first)
+        """
+        return sorted(self.hypotheses, key=lambda h: h.final_confidence, reverse=True)
 
     def generate_ranking_report(self) -> str:
-        """Generate comprehensive ranking report"""
+        """
+        Generate comprehensive ranking report with reasoning
+
+        Format:
+            HYPOTHESIS RANKING (Evidence-Based)
+
+            H1: Solid Dispersion [Confidence: 0.78]
+            Supporting Mechanisms: DISSOLUTION_LIMITATION, SOLUBILITY_LIMITATION
+            Evidence: 3 items
+            [Detailed reasoning trace]
+
+            H2: Nanocrystal [Confidence: 0.71]
+            ...
+
+            RECOMMENDATION:
+            Prioritize H1 (Solid Dispersion) based on strongest evidence.
+            Alternative: H2 if manufacturing constraints arise.
+        """
         ranked = self.rank_hypotheses()
 
-        if not ranked:
-            return "No hypotheses generated yet."
+        lines = ["# HYPOTHESIS RANKING (Evidence-Based)\n"]
+        lines.append(f"*Generated from {len(self.evidence_manager.get_all_evidence())} pieces of evidence*\n")
 
-        report = "## 🎯 Formulation Strategy Ranking\n\n"
-        report += f"*Based on analysis of {len(ranked)} candidate strategies*\n\n"
-        report += "---\n\n"
+        # Add each hypothesis
+        for idx, hypothesis in enumerate(ranked, 1):
+            lines.append(f"## H{idx}: {hypothesis.strategy_name} [Confidence: {hypothesis.final_confidence:.2f}]\n")
+            lines.append(f"**Mechanisms addressed:** {', '.join(m.value for m in hypothesis.supporting_mechanisms)}")
+            lines.append(f"**Evidence items:** {len(hypothesis.supporting_evidence)}\n")
+            lines.append(hypothesis.reasoning_trace)
+            lines.append("\n---\n")
 
-        for i, hyp in enumerate(ranked, 1):
-            report += hyp.to_markdown(i)
-            report += "---\n\n"
+        # Add recommendation
+        if ranked:
+            lines.append("## RECOMMENDATION\n")
+            top_hypothesis = ranked[0]
+            lines.append(f"**Prioritize H1 ({top_hypothesis.strategy_name})** based on strongest evidence (confidence: {top_hypothesis.final_confidence:.2f}).\n")
 
-        # Summary recommendation
-        top_hyp = ranked[0]
-        report += "## 💡 Recommendation\n\n"
-        report += f"Based on current evidence, I would **prioritize Hypothesis 1 ({top_hyp.strategy_name})** "
-        report += f"with a confidence score of {top_hyp.confidence:.2f}.\n\n"
+            if len(ranked) > 1:
+                second_hypothesis = ranked[1]
+                lines.append(f"**Alternative:** H2 ({second_hypothesis.strategy_name}) if H1 faces constraints.\n")
 
-        if len(ranked) > 1:
-            alt_hyp = ranked[1]
-            report += f"However, I recommend keeping **Hypothesis 2 ({alt_hyp.strategy_name})** "
-            report += f"as an alternative approach, especially if initial validation reveals challenges with the primary strategy.\n\n"
+            lines.append(f"\n**Next Steps:**")
+            lines.append(f"1. Validate H1 with: {', '.join(top_hypothesis.validation_methods)}")
+            if top_hypothesis.uncertainties:
+                lines.append(f"2. Resolve uncertainties: {', '.join(u.description for u in top_hypothesis.uncertainties)}")
+            lines.append(f"3. If validated, proceed to formulation optimization")
 
-        return report
+        return "\n".join(lines)
 
-    def extract_hypotheses_from_response(self, response: str, tool_calls: List[Dict]) -> None:
-        """Extract hypotheses from AI response text"""
-        # Look for common formulation strategies
-        strategies = {
-            'solid dispersion': {
-                'description': 'Amorphous solid dispersion to enhance dissolution',
-                'validation': ['DSC', 'XRPD', 'Dissolution testing'],
-            },
-            'nanocrystal': {
-                'description': 'Particle size reduction to increase surface area',
-                'validation': ['DLS', 'PDI measurement', 'Dissolution testing'],
-            },
-            'cyclodextrin': {
-                'description': 'Cyclodextrin complexation to improve solubility',
-                'validation': ['NMR', 'Phase solubility', 'Binding studies'],
-            },
-            'sedds': {
-                'description': 'Self-emulsifying drug delivery system',
-                'validation': ['Emulsification test', 'Droplet size', 'In vitro dissolution'],
-            },
-            'liposome': {
-                'description': 'Liposomal formulation for targeted delivery',
-                'validation': ['Particle size', 'Encapsulation efficiency', 'Release kinetics'],
-            },
+    def _generate_strategy_description(self, strategy_name: str) -> str:
+        """Generate human-readable description for strategy"""
+        descriptions = {
+            "solid_dispersion": "Disperse drug in polymer matrix to achieve amorphous state",
+            "nanocrystal": "Reduce particle size to nanoscale for enhanced dissolution",
+            "cyclodextrin_complex": "Form inclusion complex with cyclodextrin for solubility enhancement",
+            "SEDDS": "Self-emulsifying drug delivery system for lipophilic drugs",
+            "salt_formation": "Convert to salt form for improved solubility",
+            "cocrystal": "Form cocrystal with coformer for enhanced properties",
+            "permeation_enhancer": "Add excipients to improve intestinal permeability",
+            "nanoparticle": "Formulate as nanoparticles for enhanced absorption",
+            "lipid_formulation": "Lipid-based formulation for lipophilic drug solubilization"
         }
+        return descriptions.get(strategy_name, f"{strategy_name} formulation approach")
 
-        response_lower = response.lower()
+    def _get_validation_methods(self, strategy_name: str) -> List[str]:
+        """Return validation methods for each strategy"""
+        validation_map = {
+            "solid_dispersion": ["DSC (amorphous state)", "XRPD (crystallinity)", "Dissolution test"],
+            "nanocrystal": ["DLS (particle size)", "SEM/TEM (morphology)", "Dissolution test"],
+            "cyclodextrin_complex": ["Phase solubility", "DSC", "NMR (complex formation)"],
+            "SEDDS": ["Droplet size", "Self-emulsification time", "In vitro lipolysis"],
+            "salt_formation": ["pKa measurement", "Solubility test", "Stability study"],
+            "cocrystal": ["XRPD", "DSC", "FTIR (cocrystal confirmation)"],
+            "permeation_enhancer": ["Caco-2 permeability", "TEER measurement", "In vivo PK"],
+            "nanoparticle": ["DLS", "Zeta potential", "TEM", "Drug loading"],
+            "lipid_formulation": ["Lipid solubility", "Emulsion stability", "In vitro lipolysis"]
+        }
+        return validation_map.get(strategy_name, ["Characterization required"])
 
-        for strategy_key, strategy_info in strategies.items():
-            if strategy_key in response_lower:
-                # Create hypothesis
-                hyp = Hypothesis(
-                    strategy_name=strategy_key.replace('_', ' ').title(),
-                    description=strategy_info['description'],
-                    confidence=0.5,  # Will be recalculated
-                    validation_methods=strategy_info['validation']
-                )
+    def _identify_uncertainties(self, strategy_name: str, evidence: List[Evidence]) -> List[UncertaintyFactor]:
+        """Identify unresolved uncertainties for each strategy"""
+        uncertainties = []
 
-                # Extract evidence from response
-                # Look for positive indicators
-                if 'suitable' in response_lower or 'recommend' in response_lower:
-                    hyp.supporting_evidence.append(Evidence(
-                        type='supporting',
-                        description='AI model recommendation',
-                        source='model_prediction',
-                        strength=0.7
-                    ))
+        # Generic uncertainties for strategies
+        if strategy_name == "solid_dispersion":
+            # Check if we have stability evidence
+            has_stability_evidence = any("stability" in e.interpretation.lower() for e in evidence)
+            if not has_stability_evidence:
+                uncertainties.append(UncertaintyFactor(
+                    description="Physical stability unknown (recrystallization risk)",
+                    impact=0.15,
+                    resolution="Accelerated stability study (40°C, 75% RH)"
+                ))
 
-                # Look for BCS class mention
-                if 'bcs ii' in response_lower or 'bcs class ii' in response_lower:
-                    hyp.supporting_evidence.append(Evidence(
-                        type='supporting',
-                        description='Appropriate for BCS Class II compounds',
-                        source='physicochemical',
-                        strength=0.8
-                    ))
+            # Check polymer compatibility
+            uncertainties.append(UncertaintyFactor(
+                description="Optimal polymer type not determined",
+                impact=0.10,
+                resolution="Polymer screening (HPMC-AS, PVP-VA, Soluplus)"
+            ))
 
-                # Look for risks
-                if 'stability' in response_lower and strategy_key == 'solid dispersion':
-                    hyp.risks.append(Evidence(
-                        type='risk',
-                        description='Physical stability challenges (recrystallization)',
-                        source='literature',
-                        strength=0.6
-                    ))
+        elif strategy_name == "nanocrystal":
+            uncertainties.append(UncertaintyFactor(
+                description="Manufacturing scalability unknown",
+                impact=0.12,
+                resolution="Pilot scale wet milling study"
+            ))
 
-                if 'complexity' in response_lower or 'difficult' in response_lower:
-                    hyp.risks.append(Evidence(
-                        type='risk',
-                        description='Manufacturing complexity',
-                        source='model_prediction',
-                        strength=0.5
-                    ))
+        elif strategy_name == "SEDDS":
+            uncertainties.append(UncertaintyFactor(
+                description="Lipid excipient compatibility not tested",
+                impact=0.15,
+                resolution="Lipid solubility screening and formulation optimization"
+            ))
 
-                self.add_hypothesis(hyp)
+        return uncertainties
+
+
+def create_hypothesis_ranker_from_evidence(
+    evidence_manager: EvidenceManager,
+    drug_context: Optional[DrugContext] = None
+) -> HypothesisRanker:
+    """
+    Convenience function to create ranker and generate hypotheses
+
+    Usage:
+        evidence_mgr = EvidenceManager()
+        evidence_mgr.capture_from_tool_call("preformulation_fundamentals", tool_result)
+
+        # Create drug context from tool results
+        drug_context = DrugContext(
+            molecular_weight=tool_result["molecular_weight"],
+            logP=tool_result["LogP"],
+            logS=tool_result["LogS"],
+            bcs_class=tool_result["bcs_class"]
+        )
+
+        ranker = create_hypothesis_ranker_from_evidence(evidence_mgr, drug_context)
+        ranked_hypotheses = ranker.rank_hypotheses()
+        report = ranker.generate_ranking_report()
+    """
+    ranker = HypothesisRanker(evidence_manager, drug_context)
+    ranker.generate_hypotheses_from_evidence()
+    return ranker
