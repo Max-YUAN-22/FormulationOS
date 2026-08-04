@@ -52,7 +52,14 @@ class ConversationMemory:
         self.scientific_state = ScientificState()
 
     def add_message(self, role: str, content: str, tool_calls: List[Dict] = None):
-        """Add a message to history"""
+        """Add a message to history (with duplicate prevention)"""
+        # Check if the last message is identical (prevent duplicates from button double-clicks)
+        if self.messages:
+            last_msg = self.messages[-1]
+            if last_msg.role == role and last_msg.content == content:
+                # This is a duplicate, skip adding
+                return
+
         msg = Message(
             role=role,
             content=content,
