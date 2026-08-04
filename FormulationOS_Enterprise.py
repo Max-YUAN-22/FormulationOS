@@ -487,29 +487,36 @@ elif st.session_state.view_mode == "workspace":
         for col_name, (button_text, query) in example_queries.items():
             with locals()[col_name]:
                 if st.button(button_text, use_container_width=True, key=f"quickstart_{col_name}"):
-                    # Directly process the query without intermediate rerun
-                    try:
-                        with st.spinner("🧠 Analyzing..."):
-                            resp, tool_calls, _, _ = st.session_state.llm_manager.generate_with_tools_loop(
-                                user_query=query,
-                                model=DEFAULT_MODEL,
-                                max_iterations=5
-                            )
+                    # Check if this query is already in memory (prevent duplicates)
+                    already_exists = False
+                    for msg in memory.messages:
+                        if msg.role == "user" and msg.content == query:
+                            already_exists = True
+                            break
 
-                        # Save to memory
-                        memory.add_message("user", query)
-                        memory.add_message("assistant", resp)
+                    if not already_exists:
+                        try:
+                            with st.spinner("🧠 Analyzing..."):
+                                resp, tool_calls, _, _ = st.session_state.llm_manager.generate_with_tools_loop(
+                                    user_query=query,
+                                    model=DEFAULT_MODEL,
+                                    max_iterations=5
+                                )
 
-                        # Store tool calls
-                        if tool_calls:
-                            session = get_session()
-                            if "tool_calls" not in session:
-                                session["tool_calls"] = {}
-                            session["tool_calls"][len(memory.messages) - 1] = tool_calls
+                            # Save to memory
+                            memory.add_message("user", query)
+                            memory.add_message("assistant", resp)
 
-                    except Exception as e:
-                        memory.add_message("user", query)
-                        memory.add_message("assistant", f"Error: {str(e)}")
+                            # Store tool calls
+                            if tool_calls:
+                                session = get_session()
+                                if "tool_calls" not in session:
+                                    session["tool_calls"] = {}
+                                session["tool_calls"][len(memory.messages) - 1] = tool_calls
+
+                        except Exception as e:
+                            memory.add_message("user", query)
+                            memory.add_message("assistant", f"Error: {str(e)}")
 
                     # Single rerun to display the saved messages
                     st.rerun()
