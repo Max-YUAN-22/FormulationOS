@@ -564,6 +564,12 @@ elif st.session_state.view_mode == "workspace":
     for i, msg in enumerate(memory.messages):
         message_id = f"msg_{i}"
 
+        # Pre-check: skip empty assistant messages BEFORE creating chat_message container
+        if msg.role == "assistant":
+            content_preview = re.sub(r'<think>.*?</think>', '', msg.content, flags=re.DOTALL).strip()
+            if not content_preview:
+                continue  # Skip this message entirely - don't create the chat box
+
         with st.chat_message(msg.role):
             # For assistant messages, show reasoning BEFORE content
             if msg.role == "assistant":
@@ -573,11 +579,6 @@ elif st.session_state.view_mode == "workspace":
 
             # Display message content
             content = re.sub(r'<think>.*?</think>', '', msg.content, flags=re.DOTALL).strip()
-
-            # Only display assistant messages with actual content
-            if msg.role == "assistant" and not content:
-                continue  # Skip empty assistant messages entirely
-
             if content:
                 st.markdown(content)
 
