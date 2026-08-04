@@ -495,18 +495,10 @@ elif st.session_state.view_mode == "workspace":
         query = st.session_state.quick_start_query
         st.session_state.quick_start_query = None
 
-        # Save user message
-        memory.add_message("user", query)
-        message_id = str(uuid.uuid4())
-
-        with st.chat_message("user"):
-            st.markdown(query)
-
-        with st.chat_message("assistant"):
-            # Show reasoning in real-time
-            reasoning_placeholder = st.empty()
-
+        # Only process if not already in memory
+        if not memory.messages or memory.messages[-1].content != query:
             try:
+                # Show processing indicator
                 with st.spinner("🧠 Analyzing..."):
                     resp, tool_calls, _, _ = st.session_state.llm_manager.generate_with_tools_loop(
                         user_query=query,
@@ -514,24 +506,19 @@ elif st.session_state.view_mode == "workspace":
                         max_iterations=5
                     )
 
-                # Display reasoning
-                if tool_calls:
-                    with reasoning_placeholder:
-                        display_reasoning(tool_calls, status="success")
-
-                # Display response
-                display = re.sub(r'<think>.*?</think>', '', resp, flags=re.DOTALL).strip()
-                st.markdown(display)
-
-                # Save response
+                # Save both messages to memory (they will be displayed by history loop)
+                memory.add_message("user", query)
                 memory.add_message("assistant", resp)
 
-                # Add feedback buttons
-                add_feedback_buttons(message_id)
+                # Store tool calls for display
+                if tool_calls:
+                    session = get_session()
+                    if "tool_calls" not in session:
+                        session["tool_calls"] = {}
+                    session["tool_calls"][len(memory.messages) - 1] = tool_calls
 
             except Exception as e:
-                with reasoning_placeholder:
-                    st.error(f"❌ Error: {str(e)}")
+                memory.add_message("user", query)
                 memory.add_message("assistant", f"Error: {str(e)}")
 
         st.rerun()
@@ -543,42 +530,41 @@ elif st.session_state.view_mode == "workspace":
             content = re.sub(r'<think>.*?</think>', '', msg.content, flags=re.DOTALL).strip()
             st.markdown(content)
 
+            # Display tool calls if this was an assistant message with tools
+            if msg.role == "assistant" and i > 0:
+                session = get_session()
+                if "tool_calls" in session and i in session["tool_calls"]:
+                    tool_calls = session["tool_calls"][i]
+                    display_reasoning(tool_calls, status="success")
+
+            # Add feedback buttons for assistant messages
             if msg.role == "assistant":
                 add_feedback_buttons(message_id)
 
     # Chat input
     if prompt := st.chat_input("💭 Describe your research objective..."):
-        memory.add_message("user", prompt)
-        message_id = str(uuid.uuid4())
+        try:
+            with st.spinner("🧠 Analyzing..."):
+                resp, tool_calls, _, _ = st.session_state.llm_manager.generate_with_tools_loop(
+                    user_query=prompt,
+                    model=DEFAULT_MODEL,
+                    max_iterations=5
+                )
 
-        with st.chat_message("user"):
-            st.markdown(prompt)
+            # Save messages
+            memory.add_message("user", prompt)
+            memory.add_message("assistant", resp)
 
-        with st.chat_message("assistant"):
-            reasoning_placeholder = st.empty()
+            # Store tool calls
+            if tool_calls:
+                session = get_session()
+                if "tool_calls" not in session:
+                    session["tool_calls"] = {}
+                session["tool_calls"][len(memory.messages) - 1] = tool_calls
 
-            try:
-                with st.spinner("🧠 Analyzing..."):
-                    resp, tool_calls, _, _ = st.session_state.llm_manager.generate_with_tools_loop(
-                        user_query=prompt,
-                        model=DEFAULT_MODEL,
-                        max_iterations=5
-                    )
-
-                if tool_calls:
-                    with reasoning_placeholder:
-                        display_reasoning(tool_calls, status="success")
-
-                display = re.sub(r'<think>.*?</think>', '', resp, flags=re.DOTALL).strip()
-                st.markdown(display)
-
-                memory.add_message("assistant", resp)
-                add_feedback_buttons(message_id)
-
-            except Exception as e:
-                with reasoning_placeholder:
-                    st.error(f"❌ Error: {str(e)}")
-                memory.add_message("assistant", f"Error: {str(e)}")
+        except Exception as e:
+            memory.add_message("user", prompt)
+            memory.add_message("assistant", f"Error: {str(e)}")
 
         st.rerun()
 
