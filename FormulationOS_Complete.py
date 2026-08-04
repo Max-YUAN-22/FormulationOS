@@ -483,6 +483,9 @@ elif st.session_state.view_mode == "workspace":
             query = st.session_state.quick_start_query
             st.session_state.quick_start_query = None
 
+            # Add user message to memory first
+            memory.add_message("user", query)
+
             with st.chat_message("user"):
                 st.markdown(query)
 
@@ -506,9 +509,13 @@ elif st.session_state.view_mode == "workspace":
                         # Display final response
                         display = re.sub(r'<think>.*?</think>', '', resp, flags=re.DOTALL).strip()
                         st.markdown(display)
+
+                        # Save assistant response to memory
+                        memory.add_message("assistant", resp)
                     except Exception as e:
                         err = f"❌ Error: {str(e)}"
                         st.error(err)
+                        memory.add_message("assistant", err)
             st.rerun()
 
         for msg in memory.messages:
