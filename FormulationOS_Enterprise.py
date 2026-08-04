@@ -590,31 +590,68 @@ if st.session_state.view_mode == "home":
 elif st.session_state.view_mode == "workspace":
     memory = get_session()["memory"]
 
-    st.subheader("💬 AI Scientist Chat")
-    st.caption("Natural language interface for drug formulation research")
+    # Initialize scientific components
+    if "scientific_planner" not in st.session_state:
+        from formulation_os.agent.scientific_planner import ScientificPlanner
+        from formulation_os.agent.hypothesis_ranker import HypothesisRanker
+        st.session_state.scientific_planner = ScientificPlanner()
+        st.session_state.hypothesis_ranker = HypothesisRanker()
 
-    # Mode selection
-    col_mode1, col_mode2, col_mode3 = st.columns([1, 1, 3])
-    with col_mode1:
-        if "analysis_mode" not in st.session_state:
-            st.session_state.analysis_mode = "fast"
+    # Three-column layout: Memory | Chat | Scientific State
+    col_left, col_main, col_right = st.columns([1, 2, 1])
 
-        fast_selected = st.session_state.analysis_mode == "fast"
-        if st.button("⚡ Fast Mode", use_container_width=True, type="primary" if fast_selected else "secondary"):
-            st.session_state.analysis_mode = "fast"
-            st.rerun()
+    # LEFT PANEL: Research Memory
+    with col_left:
+        st.markdown("### 📚 Research Memory")
 
-    with col_mode2:
-        deep_selected = st.session_state.analysis_mode == "deep"
-        if st.button("🧠 Deep Analysis", use_container_width=True, type="primary" if deep_selected else "secondary"):
-            st.session_state.analysis_mode = "deep"
-            st.rerun()
+        with st.expander("💊 Drug Profile", expanded=True):
+            session = get_session()
+            if hasattr(session.get("memory"), "scientific_state"):
+                state = session["memory"].scientific_state
+                if state.drug_name:
+                    st.markdown(f"**Drug**: {state.drug_name}")
+                    if state.smiles:
+                        st.code(state.smiles, language=None)
+                else:
+                    st.caption("No drug analyzed yet")
+            else:
+                st.caption("No drug analyzed yet")
 
-    with col_mode3:
-        if st.session_state.analysis_mode == "fast":
-            st.info("⚡ **Fast Mode**: Single AI agent with quick responses")
-        else:
-            st.info("🧠 **Deep Analysis**: Multi-agent system with comprehensive reasoning")
+        with st.expander("🔬 Previous Hypotheses"):
+            if st.session_state.hypothesis_ranker.hypotheses:
+                for i, hyp in enumerate(st.session_state.hypothesis_ranker.rank_hypotheses()[:3], 1):
+                    st.markdown(f"**{i}. {hyp.strategy_name}**")
+                    st.progress(hyp.confidence)
+                    st.caption(f"Confidence: {hyp.confidence:.2f}")
+            else:
+                st.caption("No hypotheses generated yet")
+
+        with st.expander("💡 Key Insights"):
+            st.caption("Accumulated insights will appear here")
+
+    # MAIN PANEL: AI Scientist Conversation
+    with col_main:
+        st.subheader("💬 AI Scientist Chat")
+        st.caption("Collaborative research interface")
+
+        # Mode selection
+        col_mode1, col_mode2 = st.columns(2)
+        with col_mode1:
+            if "analysis_mode" not in st.session_state:
+                st.session_state.analysis_mode = "fast"
+
+            fast_selected = st.session_state.analysis_mode == "fast"
+            if st.button("⚡ Fast Mode", use_container_width=True, type="primary" if fast_selected else "secondary"):
+                st.session_state.analysis_mode = "fast"
+                st.rerun()
+
+        with col_mode2:
+            deep_selected = st.session_state.analysis_mode == "deep"
+            if st.button("🧠 Deep Analysis", use_container_width=True, type="primary" if deep_selected else "secondary"):
+                st.session_state.analysis_mode = "deep"
+                st.rerun()
+
+        st.markdown("---")
 
     # Quick start examples (only show when no messages)
     if len(memory.messages) == 0:
