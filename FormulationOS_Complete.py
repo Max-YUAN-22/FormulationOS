@@ -8,6 +8,7 @@ from pathlib import Path
 import sys
 import uuid
 import re
+import os
 from datetime import datetime
 
 sys.path.insert(0, str(Path(__file__).parent / "src"))
@@ -17,13 +18,26 @@ from formulation_os.agent.unified_llm_manager import UnifiedLLMManager
 from formulation_os.agent.scientific_state import ScientificState
 from formulation_os.knowledge_base import KnowledgeBaseDB
 
-# Config - Read from Streamlit Secrets (for deployment) or environment variables (for local)
-CLAUDE_API_KEY = st.secrets.get("CLAUDE_API_KEY", "")
-GPT_API_KEY = st.secrets.get("GPT_API_KEY", "")
-MINIMAX_API_KEY = st.secrets.get("MINIMAX_API_KEY", "")
-CLAUDE_BASE_URL = st.secrets.get("CLAUDE_BASE_URL", "https://www.cun.ai")
-GPT_BASE_URL = st.secrets.get("GPT_BASE_URL", "https://api.openai.com/v1")
-MINIMAX_BASE_URL = st.secrets.get("MINIMAX_BASE_URL", "https://api.minimaxi.com/v1")
+# Config - Read from environment variables (Render) or Streamlit Secrets (Streamlit Cloud)
+def get_config(key: str, default: str = "") -> str:
+    """Get config from environment variable or Streamlit secrets"""
+    # Try environment variable first (for Render, Railway, etc.)
+    env_value = os.environ.get(key)
+    if env_value:
+        return env_value
+
+    # Fall back to Streamlit secrets (for Streamlit Cloud)
+    try:
+        return st.secrets.get(key, default)
+    except:
+        return default
+
+CLAUDE_API_KEY = get_config("CLAUDE_API_KEY")
+GPT_API_KEY = get_config("GPT_API_KEY")
+MINIMAX_API_KEY = get_config("MINIMAX_API_KEY")
+CLAUDE_BASE_URL = get_config("CLAUDE_BASE_URL", "https://www.cun.ai")
+GPT_BASE_URL = get_config("GPT_BASE_URL", "https://api.openai.com/v1")
+MINIMAX_BASE_URL = get_config("MINIMAX_BASE_URL", "https://api.minimaxi.com/v1")
 DEFAULT_MODEL = "MiniMax-M3"
 
 st.set_page_config(
