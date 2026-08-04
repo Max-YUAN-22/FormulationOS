@@ -27,6 +27,12 @@ from formulation_os.agent.conversation_memory import ConversationMemory
 from formulation_os.agent.unified_llm_manager import UnifiedLLMManager
 from formulation_os.agent.scientific_state import ScientificState
 from formulation_os.knowledge_base import KnowledgeBaseDB
+from formulation_os.tools.visualization_tools import (
+    plot_solubility_profile,
+    plot_ph_stability,
+    plot_formulation_comparison,
+    visualize_molecule_2d
+)
 
 # Configuration
 def get_config(key: str, default: str = "") -> str:
@@ -586,6 +592,29 @@ elif st.session_state.view_mode == "workspace":
     st.subheader("💬 AI Scientist Chat")
     st.caption("Natural language interface for drug formulation research")
 
+    # Mode selection
+    col_mode1, col_mode2, col_mode3 = st.columns([1, 1, 3])
+    with col_mode1:
+        if "analysis_mode" not in st.session_state:
+            st.session_state.analysis_mode = "fast"
+
+        fast_selected = st.session_state.analysis_mode == "fast"
+        if st.button("⚡ Fast Mode", use_container_width=True, type="primary" if fast_selected else "secondary"):
+            st.session_state.analysis_mode = "fast"
+            st.rerun()
+
+    with col_mode2:
+        deep_selected = st.session_state.analysis_mode == "deep"
+        if st.button("🧠 Deep Analysis", use_container_width=True, type="primary" if deep_selected else "secondary"):
+            st.session_state.analysis_mode = "deep"
+            st.rerun()
+
+    with col_mode3:
+        if st.session_state.analysis_mode == "fast":
+            st.info("⚡ **Fast Mode**: Single AI agent with quick responses")
+        else:
+            st.info("🧠 **Deep Analysis**: Multi-agent system with comprehensive reasoning")
+
     # Quick start examples (only show when no messages)
     if len(memory.messages) == 0:
         st.info("💡 **Quick Start** - Choose an example or describe your research goal")
@@ -720,47 +749,114 @@ elif st.session_state.view_mode == "workspace":
 
     # Chat input
     if prompt := st.chat_input("💭 Describe your research objective..."):
-        try:
-            with st.spinner("🧠 Analyzing..."):
+        # Immediately display user message
+        memory.add_message("user", prompt)
+
+        # Show user message in chat
+        with st.chat_message("user"):
+            st.markdown(prompt)
+
+        # Show assistant thinking process
+        with st.chat_message("assistant"):
+            # Create placeholder for streaming updates
+            reasoning_placeholder = st.empty()
+            response_placeholder = st.empty()
+
+            try:
+                # Show initial thinking status
+                with reasoning_placeholder.container():
+                    st.markdown("🧠 **Analyzing your query...**")
+
+                # Generate response with tools
                 resp, tool_calls, _, _ = st.session_state.llm_manager.generate_with_tools_loop(
                     user_query=prompt,
                     model=DEFAULT_MODEL,
                     max_iterations=5
                 )
 
-            # Save messages to memory
-            memory.add_message("user", prompt)
-            memory.add_message("assistant", resp)
+                # Update with reasoning process
+                if tool_calls:
+                    with reasoning_placeholder.container():
+                        display_reasoning(tool_calls, status="success")
+                else:
+                    reasoning_placeholder.empty()
 
-            # 💾 Persist to knowledge base database
-            kb = st.session_state.kb
-            session_id = st.session_state.current_session_id
+                # Display response
+                content = re.sub(r'<think>.*?</think>', '', resp, flags=re.DOTALL).strip()
+                if content:
+                    response_placeholder.markdown(content)
 
-            # Create session if first message
-            kb.create_session(session_id)
+                # Add feedback buttons
+                add_feedback_buttons(f"msg_{len(memory.messages)}")
 
-            # Save messages to database
-            kb.save_message(session_id, "user", prompt)
-            kb.save_message(session_id, "assistant", resp, model_used=DEFAULT_MODEL)
+            except Exception as e:
+                reasoning_placeholder.empty()
+                response_placeholder.error(f"Error: {str(e)}")
+                resp = f"Error: {str(e)}"
 
-            # Save tool calls to database
-            if tool_calls:
-                # Store in session state for display
-                session = get_session()
-                if "tool_calls" not in session:
-                    session["tool_calls"] = {}
-                session["tool_calls"][len(memory.messages) - 1] = tool_calls
+        # Save messages to memory
+        memory.add_message("assistant", resp)
 
-                # Extract drug info from user prompt (more reliable than tool arguments)
-                import re
-                smiles_match = re.search(r'SMILES[：:是]?\s*[\'"]?([A-Za-z0-9@+\-\[\]()=#$]+)[\'"]?', prompt, re.IGNORECASE)
-                smiles = smiles_match.group(1) if smiles_match else ""
+        # 💾 Persist to knowledge base database
+        kb = st.session_state.kb
+        session_id = st.session_state.current_session_id
 
-                # Try to extract drug name from prompt
-                drug_name_patterns = [
-                    r'分析\s*([A-Za-z一-龥]+)[（(]',  # "分析Ibuprofen（"
-                    r'药物[是为]?\s*([A-Za-z一-龥]+)',  # "药物是XX"
-                    r'compound[：:是]?\s*([A-Za-z一-龥]+)',  # "compound: XX"
+        # Create session if first message
+        kb.create_session(session_id)
+
+        # Save messages to database
+        kb.save_message(session_id, "user", prompt)
+        kb.save_message(session_id, "assistant", resp, model_used=DEFAULT_MODEL)
+
+        # Save tool calls to database
+        if tool_calls:
+            # Store in session state for display
+            session = get_session()
+            if "tool_calls" not in session:
+                session["tool_calls"] = {}
+            session["tool_calls"][len(memory.messages) - 1] = tool_calls
+
+            # Extract drug info from user prompt (more reliable than tool arguments)
+            import re
+            smiles_match = re.search(r'SMILES[：:是]?\s*[\'"]?([A-Za-z0-9@+\-\[\]()=#$]+)[\'"]?', prompt, re.IGNORECASE)
+            smiles = smiles_match.group(1) if smiles_match else ""
+
+            # Try to extract drug name from prompt
+            drug_name_patterns = [
+                r'分析\s*([A-Za-z一-龥]+)[（(]',  # "分析Ibuprofen（"
+                r'药物[是为]?\s*([A-Za-z一-龥]+)',  # "药物是XX"
+                r'compound[：:是]?\s*([A-Za-z一-龥]+)',  # "compound: XX"
+            ]
+            drug_name = "Unknown"
+            for pattern in drug_name_patterns:
+                match = re.search(pattern, prompt, re.IGNORECASE)
+                if match:
+                    drug_name = match.group(1)
+                    break
+
+            # Create drug analysis record
+            drug_analysis_id = None
+            for tc in tool_calls:
+                tool_name = tc.get("name", "")
+                if "preformulation" in tool_name.lower() or "formulation" in tool_name.lower():
+                    if not drug_analysis_id:
+                        drug_analysis_id = kb.save_drug_analysis(
+                            session_id=session_id,
+                            drug_name=drug_name,
+                            smiles=smiles
+                        )
+
+                    # Save tool call record
+                    kb.save_tool_call(
+                        drug_analysis_id=drug_analysis_id,
+                        tool_name=tc.get("name"),
+                        module="",
+                        input_params={"smiles": smiles, "drug_name": drug_name},
+                        output_result=tc.get("result", {})
+                    )
+
+        # Rerun to display in history
+        st.rerun()
                 ]
                 drug_name = "Unknown"
                 for pattern in drug_name_patterns:
