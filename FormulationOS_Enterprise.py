@@ -507,6 +507,13 @@ elif st.session_state.view_mode == "workspace":
                             memory.add_message("user", query)
                             memory.add_message("assistant", resp)
 
+                            # 💾 Persist to knowledge base database
+                            kb = st.session_state.kb
+                            session_id = st.session_state.current_session_id
+                            kb.create_session(session_id)
+                            kb.save_message(session_id, "user", query)
+                            kb.save_message(session_id, "assistant", resp, model_used=DEFAULT_MODEL)
+
                             # Store tool calls
                             if tool_calls:
                                 session = get_session()
@@ -514,9 +521,40 @@ elif st.session_state.view_mode == "workspace":
                                     session["tool_calls"] = {}
                                 session["tool_calls"][len(memory.messages) - 1] = tool_calls
 
+                                # Save to database
+                                drug_analysis_id = None
+                                for tc in tool_calls:
+                                    tool_name = tc.get("name", "")
+                                    if "preformulation" in tool_name.lower() or "formulation" in tool_name.lower():
+                                        args = tc.get("arguments", {})
+                                        smiles = args.get("smiles", args.get("SMILES", ""))
+                                        drug_name = args.get("drug_name", "Unknown")
+
+                                        if not drug_analysis_id:
+                                            drug_analysis_id = kb.save_drug_analysis(
+                                                session_id=session_id,
+                                                drug_name=drug_name,
+                                                smiles=smiles
+                                            )
+
+                                        kb.save_tool_call(
+                                            drug_analysis_id=drug_analysis_id,
+                                            tool_name=tc.get("name"),
+                                            module=args.get("module", ""),
+                                            input_params=args,
+                                            output_result=tc.get("result", {})
+                                        )
+
                         except Exception as e:
                             memory.add_message("user", query)
                             memory.add_message("assistant", f"Error: {str(e)}")
+
+                            # Still save error to database
+                            kb = st.session_state.kb
+                            session_id = st.session_state.current_session_id
+                            kb.create_session(session_id)
+                            kb.save_message(session_id, "user", query)
+                            kb.save_message(session_id, "assistant", f"Error: {str(e)}", model_used=DEFAULT_MODEL)
 
                     # Single rerun to display the saved messages
                     st.rerun()
@@ -552,24 +590,137 @@ elif st.session_state.view_mode == "workspace":
                     max_iterations=5
                 )
 
-            # Save messages
+            # Save messages to memory
             memory.add_message("user", prompt)
             memory.add_message("assistant", resp)
 
-            # Store tool calls
+            # 💾 Persist to knowledge base database
+            kb = st.session_state.kb
+            session_id = st.session_state.current_session_id
+
+            # Create session if first message
+            kb.create_session(session_id)
+
+            # Save messages to database
+            kb.save_message(session_id, "user", prompt)
+            kb.save_message(session_id, "assistant", resp, model_used=DEFAULT_MODEL)
+
+            # Save tool calls to database
             if tool_calls:
+                # Store in session state for display
                 session = get_session()
                 if "tool_calls" not in session:
                     session["tool_calls"] = {}
                 session["tool_calls"][len(memory.messages) - 1] = tool_calls
 
+                # Create drug analysis record if drug detected
+                # (Simple heuristic: check if SMILES is in prompt or tool calls involve drug analysis)
+                drug_analysis_id = None
+                for tc in tool_calls:
+                    tool_name = tc.get("name", "")
+                    if "preformulation" in tool_name.lower() or "formulation" in tool_name.lower():
+                        # Extract drug info from tool call
+                        args = tc.get("arguments", {})
+                        smiles = args.get("smiles", args.get("SMILES", ""))
+                        drug_name = args.get("drug_name", "Unknown")
+
+                        if not drug_analysis_id:
+                            drug_analysis_id = kb.save_drug_analysis(
+                                session_id=session_id,
+                                drug_name=drug_name,
+                                smiles=smiles
+                            )
+
+                        # Save tool call record
+                        kb.save_tool_call(
+                            drug_analysis_id=drug_analysis_id,
+                            tool_name=tc.get("name"),
+                            module=args.get("module", ""),
+                            input_params=args,
+                            output_result=tc.get("result", {})
+                        )
+
         except Exception as e:
             memory.add_message("user", prompt)
             memory.add_message("assistant", f"Error: {str(e)}")
+
+            # Still save error to database for debugging
+            kb = st.session_state.kb
+            session_id = st.session_state.current_session_id
+            kb.create_session(session_id)
+            kb.save_message(session_id, "user", prompt)
+            kb.save_message(session_id, "assistant", f"Error: {str(e)}", model_used=DEFAULT_MODEL)
 
         st.rerun()
 
 # KNOWLEDGE BASE
 elif st.session_state.view_mode == "knowledge_base":
     st.subheader("📚 Knowledge Base")
-    st.info("Knowledge base integration coming soon...")
+
+    kb = st.session_state.kb
+    stats = kb.get_statistics()
+
+    # Display statistics
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        st.metric("Total Sessions", stats['total_sessions'])
+    with col2:
+        st.metric("Total Messages", stats['total_messages'])
+    with col3:
+        st.metric("Drug Analyses", stats['total_drug_analyses'])
+    with col4:
+        st.metric("Tool Calls", stats['total_tool_calls'])
+
+    st.markdown("---")
+
+    # Export options
+    st.subheader("💾 Export Training Data")
+    col1, col2 = st.columns([3, 1])
+    with col1:
+        export_limit = st.number_input("Number of records to export (0 = all)", min_value=0, value=100)
+    with col2:
+        if st.button("📥 Export to JSON", use_container_width=True):
+            output_path = f"training_data_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+            kb.export_to_json(output_path, limit=export_limit if export_limit > 0 else None)
+            st.success(f"✅ Exported to {output_path}")
+
+    st.markdown("---")
+
+    # Show recent training examples
+    st.subheader("🔍 Recent Training Examples")
+    training_data = kb.get_training_dataset(limit=10)
+
+    if training_data:
+        for i, example in enumerate(training_data, 1):
+            with st.expander(f"#{i} - {example['drug_name']} ({example['timestamp']})"):
+                st.markdown(f"**User Query:** {example['user_query']}")
+                st.markdown(f"**SMILES:** `{example['smiles']}`")
+
+                if example['properties']:
+                    st.markdown("**Properties:**")
+                    props_df = []
+                    for prop_name, prop_data in example['properties'].items():
+                        props_df.append({
+                            "Property": prop_name,
+                            "Value": prop_data['value'],
+                            "Source": prop_data['source']
+                        })
+                    st.dataframe(props_df, use_container_width=True)
+
+                if example['tool_calls']:
+                    st.markdown(f"**Tool Calls:** {len(example['tool_calls'])} calls")
+                    for tc in example['tool_calls']:
+                        st.markdown(f"- {tc['tool']} → {tc['module']}")
+
+                if example['formulation_strategies']:
+                    st.markdown("**Formulation Strategies:**")
+                    for strategy in example['formulation_strategies']:
+                        st.markdown(f"- {strategy['type']}: {strategy['recommendation']}")
+
+                with st.expander("View AI Response"):
+                    st.markdown(example['ai_response'])
+    else:
+        st.info("No training data yet. Start analyzing drugs to build the knowledge base!")
+
+    st.markdown("---")
+    st.caption("💡 This knowledge base stores all interactions for future model fine-tuning and retrieval-augmented generation (RAG).")
