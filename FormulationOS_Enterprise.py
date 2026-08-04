@@ -359,6 +359,20 @@ if st.session_state.view_mode == "home":
     </div>
     """, unsafe_allow_html=True)
 
+    # Key statistics
+    kb = st.session_state.kb
+    stats = kb.get_statistics()
+
+    col_stat1, col_stat2, col_stat3, col_stat4 = st.columns(4)
+    with col_stat1:
+        st.metric("💬 Conversations", stats['total_messages'])
+    with col_stat2:
+        st.metric("💊 Drug Analyses", stats['total_drug_analyses'])
+    with col_stat3:
+        st.metric("🔧 AI Tool Calls", stats['total_tool_calls'])
+    with col_stat4:
+        st.metric("📁 Active Sessions", stats['total_sessions'])
+
     st.markdown("---")
 
     # Feature highlights
@@ -396,6 +410,48 @@ if st.session_state.view_mode == "home":
             </p>
         </div>
         """, unsafe_allow_html=True)
+
+    st.markdown("---")
+
+    # System capabilities
+    st.markdown("## 🎯 Key Capabilities")
+
+    col_cap1, col_cap2 = st.columns(2)
+
+    with col_cap1:
+        st.markdown("""
+        ### 🤖 Agentic AI System
+        - **Real-time Reasoning Display**: Transparent AI thinking process inspired by AstraZeneca's ChatInvent
+        - **Tool-Use Loop**: Autonomous tool selection, execution, and result analysis
+        - **Multi-Turn Dialogue**: Continuous conversation with context retention
+        - **User Feedback**: Like/dislike buttons for quality monitoring
+        """)
+
+        st.markdown("""
+        ### 📊 Data Management
+        - **Persistent Knowledge Base**: SQLite database storing all interactions
+        - **Training Data Export**: JSON export for model fine-tuning
+        - **Session History**: Multi-session management with quick switching
+        - **Analysis Archive**: Complete record of drug analyses and tool calls
+        """)
+
+    with col_cap2:
+        st.markdown("""
+        ### 🔬 Research Workflow
+        1. **Query**: Ask in natural language (English or Chinese)
+        2. **Analysis**: AI autonomously calls relevant tools
+        3. **Synthesis**: Evidence-based recommendations generated
+        4. **Iteration**: Refine through follow-up questions
+        """)
+
+        st.markdown("""
+        ### 💊 Use Cases
+        - **BCS Classification**: Automated assessment from SMILES
+        - **Formulation Strategy**: Data-driven strategy recommendation
+        - **Property Prediction**: LogP, LogS, solubility, permeability
+        - **Stability Analysis**: pH-dependent and thermal stability
+        - **Literature-Backed**: All predictions grounded in validated models
+        """)
 
     st.markdown("---")
 
@@ -447,6 +503,64 @@ if st.session_state.view_mode == "home":
         st.markdown("")
         if st.button("🔗 Visit FormulationAI Platform", use_container_width=True):
             st.markdown("[FormulationAI](https://formulationai.computpharm.org/)")
+
+    st.markdown("---")
+
+    # Technical architecture
+    st.markdown("## 🏗️ System Architecture")
+
+    col_arch1, col_arch2, col_arch3 = st.columns(3)
+
+    with col_arch1:
+        st.markdown("""
+        **🧠 LLM Layer**
+        - Multi-provider support (Claude, GPT-4o, MiniMax)
+        - Tool-use loop with result feedback
+        - Conversation memory management
+        """)
+
+    with col_arch2:
+        st.markdown("""
+        **🔧 Tool Layer**
+        - 12 specialized AI modules
+        - REST API integration
+        - Batch processing support
+        """)
+
+    with col_arch3:
+        st.markdown("""
+        **💾 Storage Layer**
+        - SQLite knowledge base
+        - Session state management
+        - Training data export
+        """)
+
+    st.markdown("---")
+
+    # Publications and references
+    st.markdown("## 📚 Scientific Foundation")
+
+    col_pub1, col_pub2 = st.columns(2)
+
+    with col_pub1:
+        st.markdown("""
+        ### Inspired by Industry Research
+        **ChatInvent** (AstraZeneca, 2026)
+        - Published in *Drug Discovery Today*
+        - Multi-agent architecture for drug discovery
+        - Real-time reasoning transparency
+        - User feedback mechanism for continuous improvement
+        """)
+
+    with col_pub2:
+        st.markdown("""
+        ### Built on Validated Models
+        **PreformulationAI & FormulationAI**
+        - Machine learning models trained on experimental data
+        - BCS classification accuracy: >85%
+        - Formulation strategy prediction validated by literature
+        - Continuous model updates from user interactions
+        """)
 
     st.markdown("---")
 
