@@ -460,10 +460,30 @@ elif st.session_state.view_mode == "workspace":
             with st.chat_message("assistant"):
                 with st.spinner("🧠 分析中..."):
                     try:
-                        resp, _, _, _ = st.session_state.llm_manager.generate_response(
+                        resp, tool_calls, _, _ = st.session_state.llm_manager.generate_response(
                             user_query=query,
                             model=DEFAULT_MODEL
                         )
+
+                        # Execute tool calls if any
+                        if tool_calls:
+                            st.info(f"🔧 调用 {len(tool_calls)} 个工具...")
+
+                            for tool_call in tool_calls:
+                                tool_name = tool_call["name"]
+                                tool_input = tool_call["input"]
+
+                                with st.expander(f"调用工具: {tool_name}"):
+                                    st.json(tool_input)
+
+                                    # Execute tool
+                                    result = st.session_state.llm_manager.execute_tool_call(
+                                        tool_name, tool_input
+                                    )
+                                    st.json(result)
+
+                            st.success("✅ 工具调用完成")
+
                         display = re.sub(r'<think>.*?</think>', '', resp, flags=re.DOTALL).strip()
                         st.markdown(display)
                         memory.add_message("assistant", resp)
