@@ -60,6 +60,13 @@ class ConversationMemory:
                 # This is a duplicate, skip adding
                 return
 
+        # Also check the second-to-last message (in case there was an intervening message)
+        if len(self.messages) >= 2:
+            second_last = self.messages[-2]
+            if second_last.role == role and second_last.content == content:
+                # This is also a duplicate, skip
+                return
+
         msg = Message(
             role=role,
             content=content,

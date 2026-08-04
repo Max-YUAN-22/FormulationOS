@@ -573,11 +573,16 @@ elif st.session_state.view_mode == "workspace":
 
             # Display message content
             content = re.sub(r'<think>.*?</think>', '', msg.content, flags=re.DOTALL).strip()
-            if content:  # Only display if there's actual content
+
+            # Only display assistant messages with actual content
+            if msg.role == "assistant" and not content:
+                continue  # Skip empty assistant messages entirely
+
+            if content:
                 st.markdown(content)
 
-            # Add feedback buttons for assistant messages
-            if msg.role == "assistant":
+            # Add feedback buttons ONLY for assistant messages with content
+            if msg.role == "assistant" and content:
                 add_feedback_buttons(message_id)
 
     # Chat input
