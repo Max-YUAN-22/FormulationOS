@@ -472,7 +472,7 @@ elif st.session_state.view_mode == "workspace":
     st.subheader("💬 AI Scientist Chat")
     st.caption("Natural language interface for drug formulation research")
 
-    # Quick start examples
+    # Quick start examples (only show when no messages)
     if len(memory.messages) == 0:
         st.info("💡 **Quick Start** - Choose an example or describe your research goal")
 
@@ -486,49 +486,33 @@ elif st.session_state.view_mode == "workspace":
 
         for col_name, (button_text, query) in example_queries.items():
             with locals()[col_name]:
-                if st.button(button_text, use_container_width=True):
-                    st.session_state.quick_start_query = query
+                if st.button(button_text, use_container_width=True, key=f"quickstart_{col_name}"):
+                    # Directly process the query without intermediate rerun
+                    try:
+                        with st.spinner("🧠 Analyzing..."):
+                            resp, tool_calls, _, _ = st.session_state.llm_manager.generate_with_tools_loop(
+                                user_query=query,
+                                model=DEFAULT_MODEL,
+                                max_iterations=5
+                            )
+
+                        # Save to memory
+                        memory.add_message("user", query)
+                        memory.add_message("assistant", resp)
+
+                        # Store tool calls
+                        if tool_calls:
+                            session = get_session()
+                            if "tool_calls" not in session:
+                                session["tool_calls"] = {}
+                            session["tool_calls"][len(memory.messages) - 1] = tool_calls
+
+                    except Exception as e:
+                        memory.add_message("user", query)
+                        memory.add_message("assistant", f"Error: {str(e)}")
+
+                    # Single rerun to display the saved messages
                     st.rerun()
-
-    # Handle quick start
-    if "quick_start_query" in st.session_state and st.session_state.quick_start_query:
-        query = st.session_state.quick_start_query
-        st.session_state.quick_start_query = None
-
-        # Check if this query was already processed
-        last_user_msg = None
-        for msg in reversed(memory.messages):
-            if msg.role == "user":
-                last_user_msg = msg.content
-                break
-
-        # Only process if this is a new query
-        if last_user_msg != query:
-            try:
-                with st.spinner("🧠 Analyzing..."):
-                    resp, tool_calls, _, _ = st.session_state.llm_manager.generate_with_tools_loop(
-                        user_query=query,
-                        model=DEFAULT_MODEL,
-                        max_iterations=5
-                    )
-
-                # Save messages
-                memory.add_message("user", query)
-                memory.add_message("assistant", resp)
-
-                # Store tool calls with the assistant message index
-                if tool_calls:
-                    session = get_session()
-                    if "tool_calls" not in session:
-                        session["tool_calls"] = {}
-                    # Assistant message is always at len(messages) - 1 after we just added it
-                    session["tool_calls"][len(memory.messages) - 1] = tool_calls
-
-            except Exception as e:
-                memory.add_message("user", query)
-                memory.add_message("assistant", f"Error: {str(e)}")
-
-        st.rerun()
 
     # Display conversation history
     session = get_session()
