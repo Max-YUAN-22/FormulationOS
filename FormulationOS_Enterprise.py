@@ -1006,34 +1006,112 @@ elif st.session_state.view_mode == "workspace":
             demo_query = st.session_state.demo_query
             st.session_state.demo_query = None  # Clear after use
 
-            # Extract drug name from query
-            drug_name = None
-            if "Ibuprofen" in demo_query:
-                drug_name = "Ibuprofen"
-            elif "Paclitaxel" in demo_query:
-                drug_name = "Paclitaxel"
-            elif "Celecoxib" in demo_query:
-                drug_name = "Celecoxib"
-            elif "Aspirin" in demo_query:
-                drug_name = "Aspirin"
+            # Demo cases with pre-written content
+            demo_cases = {
+                "Ibuprofen": {
+                    "user_query": "帮我分析Ibuprofen（布洛芬）的制剂挑战，SMILES: CC(C)Cc1ccc(cc1)C(C)C(=O)O，我想改善其口服生物利用度",
+                    "ai_response": """# Ibuprofen 制剂分析
 
-            if drug_name:
-                # Fetch from knowledge base
-                kb = st.session_state.kb
-                training_data = kb.get_training_dataset(limit=50)
+## 分子性质
+- **分子量**: 206.28 Da ✓
+- **LogP**: 3.97 (高脂溶性)
+- **pKa**: 4.91 (弱酸性)
+- **BCS分类**: **BCS II** (低溶解度/高渗透性)
 
-                # Find matching drug
-                demo_case = None
-                for example in training_data:
-                    if example['drug_name'] == drug_name:
-                        demo_case = example
-                        break
+## 制剂挑战
+1. **溶解度限制**: 在胃液中溶解度较低
+2. **pH依赖性**: 在小肠环境中溶解度显著提高
+3. **生物利用度**: 传统片剂生物利用度约80-90%
 
-                if demo_case:
-                    # Add to current session memory
-                    memory.add_message("user", demo_case['user_query'])
-                    memory.add_message("assistant", demo_case['ai_response'])
-                    st.rerun()
+## 推荐策略
+### 1. 固体分散体 (ASD)
+- 聚合物: PVP K30 或 HPMC
+- 药物负载: 20-40%
+- 工艺: 热熔挤出或喷雾干燥
+- **优势**: 成本较低，工艺成熟
+
+### 2. 纳米晶体
+- 粒径: 200-400 nm
+- 稳定剂: Poloxamer 188
+- **优势**: 保持结晶形式，物理稳定性好
+
+## 商业化产品参考
+- **Advil Liqui-Gels**: 液体填充胶囊
+- **Nurofen Rapid**: 速释制剂
+"""
+                },
+                "Paclitaxel": {
+                    "user_query": "分析Paclitaxel的制剂挑战，SMILES: CC1=C2C(C(=O)C3(C(CC4C(C3C(C(C2(C)C)(CC1OC(=O)C(C(C5=CC=CC=C5)NC(=O)C6=CC=CC=C6)O)O)OC(=O)C7=CC=CC=C7)(CO4)OC(=O)C)O)C)OC(=O)C",
+                    "ai_response": """# Paclitaxel 制剂分析
+
+## 分子性质
+- **分子量**: 853.91 Da (大分子)
+- **LogP**: 3.0
+- **溶解度**: 极低 (<0.01 mg/mL)
+- **BCS分类**: **BCS IV** (低溶解度/低渗透性)
+
+## 严峻挑战
+1. **极低溶解度**: 几乎不溶于水
+2. **大分子量**: 影响膜渗透
+3. **毒性溶剂**: 传统制剂使用Cremophor EL
+
+## 推荐策略
+### 1. 脂质体 (首选)
+- **Abraxane**: 白蛋白结合型纳米粒
+- 粒径: 130 nm
+- **优势**: 已上市，避免过敏反应
+
+### 2. 聚合物胶束
+- 载体: mPEG-PLGA
+- 药物负载: 5-10%
+- **优势**: EPR效应，肿瘤靶向
+
+### 3. SEDDS
+- 油相: Labrafil M2125CS
+- 表面活性剂: Cremophor RH40
+- **挑战**: 药物负载低
+"""
+                },
+                "Celecoxib": {
+                    "user_query": "分析Celecoxib的制剂策略，SMILES: CC1=CC=C(C=C1)C2=CC(=NN2C3=CC=C(C=C3)S(=O)(=O)N)C(F)(F)F",
+                    "ai_response": """# Celecoxib 制剂分析
+
+## 分子性质
+- **分子量**: 381.37 Da
+- **LogP**: 3.5
+- **溶解度**: 7 μg/mL (极低)
+- **BCS分类**: **BCS II** (低溶解度/高渗透性)
+
+## 制剂挑战
+- 溶解度是主要限速步骤
+- 疏水性强
+
+## 成熟商业策略
+### 1. PVP固体分散体 (Celebrex)
+- 聚合物: PVP K30
+- 比例: 1:1 (药物:聚合物)
+- 工艺: 喷雾干燥
+- **成果**: 生物利用度提高300%
+
+### 2. 纳米晶体悬浮液
+- 粒径: 200-300 nm
+- 稳定剂: HPMC + SDS
+- **优势**: 快速起效
+
+## 文献支持
+✓ 固体分散体技术已验证
+✓ FDA批准制剂
+✓ 工业化生产成熟
+"""
+                }
+            }
+
+            # Load demo case
+            if demo_query in demo_cases:
+                demo_case = demo_cases[demo_query]
+                memory.add_message("user", demo_case['user_query'])
+                memory.add_message("assistant", demo_case['ai_response'])
+                st.rerun()
 
         # Quick start examples (only show when no messages)
         if len(memory.messages) == 0:
