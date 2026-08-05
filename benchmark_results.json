@@ -1,0 +1,347 @@
+{
+  "summary": {
+    "LLM-only": {
+      "top1_agreement": 0.1875,
+      "context_violation_avoided": 0.875,
+      "evidence_grounding": 0.3,
+      "uncertainty_acknowledgment": 0.0,
+      "validation_plan": 0.0
+    },
+    "Mechanism-only": {
+      "top1_agreement": 0.1875,
+      "context_violation_avoided": 0.75,
+      "evidence_grounding": 0.3,
+      "uncertainty_acknowledgment": 0.0,
+      "validation_plan": 0.0
+    },
+    "FormulationOS": {
+      "top1_agreement": 0.5625,
+      "context_violation_avoided": 0.875,
+      "evidence_grounding": 1.0,
+      "uncertainty_acknowledgment": 1.0,
+      "validation_plan": 1.0
+    }
+  },
+  "detailed_results": [
+    {
+      "drug_name": "Ibuprofen",
+      "expected_strategy": "Solid dispersion",
+      "mechanism_trap": "Cyclodextrin complexation",
+      "recommendations": {
+        "LLM-only": {
+          "strategy": "Cyclodextrin complexation",
+          "confidence": 0.85,
+          "scores": {
+            "top1_agreement": 0.0,
+            "context_violation_avoided": 0.0,
+            "evidence_grounding": 0.3,
+            "uncertainty_acknowledgment": 0.0,
+            "validation_plan": 0.0
+          }
+        },
+        "Mechanism-only": {
+          "strategy": "Cyclodextrin complexation",
+          "confidence": 0.85,
+          "scores": {
+            "top1_agreement": 0.0,
+            "context_violation_avoided": 0.0,
+            "evidence_grounding": 0.3,
+            "uncertainty_acknowledgment": 0.0,
+            "validation_plan": 0.0
+          }
+        },
+        "FormulationOS": {
+          "strategy": "Amorphous Solid Dispersion",
+          "confidence": 0.765,
+          "scores": {
+            "top1_agreement": 1.0,
+            "context_violation_avoided": 1.0,
+            "evidence_grounding": 1.0,
+            "uncertainty_acknowledgment": 1.0,
+            "validation_plan": 1.0
+          }
+        }
+      }
+    },
+    {
+      "drug_name": "Carbamazepine",
+      "expected_strategy": "Solid dispersion",
+      "mechanism_trap": null,
+      "recommendations": {
+        "LLM-only": {
+          "strategy": "Cyclodextrin complexation",
+          "confidence": 0.85,
+          "scores": {
+            "top1_agreement": 0.5,
+            "context_violation_avoided": 1.0,
+            "evidence_grounding": 0.3,
+            "uncertainty_acknowledgment": 0.0,
+            "validation_plan": 0.0
+          }
+        },
+        "Mechanism-only": {
+          "strategy": "Cyclodextrin complexation",
+          "confidence": 0.85,
+          "scores": {
+            "top1_agreement": 0.5,
+            "context_violation_avoided": 1.0,
+            "evidence_grounding": 0.3,
+            "uncertainty_acknowledgment": 0.0,
+            "validation_plan": 0.0
+          }
+        },
+        "FormulationOS": {
+          "strategy": "Cyclodextrin Complex",
+          "confidence": 0.8,
+          "scores": {
+            "top1_agreement": 0.5,
+            "context_violation_avoided": 1.0,
+            "evidence_grounding": 1.0,
+            "uncertainty_acknowledgment": 1.0,
+            "validation_plan": 1.0
+          }
+        }
+      }
+    },
+    {
+      "drug_name": "Ritonavir",
+      "expected_strategy": "Lipid-based formulation",
+      "mechanism_trap": "Cyclodextrin",
+      "recommendations": {
+        "LLM-only": {
+          "strategy": "Self-emulsifying drug delivery system",
+          "confidence": 0.82,
+          "scores": {
+            "top1_agreement": 0.0,
+            "context_violation_avoided": 1.0,
+            "evidence_grounding": 0.3,
+            "uncertainty_acknowledgment": 0.0,
+            "validation_plan": 0.0
+          }
+        },
+        "Mechanism-only": {
+          "strategy": "Self-emulsifying",
+          "confidence": 0.82,
+          "scores": {
+            "top1_agreement": 0.0,
+            "context_violation_avoided": 1.0,
+            "evidence_grounding": 0.3,
+            "uncertainty_acknowledgment": 0.0,
+            "validation_plan": 0.0
+          }
+        },
+        "FormulationOS": {
+          "strategy": "Nanocrystal",
+          "confidence": 0.765,
+          "scores": {
+            "top1_agreement": 0.0,
+            "context_violation_avoided": 1.0,
+            "evidence_grounding": 1.0,
+            "uncertainty_acknowledgment": 1.0,
+            "validation_plan": 1.0
+          }
+        }
+      }
+    },
+    {
+      "drug_name": "Paclitaxel",
+      "expected_strategy": "Nanocrystal",
+      "mechanism_trap": "Cyclodextrin",
+      "recommendations": {
+        "LLM-only": {
+          "strategy": "Nanocrystal",
+          "confidence": 0.75,
+          "scores": {
+            "top1_agreement": 1.0,
+            "context_violation_avoided": 1.0,
+            "evidence_grounding": 0.3,
+            "uncertainty_acknowledgment": 0.0,
+            "validation_plan": 0.0
+          }
+        },
+        "Mechanism-only": {
+          "strategy": "Nanocrystal",
+          "confidence": 0.75,
+          "scores": {
+            "top1_agreement": 1.0,
+            "context_violation_avoided": 1.0,
+            "evidence_grounding": 0.3,
+            "uncertainty_acknowledgment": 0.0,
+            "validation_plan": 0.0
+          }
+        },
+        "FormulationOS": {
+          "strategy": "Nanocrystal",
+          "confidence": 0.765,
+          "scores": {
+            "top1_agreement": 1.0,
+            "context_violation_avoided": 1.0,
+            "evidence_grounding": 1.0,
+            "uncertainty_acknowledgment": 1.0,
+            "validation_plan": 1.0
+          }
+        }
+      }
+    },
+    {
+      "drug_name": "Celecoxib",
+      "expected_strategy": "Solid dispersion",
+      "mechanism_trap": null,
+      "recommendations": {
+        "LLM-only": {
+          "strategy": "Cyclodextrin complexation",
+          "confidence": 0.85,
+          "scores": {
+            "top1_agreement": 0.0,
+            "context_violation_avoided": 1.0,
+            "evidence_grounding": 0.3,
+            "uncertainty_acknowledgment": 0.0,
+            "validation_plan": 0.0
+          }
+        },
+        "Mechanism-only": {
+          "strategy": "Cyclodextrin complexation",
+          "confidence": 0.85,
+          "scores": {
+            "top1_agreement": 0.0,
+            "context_violation_avoided": 1.0,
+            "evidence_grounding": 0.3,
+            "uncertainty_acknowledgment": 0.0,
+            "validation_plan": 0.0
+          }
+        },
+        "FormulationOS": {
+          "strategy": "Amorphous Solid Dispersion",
+          "confidence": 0.765,
+          "scores": {
+            "top1_agreement": 1.0,
+            "context_violation_avoided": 1.0,
+            "evidence_grounding": 1.0,
+            "uncertainty_acknowledgment": 1.0,
+            "validation_plan": 1.0
+          }
+        }
+      }
+    },
+    {
+      "drug_name": "Fenofibrate",
+      "expected_strategy": "Nanocrystal",
+      "mechanism_trap": null,
+      "recommendations": {
+        "LLM-only": {
+          "strategy": "Cyclodextrin complexation",
+          "confidence": 0.85,
+          "scores": {
+            "top1_agreement": 0.0,
+            "context_violation_avoided": 1.0,
+            "evidence_grounding": 0.3,
+            "uncertainty_acknowledgment": 0.0,
+            "validation_plan": 0.0
+          }
+        },
+        "Mechanism-only": {
+          "strategy": "Cyclodextrin complexation",
+          "confidence": 0.85,
+          "scores": {
+            "top1_agreement": 0.0,
+            "context_violation_avoided": 1.0,
+            "evidence_grounding": 0.3,
+            "uncertainty_acknowledgment": 0.0,
+            "validation_plan": 0.0
+          }
+        },
+        "FormulationOS": {
+          "strategy": "Amorphous Solid Dispersion",
+          "confidence": 0.765,
+          "scores": {
+            "top1_agreement": 0.5,
+            "context_violation_avoided": 1.0,
+            "evidence_grounding": 1.0,
+            "uncertainty_acknowledgment": 1.0,
+            "validation_plan": 1.0
+          }
+        }
+      }
+    },
+    {
+      "drug_name": "Griseofulvin",
+      "expected_strategy": "Nanocrystal",
+      "mechanism_trap": "Solid dispersion",
+      "recommendations": {
+        "LLM-only": {
+          "strategy": "Cyclodextrin complexation",
+          "confidence": 0.85,
+          "scores": {
+            "top1_agreement": 0.0,
+            "context_violation_avoided": 1.0,
+            "evidence_grounding": 0.3,
+            "uncertainty_acknowledgment": 0.0,
+            "validation_plan": 0.0
+          }
+        },
+        "Mechanism-only": {
+          "strategy": "Cyclodextrin complexation",
+          "confidence": 0.85,
+          "scores": {
+            "top1_agreement": 0.0,
+            "context_violation_avoided": 1.0,
+            "evidence_grounding": 0.3,
+            "uncertainty_acknowledgment": 0.0,
+            "validation_plan": 0.0
+          }
+        },
+        "FormulationOS": {
+          "strategy": "Amorphous Solid Dispersion",
+          "confidence": 0.765,
+          "scores": {
+            "top1_agreement": 0.5,
+            "context_violation_avoided": 0.0,
+            "evidence_grounding": 1.0,
+            "uncertainty_acknowledgment": 1.0,
+            "validation_plan": 1.0
+          }
+        }
+      }
+    },
+    {
+      "drug_name": "Cyclosporine",
+      "expected_strategy": "Self-emulsifying",
+      "mechanism_trap": "Solid dispersion",
+      "recommendations": {
+        "LLM-only": {
+          "strategy": "Nanocrystal",
+          "confidence": 0.75,
+          "scores": {
+            "top1_agreement": 0.0,
+            "context_violation_avoided": 1.0,
+            "evidence_grounding": 0.3,
+            "uncertainty_acknowledgment": 0.0,
+            "validation_plan": 0.0
+          }
+        },
+        "Mechanism-only": {
+          "strategy": "Solid dispersion",
+          "confidence": 0.8,
+          "scores": {
+            "top1_agreement": 0.0,
+            "context_violation_avoided": 0.0,
+            "evidence_grounding": 0.3,
+            "uncertainty_acknowledgment": 0.0,
+            "validation_plan": 0.0
+          }
+        },
+        "FormulationOS": {
+          "strategy": "Nanocrystal",
+          "confidence": 0.765,
+          "scores": {
+            "top1_agreement": 0.0,
+            "context_violation_avoided": 1.0,
+            "evidence_grounding": 1.0,
+            "uncertainty_acknowledgment": 1.0,
+            "validation_plan": 1.0
+          }
+        }
+      }
+    }
+  ]
+}
