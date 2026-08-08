@@ -1,7 +1,9 @@
-# Formulation DT Assets
+# Formulation DT Assets (FormulationAI 2.0)
 
 This directory contains runtime assets for the Formulation DT module.
 These files are **not tracked by git** and must be placed manually.
+
+**Version**: FormulationAI 2.0 - Second generation formulation decision tree models
 
 ## Required Files
 
@@ -26,3 +28,10 @@ These files are **not tracked by git** and must be placed manually.
 
 > These models were trained with scikit-learn 1.2.2. runner-dt uses `scikit-learn==1.2.2`
 > and a `sys.modules` shim to load legacy pickle files.
+
+## FormulationAI 2.0 Improvements
+
+- Enhanced training dataset with more diverse formulation examples
+- Improved multi-level decision architecture
+- Better handling of BCS Class II/IV compounds
+- More accurate polymer and excipient selection

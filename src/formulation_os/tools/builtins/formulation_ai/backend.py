@@ -1,7 +1,13 @@
-"""Real backend for FormulationAI using local Decision Tree models.
+"""Real backend for FormulationAI 2.0 using local Decision Tree models.
 
 Uses 12 sklearn RandomForest models from assets/formulation_dt/models/
 to predict optimal formulation strategies for oral and injectable routes.
+
+FormulationAI 2.0 features:
+- Enhanced training dataset with diverse formulation examples
+- Improved multi-level decision architecture (input layer → output layer)
+- Better accuracy for BCS Class II/IV compounds
+- More precise polymer and excipient recommendations
 """
 
 from __future__ import annotations

@@ -56,11 +56,16 @@
 
 ---
 
-## 🧪 FormulationAI 模型 (57 MB)
+## 🧪 FormulationAI 2.0 模型 (57 MB)
 
-### Formulation Decision Tree 模型
+### Formulation Decision Tree 模型（第二代）
 
 位置: `assets/formulation_dt/models/`
+
+**版本说明**: FormulationAI 2.0 是最新一代的制剂设计决策树系统，相比1.0版本：
+- 扩展了训练数据集
+- 改进了多层级决策架构
+- 提升了BCS分类相关的策略推荐准确率
 
 | 模型文件 | 大小 | 功能说明 |
 |---------|------|----------|
@@ -190,9 +195,10 @@ with open("assets/solid_dispersion/models/lgb_best_params.json", "r") as f:
 - **溶解度预测**: R² > 0.75
 - **成药性分类**: AUC > 0.90
 
-### FormulationAI
+### FormulationAI 2.0
 - **策略推荐准确率**: 78% (top-1), 92% (top-3)
 - **BCS分类准确率**: 85%
+- **版本**: 第二代模型，相比1.0版本改进了决策架构和训练数据
 
 ### Solid Dispersion
 - **溶解度提升预测**: R² = 0.82

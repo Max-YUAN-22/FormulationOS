@@ -1,7 +1,10 @@
-"""Local model loader for FormulationAI Decision Tree models.
+"""Local model loader for FormulationAI 2.0 Decision Tree models.
 
 Loads the 12 sklearn RandomForest models from assets/formulation_dt/models/
 These are Python 2 pickle files that need encoding="latin1" to load.
+
+FormulationAI 2.0 is the second generation of the formulation decision tree system,
+featuring improved training data and enhanced multi-level decision architecture.
 """
 
 from __future__ import annotations
