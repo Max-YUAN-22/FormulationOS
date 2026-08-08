@@ -18,6 +18,7 @@ torch>=1.12.0
 scikit-learn>=1.0.0
 lightgbm>=3.3.0
 joblib>=1.2.0
+chemprop>=2.0.0
 
 # Visualization
 matplotlib>=3.7.0
@@ -35,6 +36,3 @@ toml>=0.10.2
 
 # Utilities
 python-dateutil>=2.8.0
-
-# Database
-sqlite3  # Built-in with Python
