@@ -1,0 +1,11 @@
+{
+    "n_estimators": 205.70548790045046,
+    "learning_rate": 0.1,
+    "num_leaves": 38.491960719345336,
+    "subsample": 1.0,
+    "subsample_freq": 3.6779570695808217,
+    "colsample_bytree": 1.0,
+    "colsample_bynode": 1.0,
+    "reg_alpha": 1.6169275404040322,
+    "reg_lambda": 1.7314928196517914
+}
