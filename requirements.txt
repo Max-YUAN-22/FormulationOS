@@ -13,12 +13,19 @@ httpx>=0.25.0
 pandas>=2.0.0
 numpy>=1.24.0
 
+# Machine Learning Models
+torch>=1.12.0
+scikit-learn>=1.0.0
+lightgbm>=3.3.0
+joblib>=1.2.0
+
 # Visualization
 matplotlib>=3.7.0
 plotly>=5.14.0
 
-# Chemistry (optional, for molecule visualization)
-# rdkit-pypi>=2023.9.0
+# Chemistry
+rdkit>=2022.03.0
+py3Dmol>=2.0.0
 
 # HTTP & API
 requests>=2.31.0
@@ -28,3 +35,6 @@ toml>=0.10.2
 
 # Utilities
 python-dateutil>=2.8.0
+
+# Database
+sqlite3  # Built-in with Python
