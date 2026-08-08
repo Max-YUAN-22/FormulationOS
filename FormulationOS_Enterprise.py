@@ -40,6 +40,18 @@ from formulation_os.tools.visualization_tools import (
     visualize_molecule_2d
 )
 from formulation_os.tools.auto_visualization import generate_visualizations_from_response
+from formulation_os.ui.model_visualization import (
+    display_pytorch_predictions,
+    display_preformulation_results,
+    display_formulation_strategy,
+    display_model_selection_logic
+)
+from formulation_os.ui.knowledge_visualization import (
+    display_literature_search_results,
+    display_drug_database_query,
+    display_knowledge_source_badge,
+    display_knowledge_search_status
+)
 
 # Configuration
 def get_config(key: str, default: str = "") -> str:
@@ -1322,9 +1334,13 @@ FormulationOS 需要配置 LLM API Key 才能正常工作。
                     if analysis_mode == "fast":
                         # Step 1: Search literature for context (if formulation-related)
                         literature_context = []
+                        drug_database_results = []
+                        knowledge_sources_used = []
+
+                        # 📚 Literature Search
                         if any(keyword in prompt.lower() for keyword in ['formulation', 'solubility', 'bioavailability', 'bcs', 'strategy', 'drug', 'pharmaceutical']):
                             with reasoning_placeholder.container():
-                                st.markdown("🧠 **Searching literature...**")
+                                display_knowledge_search_status(True, "Searching PubMed literature...")
 
                             try:
                                 from src.formulation_os.knowledge.pubmed_search import PubMedSearchEngine
@@ -1332,14 +1348,51 @@ FormulationOS 需要配置 LLM API Key 才能正常工作。
 
                                 # Quick search for relevant papers
                                 search_query = prompt[:100]  # Truncate long queries
-                                papers = pubmed.search_literature(search_query, max_results=3)
+                                papers = pubmed.search_literature(search_query, max_results=5)
                                 literature_context = papers
 
                                 if papers:
+                                    knowledge_sources_used.append('PubMed')
                                     with reasoning_placeholder.container():
-                                        st.markdown(f"🧠 **Found {len(papers)} relevant papers...**")
-                            except:
+                                        st.markdown(f"🧠 **Found {len(papers)} relevant papers from PubMed**")
+                            except Exception as e:
                                 pass  # Continue without literature if search fails
+
+                        # 💊 Drug Database Search (if drug name detected)
+                        # Detect common drug names or queries like "analyze [Drug]"
+                        drug_name_patterns = [
+                            r'analyze\s+(\w+)',
+                            r'drug[:\s]+(\w+)',
+                            r'molecule[:\s]+(\w+)',
+                            r'分析\s*(\w+)',
+                            r'药物[：:\s]*(\w+)'
+                        ]
+                        detected_drug = None
+                        for pattern in drug_name_patterns:
+                            match = re.search(pattern, prompt, re.IGNORECASE)
+                            if match:
+                                detected_drug = match.group(1)
+                                break
+
+                        if detected_drug:
+                            try:
+                                from src.formulation_os.knowledge.drug_search import DrugSearchEngine
+                                drug_engine = DrugSearchEngine()
+                                drug_data = drug_engine.search_drug(detected_drug)
+
+                                if drug_data:
+                                    drug_database_results.append({
+                                        'name': detected_drug,
+                                        'data': drug_data
+                                    })
+                                    source = drug_data.get('source', 'Database')
+                                    if source not in knowledge_sources_used:
+                                        knowledge_sources_used.append(source)
+
+                                    with reasoning_placeholder.container():
+                                        st.markdown(f"🧠 **Found {detected_drug} in {source}**")
+                            except Exception as e:
+                                pass  # Continue without drug data if search fails
 
                         # Step 2: Generate response with tool calls
                         resp, tool_calls, _, _ = st.session_state.llm_manager.generate_with_tools_loop(
@@ -1347,17 +1400,6 @@ FormulationOS 需要配置 LLM API Key 才能正常工作。
                             model=DEFAULT_MODEL,
                             max_iterations=5
                         )
-
-                        # Step 3: Enhance response with literature citations if available
-                        if literature_context:
-                            # Build citation context
-                            citation_text = "\n\n---\n\n### 📚 Literature References\n\n"
-                            for i, paper in enumerate(literature_context, 1):
-                                citation_text += f"[{i}] {paper['authors_full']}. *{paper['title']}*. "
-                                citation_text += f"{paper['journal']} ({paper['year']}). "
-                                citation_text += f"[PMID: {paper['pmid']}]({paper['pubmed_url']})\n\n"
-
-                            resp = resp + citation_text
                     else:
                         # Deep Analysis Mode: Multi-agent workflow
                         with reasoning_placeholder.container():
@@ -1444,6 +1486,110 @@ return synthesis;
                     content = re.sub(r'<think>.*?</think>', '', resp, flags=re.DOTALL).strip()
                     if content:
                         response_placeholder.markdown(content)
+
+                    # 🎯 Display AI Model Usage (NEW - Making AI transparent!)
+                    if tool_calls:
+                        st.markdown("---")
+
+                        # Extract tool names to detect which models were used
+                        tool_names = [tc.get("name", "") for tc in tool_calls]
+
+                        # Check for PreFormulationAI usage
+                        preformulation_tools = [
+                            "predict_druglikeness",
+                            "predict_oral_bioavailability",
+                            "predict_injectable_suitability"
+                        ]
+                        used_preformulation = any(tool in tool_names for tool in preformulation_tools)
+
+                        # Check for FormulationAI 2.0 usage
+                        formulation_tools = [
+                            "recommend_formulation_strategy",
+                            "search_formulation_database"
+                        ]
+                        used_formulation = any(tool in tool_names for tool in formulation_tools)
+
+                        # Check for PyTorch predictions (via feature extraction)
+                        pytorch_tools = [
+                            "extract_molecular_features",
+                            "predict_property"
+                        ]
+                        used_pytorch = any(tool in tool_names for tool in pytorch_tools)
+
+                        # Display PyTorch predictions if SMILES detected
+                        smiles_match = re.search(r'SMILES[：:是]?\s*[\'"]?([A-Za-z0-9@+\-\[\]()=#$]+)[\'"]?', prompt, re.IGNORECASE)
+                        if smiles_match and (used_preformulation or used_pytorch):
+                            smiles = smiles_match.group(1)
+                            try:
+                                # Extract PyTorch predictions to display
+                                from src.formulation_os.tools.builtins.preformulation_ai.pytorch_predictor import (
+                                    predict_density, predict_melting_point, predict_glass_transition,
+                                    predict_logp, predict_logd, predict_pka_acidic, predict_pka_basic,
+                                    predict_aqueous_solubility, predict_permeability, predict_kinetic_solubility
+                                )
+
+                                pytorch_results = {
+                                    'Density (g/cm³)': predict_density(smiles),
+                                    'Melting Point (°C)': predict_melting_point(smiles),
+                                    'Glass Transition (°C)': predict_glass_transition(smiles),
+                                    'LogP': predict_logp(smiles),
+                                    'LogD (pH 7.4)': predict_logd(smiles),
+                                    'pKa (Acidic)': predict_pka_acidic(smiles),
+                                    'pKa (Basic)': predict_pka_basic(smiles),
+                                    'LogS (Aqueous)': predict_aqueous_solubility(smiles),
+                                    'LogPapp (Permeability)': predict_permeability(smiles),
+                                    'Kinetic Solubility (μM)': predict_kinetic_solubility(smiles)
+                                }
+
+                                display_pytorch_predictions(pytorch_results)
+                            except Exception as e:
+                                st.info(f"💡 PyTorch predictions unavailable: {str(e)}")
+
+                        # Display PreFormulationAI results if used
+                        if used_preformulation:
+                            try:
+                                # Extract results from tool calls
+                                preformulation_results = {}
+                                for tc in tool_calls:
+                                    if tc.get("name") == "predict_druglikeness" and "result" in tc:
+                                        preformulation_results['druglikeness'] = tc["result"]
+                                    elif tc.get("name") == "predict_oral_bioavailability" and "result" in tc:
+                                        preformulation_results['oral'] = tc["result"]
+                                    elif tc.get("name") == "predict_injectable_suitability" and "result" in tc:
+                                        preformulation_results['injectable'] = tc["result"]
+
+                                if preformulation_results:
+                                    display_preformulation_results(preformulation_results)
+                            except Exception as e:
+                                st.info(f"💡 PreFormulationAI visualization unavailable: {str(e)}")
+
+                        # Display FormulationAI 2.0 strategy if used
+                        if used_formulation:
+                            try:
+                                # Extract formulation strategy from tool calls
+                                for tc in tool_calls:
+                                    if tc.get("name") == "recommend_formulation_strategy" and "result" in tc:
+                                        strategy = tc["result"]
+                                        display_formulation_strategy(strategy)
+                                        break
+                            except Exception as e:
+                                st.info(f"💡 FormulationAI 2.0 visualization unavailable: {str(e)}")
+
+                        # Add collapsible explanation of model selection logic
+                        with st.expander("🤖 How does FormulationOS choose which AI models to use?"):
+                            display_model_selection_logic()
+
+                    # 📚 Display Knowledge Base Results (Literature + Drug Database)
+                    if 'literature_context' in locals() and literature_context:
+                        display_literature_search_results(literature_context, prompt)
+
+                    if 'drug_database_results' in locals() and drug_database_results:
+                        for drug_result in drug_database_results:
+                            display_drug_database_query(drug_result['name'], drug_result['data'])
+
+                    # Display knowledge sources badge if any were used
+                    if 'knowledge_sources_used' in locals() and knowledge_sources_used:
+                        display_knowledge_source_badge(knowledge_sources_used)
 
                     # 🧬 Auto-visualize molecule if SMILES detected
                     smiles_match = re.search(r'SMILES[：:是]?\s*[\'"]?([A-Za-z0-9@+\-\[\]()=#$]+)[\'"]?', prompt, re.IGNORECASE)
