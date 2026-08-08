@@ -60,41 +60,24 @@ def _load_pytorch_model(model_name: str) -> Any:
 
 
 def extract_molecular_descriptors(smiles: str) -> np.ndarray:
-    """Extract molecular descriptors from SMILES for model input.
+    """Extract complete 74 molecular features from SMILES.
+
+    Uses the feature_extractor module to get all required features.
 
     Args:
         smiles: SMILES string
 
     Returns:
-        Feature vector as numpy array
+        Feature vector as numpy array (74 features)
     """
     try:
-        from rdkit import Chem
-        from rdkit.Chem import Descriptors, rdMolDescriptors
-    except ImportError:
-        raise ImportError("RDKit not installed. Run: pip install rdkit")
+        from .feature_extractor import extract_74_features
 
-    mol = Chem.MolFromSmiles(smiles)
-    if mol is None:
-        raise ValueError(f"Invalid SMILES: {smiles}")
+        features_df = extract_74_features(smiles)
+        return features_df.values
 
-    # Common descriptors used in PreFormulationAI
-    features = [
-        Descriptors.MolWt(mol),
-        Descriptors.MolLogP(mol),
-        Descriptors.NumHDonors(mol),
-        Descriptors.NumHAcceptors(mol),
-        Descriptors.TPSA(mol),
-        Descriptors.NumRotatableBonds(mol),
-        Descriptors.NumAromaticRings(mol),
-        Descriptors.FractionCSP3(mol),
-        Descriptors.NumAliphaticRings(mol),
-        Descriptors.NumSaturatedRings(mol),
-        rdMolDescriptors.CalcNumHeavyAtoms(mol),
-        Descriptors.RingCount(mol),
-    ]
-
-    return np.array(features)
+    except ImportError as e:
+        raise ImportError(f"Feature extraction failed: {str(e)}")
 
 
 def predict_druglikeness(smiles: str) -> dict[str, Any]:
@@ -107,11 +90,17 @@ def predict_druglikeness(smiles: str) -> dict[str, Any]:
         Dictionary with druglike probability and category
     """
     model = _load_sklearn_model("druglikeness_model_final")
-    features = extract_molecular_descriptors(smiles).reshape(1, -1)
+
+    # Extract all features and select the ones needed for druglikeness model
+    from .feature_extractor import extract_74_features
+    from .feature_selector import add_missing_features
+
+    features_df = extract_74_features(smiles)
+    features_df = add_missing_features(features_df, 'druglikeness')
 
     try:
-        prediction = model.predict(features)[0]
-        proba = model.predict_proba(features)[0]
+        prediction = model.predict(features_df)[0]
+        proba = model.predict_proba(features_df)[0]
 
         return {
             "is_druglike": bool(prediction == 1),
@@ -132,11 +121,17 @@ def predict_oral_bioavailability(smiles: str) -> dict[str, Any]:
         Dictionary with oral feasibility prediction
     """
     model = _load_sklearn_model("oral_model_final")
-    features = extract_molecular_descriptors(smiles).reshape(1, -1)
+
+    # Extract all features and select the 71 needed for oral model
+    from .feature_extractor import extract_74_features
+    from .feature_selector import add_missing_features
+
+    features_df = extract_74_features(smiles)
+    features_df = add_missing_features(features_df, 'oral')
 
     try:
-        prediction = model.predict(features)[0]
-        proba = model.predict_proba(features)[0]
+        prediction = model.predict(features_df)[0]
+        proba = model.predict_proba(features_df)[0]
 
         return {
             "oral_feasible": bool(prediction == 1),
@@ -157,11 +152,17 @@ def predict_injectable_feasibility(smiles: str) -> dict[str, Any]:
         Dictionary with injectable feasibility prediction
     """
     model = _load_sklearn_model("injectable_model_final")
-    features = extract_molecular_descriptors(smiles).reshape(1, -1)
+
+    # Extract all features and select the 66 needed for injectable model
+    from .feature_extractor import extract_74_features
+    from .feature_selector import add_missing_features
+
+    features_df = extract_74_features(smiles)
+    features_df = add_missing_features(features_df, 'injectable')
 
     try:
-        prediction = model.predict(features)[0]
-        proba = model.predict_proba(features)[0]
+        prediction = model.predict(features_df)[0]
+        proba = model.predict_proba(features_df)[0]
 
         return {
             "injectable_feasible": bool(prediction == 1),
