@@ -1,99 +1,130 @@
-"""Drug Database Query Tool - Mock Implementation
+"""Drug Database Query Tool — local-only runtime.
 
-Queries drug databases (DrugBank, ChEMBL, PubChem) for drug information.
+Queries a pre-built, offline drug-intelligence store (SQLite). **No network
+access happens at query time** — live API calls would make the service slow and
+unreliable, so all data is ingested offline by
+``scripts/build_drug_intelligence.py`` and only read from here.
+
+Each category of information keeps its designated primary source + supplements
+(recorded as provenance inside the stored profile):
+
+    identity/physicochemical -> PubChem (primary) + ChEMBL (+ DrugBank, local only)
+    drug_forms               -> ChEMBL (primary) + DrugBank (local only) + CSD*
+    approved_products        -> FDA openFDA + DailyMed (+ EMA*, NMPA/CDE*)
+    patents_exclusivity      -> FDA Orange Book (+ USPTO/EPO/WIPO/CNIPA*)
+
+(* = phase-2, not yet ingested.)
 """
 
 from __future__ import annotations
 
 from typing import Any
 
+from formulation_os.knowledge.local_store import LocalDrugStore
+from formulation_os.knowledge.sources.schema import (
+    ALL_CATEGORIES,
+    CATEGORY_APPROVED,
+    CATEGORY_FORMS,
+    CATEGORY_IDENTITY,
+    CATEGORY_PATENTS,
+    CATEGORY_PHYSCHEM,
+    SCALAR_CATEGORIES,
+)
+
+# Map the tool's query_type values to profile categories.
+_QUERY_MAP = {
+    "identity": [CATEGORY_IDENTITY],
+    "properties": [CATEGORY_IDENTITY, CATEGORY_PHYSCHEM],
+    "physicochemical": [CATEGORY_PHYSCHEM],
+    "forms": [CATEGORY_FORMS],
+    "approved_products": [CATEGORY_APPROVED],
+    "patents": [CATEGORY_PATENTS],
+    "all": ALL_CATEGORIES,
+}
+
+# Legacy query types kept for backwards compatibility (previously mock-only).
+_LEGACY = {"targets", "indications", "interactions"}
+
+_store: LocalDrugStore | None = None
+
+
+def _get_store() -> LocalDrugStore:
+    global _store
+    if _store is None:
+        _store = LocalDrugStore()
+    return _store
+
 
 def run(input_data: dict[str, Any]) -> dict[str, Any]:
-    """Query drug database for drug information.
+    """Query the local drug-intelligence store (offline).
 
     Args:
-        input_data: Expected keys:
-            - drug_name: str - Drug name to query
-            - query_type: str - Type of query (properties, targets, indications, interactions)
+        input_data:
+            - drug_name: str   (required)
+            - query_type: str  identity | properties | physicochemical | forms |
+                               approved_products | patents | all
+                               (default: properties)
 
     Returns:
-        Drug database information
+        Provenance-aware drug intelligence for the requested categories, filtered
+        from the pre-built local profile. Every value carries its source and
+        whether it is experimental / predicted / recorded.
     """
-    drug_name = input_data.get("drug_name", "Unknown Drug")
+    drug_name = input_data.get("drug_name")
     query_type = input_data.get("query_type", "properties")
 
-    # Mock data based on query type
-    if query_type == "properties":
-        return {
-            "drug_name": drug_name,
-            "molecular_formula": "C13H18O2",
-            "molecular_weight": 206.28,
-            "smiles": "CC(C)Cc1ccc(cc1)C(C)C(=O)O",
-            "inchi": "InChI=1S/C13H18O2/c1-9(2)8-11-4-6-12(7-5-11)10(3)13(14)15/h4-7,9-10H,8H2,1-3H3,(H,14,15)",
-            "cas_number": "15687-27-1",
-            "drugbank_id": "DB01050",
-            "chembl_id": "CHEMBL521",
-            "pubchem_cid": "3672",
-            "summary": f"Mock database entry for {drug_name}",
-            "warnings": ["⚠️ MOCK OUTPUT — replace with real DrugBank/ChEMBL API"]
-        }
+    if not drug_name:
+        return {"error": "drug_name is required", "warnings": ["No query target provided."]}
 
-    elif query_type == "targets":
+    if query_type in _LEGACY:
         return {
             "drug_name": drug_name,
-            "targets": [
-                {
-                    "name": "Cyclooxygenase-1",
-                    "gene": "COX1",
-                    "type": "enzyme",
-                    "action": "inhibitor"
-                },
-                {
-                    "name": "Cyclooxygenase-2",
-                    "gene": "COX2",
-                    "type": "enzyme",
-                    "action": "inhibitor"
-                }
+            "query_type": query_type,
+            "results": [],
+            "warnings": [
+                f"'{query_type}' is not served by the drug database "
+                f"(it covers identity/properties/forms/approved_products/patents)."
             ],
-            "summary": f"Mock target information for {drug_name}",
-            "warnings": ["⚠️ MOCK OUTPUT — replace with real target database"]
         }
 
-    elif query_type == "indications":
+    categories = _QUERY_MAP.get(query_type, _QUERY_MAP["properties"])
+
+    store = _get_store()
+    if not store.available:
         return {
             "drug_name": drug_name,
-            "indications": [
-                "Pain relief",
-                "Fever reduction",
-                "Anti-inflammation"
+            "error": "local_store_missing",
+            "warnings": [
+                "Local drug-intelligence database not found. Build it offline: "
+                "`python scripts/build_drug_intelligence.py`."
             ],
-            "approved_uses": ["Oral tablet", "Capsule", "Suspension"],
-            "summary": f"Mock indication data for {drug_name}",
-            "warnings": ["⚠️ MOCK OUTPUT — replace with real clinical data"]
         }
 
-    elif query_type == "interactions":
+    profile = store.get(drug_name)
+    if profile is None:
         return {
             "drug_name": drug_name,
-            "interactions": [
-                {
-                    "drug": "Warfarin",
-                    "severity": "major",
-                    "description": "Increased bleeding risk"
-                },
-                {
-                    "drug": "Aspirin",
-                    "severity": "moderate",
-                    "description": "Additive GI side effects"
-                }
+            "error": "not_found",
+            "warnings": [
+                f"'{drug_name}' is not in the local database yet. Add it to the "
+                f"curated list and rebuild: `python scripts/build_drug_intelligence.py`.",
+                f"Currently {store.stats().get('count', 0)} drugs are available.",
             ],
-            "summary": f"Mock interaction data for {drug_name}",
-            "warnings": ["⚠️ MOCK OUTPUT — replace with real interaction database"]
         }
 
-    else:
-        return {
-            "drug_name": drug_name,
-            "error": f"Unknown query_type: {query_type}",
-            "warnings": ["⚠️ MOCK OUTPUT"]
-        }
+    # Filter the stored profile down to the requested categories.
+    out: dict[str, Any] = {"query": profile.get("query", drug_name)}
+    for cat in categories:
+        out[cat] = profile.get(cat, {} if cat in SCALAR_CATEGORIES else [])
+    out["_meta"] = profile.get("_meta", {})
+
+    meta = out["_meta"]
+    used = meta.get("sources_used", [])
+    unavailable = [s.get("source") for s in meta.get("sources_unavailable", [])]
+    bits = [f"Sources: {', '.join(used) or 'none'}"]
+    if unavailable:
+        bits.append(f"Not yet ingested: {', '.join(unavailable)}")
+    if meta.get("conflicts"):
+        bits.append(f"{len(meta['conflicts'])} cross-source conflict(s) flagged")
+    out["summary"] = " | ".join(bits)
+    return out

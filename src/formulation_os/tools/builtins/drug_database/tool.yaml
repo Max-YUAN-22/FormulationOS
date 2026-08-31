@@ -1,34 +1,30 @@
 name: DrugDatabase
-version: 0.1.0
-description: >-
-  Query drug databases (DrugBank, ChEMBL, PubChem) for comprehensive drug information
-  including molecular properties, therapeutic targets, indications, and drug interactions.
+version: 0.2.0
+owner: formulation-os
+description: |
+  Multi-source drug intelligence. Each category of information has a designated
+  primary data source with supplements for cross-validation:
+    - identity / physicochemical  -> PubChem (primary) + ChEMBL
+    - drug_forms (salt/crystal)   -> ChEMBL (primary) + phase-2 CSD/DrugBank
+    - approved_products           -> FDA openFDA + DailyMed (+ phase-2 EMA/NMPA-CDE)
+    - patents_exclusivity         -> FDA Orange Book (+ phase-2 USPTO/EPO/WIPO/CNIPA)
+
+  DrugBank is an optional supplement only, never required. Every value is
+  returned with its source and whether it is experimental, predicted, or recorded.
+
+  USE THIS TOOL WHEN:
+    - User asks who a drug is (identifiers, structure, formula)
+    - User asks for physicochemical properties
+    - User asks about salts / crystal forms / marketed products / patents
 
 semantics:
-  domain: drug_information
   capabilities:
-    - drug_property_lookup
-    - target_identification
-    - indication_retrieval
-    - interaction_checking
-  keywords:
-    - drug
-    - database
-    - drugbank
-    - chembl
-    - pubchem
-    - properties
-    - targets
-    - interactions
-    - indications
-
-dependencies:
-  scientific:
-    upstream_capabilities_optional:
-      - literature_search
-    downstream_capabilities:
-      - formulation_design
-      - toxicity_prediction
+    - drug_identity_lookup
+    - physicochemical_property_lookup
+    - salt_and_crystal_form_lookup
+    - approved_product_lookup
+    - patent_and_exclusivity_lookup
+  domain: drug_information
 
 input_schema:
   type: object
@@ -36,38 +32,72 @@ input_schema:
     drug_name:
       type: string
       description: Name of the drug to query
+    smiles:
+      type: string
+      description: Optional SMILES; used when name lookup is unavailable
     query_type:
       type: string
-      enum:
-        - properties
-        - targets
-        - indications
-        - interactions
-      description: Type of information to retrieve
-  required:
-    - drug_name
-  additionalProperties: false
+      enum: [identity, properties, physicochemical, forms, approved_products, patents, all]
+      default: properties
+      description: Category of information to retrieve
+  required: [drug_name]
 
 output_schema:
   type: object
   properties:
-    drug_name:
-      type: string
-    molecular_formula:
-      type: string
-    molecular_weight:
-      type: number
-    smiles:
-      type: string
-    targets:
-      type: array
-    indications:
-      type: array
-    interactions:
-      type: array
-    summary:
-      type: string
-    warnings:
-      type: array
-      items:
-        type: string
+    query: {type: string}
+    identity: {type: object}
+    physicochemical: {type: object}
+    drug_forms: {type: array}
+    approved_products: {type: array}
+    patents_exclusivity: {type: array}
+    summary: {type: string}
+    _meta: {type: object}
+
+planning_hints:
+  keywords:
+    - drug
+    - database
+    - identity
+    - structure
+    - smiles
+    - inchikey
+    - properties
+    - physicochemical
+    - salt
+    - crystal
+    - polymorph
+    - approved
+    - marketed
+    - orange book
+    - patent
+    - exclusivity
+    - pubchem
+    - chembl
+    - fda
+  notes: |
+    Chain PreformulationAI / FormulationAI after an identity+properties lookup
+    for a full in-silico screening workflow.
+
+scientific_dependencies:
+  upstream_capabilities_optional:
+    - literature_search
+  upstream_capabilities_required: []
+
+executor:
+  type: python
+  module: formulation_os.tools.builtins.drug_database.backend
+  function: run
+
+provenance_spec:
+  record_inputs: true
+  record_outputs: true
+  record_parameters: true
+  record_compute_env: true
+
+cost:
+  latency_class: high
+  cost_class: low
+  confidence: production
+
+mock: false

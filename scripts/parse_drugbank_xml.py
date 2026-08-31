@@ -244,28 +244,58 @@ class DrugBankParser:
 
 
 if __name__ == '__main__':
-    xml_file = '/Users/Apple/FormulationOS/data/drugbank/full_database.xml'
-    db_file = '/Users/Apple/FormulationOS/data/drugbank/drugbank.db'
+    import argparse
+    import zipfile
+
+    ap = argparse.ArgumentParser(description="Parse DrugBank full-database XML (or .zip) into SQLite")
+    ap.add_argument(
+        "input",
+        nargs="?",
+        default="/Users/Apple/FormulationOS/data/drugbank/full_database.xml",
+        help="Path to 'full database.xml' or the DrugBank .xml.zip (streamed, no extraction needed)",
+    )
+    ap.add_argument(
+        "-o", "--output",
+        default="/Users/Apple/FormulationOS/data/drugbank/drugbank.db",
+        help="Output SQLite path (default: data/drugbank/drugbank.db, git-ignored)",
+    )
+    args = ap.parse_args()
 
     print("🚀 DrugBank XML Parser")
-    print(f"📂 Input: {xml_file}")
-    print(f"💾 Output: {db_file}")
+    print(f"📂 Input:  {args.input}")
+    print(f"💾 Output: {args.output}")
     print()
 
-    if not Path(xml_file).exists():
-        print(f"❌ Error: XML file not found at {xml_file}")
-        print("📥 Please download drugbank_all_full_database.xml.zip from DrugBank")
-        print("   and extract to /Users/Apple/FormulationOS/data/drugbank/")
+    if not Path(args.input).exists():
+        print(f"❌ Error: input not found at {args.input}")
+        print("📥 Point this at your DrugBank download, e.g.:")
+        print('   python scripts/parse_drugbank_xml.py "/Users/Apple/Desktop/Year 4/FYP 欧阳/drugbank_all_full_database（5-1-19版本）.xml.zip"')
         sys.exit(1)
 
-    parser = DrugBankParser(xml_file, db_file)
+    Path(args.output).parent.mkdir(parents=True, exist_ok=True)
+
+    # Stream the XML directly — from a .zip inner file when given a zip, so the
+    # 2.57 GB XML never has to be extracted to disk.
+    xml_source = args.input
+    zf = None
+    if zipfile.is_zipfile(args.input):
+        zf = zipfile.ZipFile(args.input)
+        inner = next((n for n in zf.namelist() if n.lower().endswith(".xml")), None)
+        if inner is None:
+            print("❌ No .xml inside the zip")
+            sys.exit(1)
+        print(f"📦 Streaming '{inner}' from zip (no extraction)")
+        xml_source = zf.open(inner)
+
+    parser = DrugBankParser(xml_source, args.output)
     parser.create_tables()
     total_drugs = parser.parse_all()
     parser.close()
+    if zf is not None:
+        zf.close()
 
     print()
-    print(f"🎉 Complete! {total_drugs} drugs imported into {db_file}")
+    print(f"🎉 Complete! {total_drugs} drugs imported into {args.output}")
     print()
-    print("Next steps:")
-    print("1. Test the database: sqlite3 /Users/Apple/FormulationOS/data/drugbank/drugbank.db")
-    print("2. Query example: SELECT name, bcs_class FROM drugs WHERE bcs_class='BCS II' LIMIT 10;")
+    print("Next step: build the local drug-intelligence DB including DrugBank:")
+    print("   python scripts/build_drug_intelligence.py --profile local")
