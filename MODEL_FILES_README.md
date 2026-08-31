@@ -5,7 +5,7 @@
 本项目现已集成真实的机器学习模型，用于药物制剂的预测和优化。
 
 ### 模型存储位置
-- **FormulationAI**: `assets/formulation_dt/` 和 `assets/solid_dispersion/`
+- **FormulationAI 2.0**: `assets/formulation_dt/` 和 `assets/solid_dispersion/`
 - **PreFormulationAI**: `src/formulation_os/tools/builtins/preformulation_ai/models/`
 
 ---
@@ -148,7 +148,7 @@ with open("src/formulation_os/tools/builtins/preformulation_ai/models/druglikene
 # prediction = model.predict(features)
 ```
 
-### 2. FormulationAI 模型
+### 2. FormulationAI 2.0 模型
 
 ```python
 import pickle
@@ -260,7 +260,7 @@ git push
 
 模型训练和验证的详细信息，请参考：
 - PreFormulationAI论文
-- FormulationAI技术文档
+- FormulationAI 2.0技术文档
 - 训练数据集说明
 
 ---

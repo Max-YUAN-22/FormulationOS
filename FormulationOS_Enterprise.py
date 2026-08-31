@@ -699,8 +699,8 @@ if st.session_state.view_mode == "home":
         """)
 
         st.markdown("")
-        if st.button("🔗 Visit FormulationAI Platform", use_container_width=True):
-            st.link_button("Open FormulationAI", "https://formulationai.computpharm.org/")
+        if st.button("🔗 Visit FormulationAI 2.0 Platform", use_container_width=True):
+            st.link_button("Open FormulationAI 2.0", "https://formulationai.computpharm.org/")
 
     st.markdown("---")
 
@@ -1268,6 +1268,24 @@ elif st.session_state.view_mode == "workspace":
                 if content:
                     st.markdown(content)
 
+                # 📚 Display saved knowledge base results for historical messages
+                if msg.role == "assistant":
+                    if "knowledge_base_data" in session and i in session["knowledge_base_data"]:
+                        kb_data = session["knowledge_base_data"][i]
+
+                        # Display literature if saved
+                        if kb_data.get("literature"):
+                            display_literature_search_results(kb_data["literature"], kb_data.get("query", ""))
+
+                        # Display drug database results if saved
+                        if kb_data.get("drugs"):
+                            for drug_result in kb_data["drugs"]:
+                                display_drug_database_query(drug_result['name'], drug_result['data'])
+
+                        # Display knowledge sources badge
+                        if kb_data.get("sources"):
+                            display_knowledge_source_badge(kb_data["sources"])
+
                 # Add feedback buttons ONLY for assistant messages with content
                 if msg.role == "assistant" and content:
                     add_feedback_buttons(message_id)
@@ -1331,14 +1349,15 @@ FormulationOS 需要配置 LLM API Key 才能正常工作。
                     # Check analysis mode
                     analysis_mode = st.session_state.get("analysis_mode", "fast")
 
+                    # Initialize knowledge base tracking variables (outside if blocks for proper scope)
+                    literature_context = []
+                    drug_database_results = []
+                    knowledge_sources_used = []
+
                     if analysis_mode == "fast":
-                        # Step 1: Search literature for context (if formulation-related)
-                        literature_context = []
-                        drug_database_results = []
-                        knowledge_sources_used = []
 
                         # 📚 Literature Search
-                        if any(keyword in prompt.lower() for keyword in ['formulation', 'solubility', 'bioavailability', 'bcs', 'strategy', 'drug', 'pharmaceutical']):
+                        if any(keyword in prompt.lower() for keyword in ['formulation', 'solubility', 'bioavailability', 'bcs', 'strategy', 'drug', 'pharmaceutical', '制剂', '可制剂性', '分类']):
                             with reasoning_placeholder.container():
                                 display_knowledge_search_status(True, "Searching PubMed literature...")
 
@@ -1346,8 +1365,22 @@ FormulationOS 需要配置 LLM API Key 才能正常工作。
                                 from src.formulation_os.knowledge.pubmed_search import PubMedSearchEngine
                                 pubmed = PubMedSearchEngine()
 
-                                # Quick search for relevant papers
-                                search_query = prompt[:100]  # Truncate long queries
+                                # Build English search query from keywords
+                                search_terms = []
+                                if 'bcs' in prompt.lower() or '分类' in prompt.lower():
+                                    search_terms.append('BCS classification')
+                                if '制剂' in prompt.lower() or 'formulation' in prompt.lower():
+                                    search_terms.append('drug formulation')
+                                if '可制剂性' in prompt.lower() or 'formulatability' in prompt.lower():
+                                    search_terms.append('formulatability')
+                                if 'solubility' in prompt.lower() or '溶解' in prompt.lower():
+                                    search_terms.append('solubility')
+
+                                # Default search if no specific terms found
+                                if not search_terms:
+                                    search_terms = ['pharmaceutical formulation', 'drug delivery']
+
+                                search_query = ' '.join(search_terms[:3])  # Max 3 terms
                                 papers = pubmed.search_literature(search_query, max_results=5)
                                 literature_context = papers
 
@@ -1356,7 +1389,10 @@ FormulationOS 需要配置 LLM API Key 才能正常工作。
                                     with reasoning_placeholder.container():
                                         st.markdown(f"🧠 **Found {len(papers)} relevant papers from PubMed**")
                             except Exception as e:
-                                pass  # Continue without literature if search fails
+                                # Show error for debugging
+                                st.warning(f"⚠️ Literature search failed: {str(e)}")
+                                import traceback
+                                st.code(traceback.format_exc())
 
                         # 💊 Drug Database Search (if drug name detected)
                         # Detect common drug names or queries like "analyze [Drug]"
@@ -1580,16 +1616,30 @@ return synthesis;
                             display_model_selection_logic()
 
                     # 📚 Display Knowledge Base Results (Literature + Drug Database)
-                    if 'literature_context' in locals() and literature_context:
-                        display_literature_search_results(literature_context, prompt)
+                    # DEBUG: Show counts for troubleshooting
+                    st.info(f"🐛 DEBUG: literature={len(literature_context)}, drugs={len(drug_database_results)}, sources={knowledge_sources_used}")
 
-                    if 'drug_database_results' in locals() and drug_database_results:
+                    if literature_context:
+                        try:
+                            display_literature_search_results(literature_context, prompt)
+                        except Exception as e:
+                            st.error(f"Literature display error: {str(e)}")
+                            import traceback
+                            st.code(traceback.format_exc())
+
+                    if drug_database_results:
                         for drug_result in drug_database_results:
-                            display_drug_database_query(drug_result['name'], drug_result['data'])
+                            try:
+                                display_drug_database_query(drug_result['name'], drug_result['data'])
+                            except Exception as e:
+                                st.error(f"Drug DB display error: {str(e)}")
 
                     # Display knowledge sources badge if any were used
-                    if 'knowledge_sources_used' in locals() and knowledge_sources_used:
-                        display_knowledge_source_badge(knowledge_sources_used)
+                    if knowledge_sources_used:
+                        try:
+                            display_knowledge_source_badge(knowledge_sources_used)
+                        except Exception as e:
+                            st.error(f"Badge display error: {str(e)}")
 
                     # 🧬 Auto-visualize molecule if SMILES detected
                     smiles_match = re.search(r'SMILES[：:是]?\s*[\'"]?([A-Za-z0-9@+\-\[\]()=#$]+)[\'"]?', prompt, re.IGNORECASE)
@@ -1664,6 +1714,19 @@ return synthesis;
                     session["tool_calls"] = {}
                 session["tool_calls"][len(memory.messages) - 1] = tool_calls
 
+            # 📚 Save knowledge base data to session state for historical display
+            if literature_context or drug_database_results or knowledge_sources_used:
+                session = get_session()
+                if "knowledge_base_data" not in session:
+                    session["knowledge_base_data"] = {}
+                session["knowledge_base_data"][len(memory.messages) - 1] = {
+                    "literature": literature_context,
+                    "drugs": drug_database_results,
+                    "sources": knowledge_sources_used,
+                    "query": prompt
+                }
+
+            if tool_calls:
                 # Extract drug info from user prompt (more reliable than tool arguments)
                 import re
                 smiles_match = re.search(r'SMILES[：:是]?\s*[\'"]?([A-Za-z0-9@+\-\[\]()=#$]+)[\'"]?', prompt, re.IGNORECASE)

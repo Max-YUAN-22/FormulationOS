@@ -10,7 +10,7 @@ Deployment: https://formulationos.onrender.com (Render) | http://localhost:8504 
 
 ## 🎯 Executive Summary
 
-FormulationOS is an enterprise-grade agentic AI system for pharmaceutical formulation research, inspired by AstraZeneca's ChatInvent (Drug Discovery Today, 2026). It integrates 12 AI modules (PreformulationAI + FormulationAI) with natural language interface, real-time reasoning display, and multimodal output capabilities.
+FormulationOS is an enterprise-grade agentic AI system for pharmaceutical formulation research, inspired by AstraZeneca's ChatInvent (Drug Discovery Today, 2026). It integrates 12 AI modules (PreformulationAI + FormulationAI 2.0) with natural language interface, real-time reasoning display, and multimodal output capabilities.
 
 **Key Differentiators:**
 - ✅ **ChatInvent-inspired transparency** - Real-time reasoning display
@@ -166,7 +166,7 @@ System intelligently generates relevant plots based on analysis type:
 ┌─────────────────────────────────────────┐
 │          Tool Layer                     │
 │  - 5 PreformulationAI modules          │
-│  - 7 FormulationAI modules             │
+│  - 7 FormulationAI 2.0 modules         │
 │  - REST API integration                │
 │  - Visualization tools (NEW)           │
 └─────────────────────────────────────────┘
@@ -192,7 +192,7 @@ System intelligently generates relevant plots based on analysis type:
 
 ### Built on Validated Models
 
-**PreformulationAI & FormulationAI**
+**PreformulationAI & FormulationAI 2.0**
 - Machine learning models trained on experimental data
 - BCS classification accuracy: >85%
 - Continuous model updates from user interactions
@@ -258,7 +258,7 @@ System intelligently generates relevant plots based on analysis type:
 - **Production**: https://formulationos.onrender.com
 - **Code**: https://github.com/Max-YUAN-22/FormulationOS
 - **PreformulationAI**: https://preformulationai.computpharm.org
-- **FormulationAI**: https://formulationai.computpharm.org
+- **FormulationAI 2.0**: https://formulationai.computpharm.org
 
 ---
 
