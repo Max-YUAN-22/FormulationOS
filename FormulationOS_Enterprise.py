@@ -1805,16 +1805,18 @@ elif st.session_state.view_mode == "knowledge_base":
                                  placeholder="e.g., Atorvastatin, Metformin, Ibuprofen",
                                  key="drugdb_deep_query")
         if dd_query:
-            from src.formulation_os.knowledge.web_drug_card import get_drug_card, is_prebuilt
+            from src.formulation_os.knowledge.web_drug_card import get_drug_card, has_full_depth
             from src.formulation_os.ui.drug_card import render_drug_card
-            prebuilt = is_prebuilt(dd_query)
-            with st.spinner("Assembling multi-source intelligence…" if prebuilt
-                            else "Live-fetching from public sources (PubChem/ChEMBL/openFDA/Orange Book)…"):
+            with st.spinner("Loading local profile…"):
                 card = get_drug_card(dd_query)
             if card:
-                render_drug_card(st, card, live=not prebuilt)
+                if not has_full_depth(card):
+                    st.info("ℹ️ Lightweight profile (identity + physicochemical). "
+                            "Full depth (products / patents / CN) is pre-built for the curated set.")
+                render_drug_card(st, card, live=False)
             else:
-                st.error(f"No data found for '{dd_query}' across the public sources.")
+                st.warning(f"'{dd_query}' is not in the local catalog. Try the BCS catalog search below, "
+                           f"or add it to the curated build.")
         st.markdown("---")
 
         # ── BREADTH CATALOG (ChEMBL 4,225 browse) ─────────────────────────
