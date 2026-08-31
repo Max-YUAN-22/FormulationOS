@@ -1795,7 +1795,30 @@ elif st.session_state.view_mode == "knowledge_base":
     # TAB 1: Drug Database - Dashboard Style
     with tab1:
         st.markdown("### 🗃️ Pharmaceutical Drug Database")
-        st.caption("4,225 FDA/EMA approved drugs from ChEMBL with BCS classification")
+        st.caption("4,225 FDA/EMA approved drugs (ChEMBL, breadth) + multi-source Drug Intelligence (depth)")
+
+        # ── DEEP DRUG INTELLIGENCE (DrugDB drill-down) ─────────────────────
+        st.markdown("#### 🔬 Deep Drug Intelligence")
+        st.caption("Multi-source, provenance-aware profile: identity · physicochemical · "
+                   "salt/crystal forms · US/CN marketed products · patents & exclusivity")
+        dd_query = st.text_input("Enter a drug name for a full intelligence card:",
+                                 placeholder="e.g., Atorvastatin, Metformin, Ibuprofen",
+                                 key="drugdb_deep_query")
+        if dd_query:
+            from src.formulation_os.knowledge.web_drug_card import get_drug_card, is_prebuilt
+            from src.formulation_os.ui.drug_card import render_drug_card
+            prebuilt = is_prebuilt(dd_query)
+            with st.spinner("Assembling multi-source intelligence…" if prebuilt
+                            else "Live-fetching from public sources (PubChem/ChEMBL/openFDA/Orange Book)…"):
+                card = get_drug_card(dd_query)
+            if card:
+                render_drug_card(st, card, live=not prebuilt)
+            else:
+                st.error(f"No data found for '{dd_query}' across the public sources.")
+        st.markdown("---")
+
+        # ── BREADTH CATALOG (ChEMBL 4,225 browse) ─────────────────────────
+        st.markdown("#### 🗂️ BCS Catalog (browse 4,225 drugs)")
 
         # Import modules
         from src.formulation_os.knowledge.drug_search import DrugSearchEngine
@@ -1863,6 +1886,9 @@ elif st.session_state.view_mode == "knowledge_base":
 
         with col_viz1:
             st.markdown("#### 📈 BCS Classification Distribution")
+            st.caption("⚠ BCS here is **predicted** by a MW/LogP/PSA heuristic (not experimental); "
+                       "some drugs are Unknown. Use the Deep Drug Intelligence card above for "
+                       "provenance-tagged, source-backed data.")
             bcs_counts = df['bcs_class'].value_counts()
             fig_pie = go.Figure(data=[go.Pie(
                 labels=bcs_counts.index,
