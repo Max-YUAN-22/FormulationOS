@@ -1,41 +1,69 @@
 # FormulationOS 进展汇报
-### FormulationOS & 药物分子数据库构建 — Progress Report
+### Intelligent Design & Performance Prediction Platform for AI-Driven Drug Delivery Systems Based on a Multi-Agent Framework
+### （FYP HSCI4000）— 平台进展 & 药物分子数据库构建
 
 > 用法:每个 `##` 是一页。建议现场配合 `python demos/drug_report_card.py <药名>` 演示。
 
 ---
 
-## 1 · 一句话定位
+## 0 · 项目定位:两个语境
 
-**FormulationOS** = 一个面向药物制剂研发的 **AI 操作系统**:自然语言接口 →
-LLM 编排 → 调用多个专业 AI 模型 + 一个**带溯源的多源药物情报数据库**,输出制剂
-设计与评估建议。
+本 FYP 题目 = **基于多智能体框架的、AI 驱动药物递送系统的智能设计与性能预测平台**
+（本项目内部代号 **FormulationOS**）。本学期成果落在**两个相互衔接的语境**里:
 
-近期主要进展有两块:
-1. **平台侧**:三个 AI 模块接入真实训练模型,部署上线(Render / Streamlit)。
-2. **数据侧**(本轮重点):把原来的 mock「药物数据库」重建为一个**多源、带溯源、
-   离线**的 **Drug Intelligence Database v1**。
+```
+① FYP:FormulationOS(多智能体设计/预测平台)
+        └─ 需要一个"事实底座"数据层 ─► 药物分子数据库
+
+② 教授的「制剂数据库平台」大项目
+        ├─ DrugDB(药物分子数据库)  ← 本人负责，本轮重点
+        ├─ ExcipientDB(辅料库)      ← 他人
+        └─ FormulationDB(处方库)    ← 他人
+```
+
+**一句话**:药物分子数据库既是 FYP 平台的**数据层**,又是教授制剂数据库平台里
+**我负责的 DrugDB 组件**——本学期把它从 mock 做成了一个真实的 v1。
 
 ---
 
-## 2 · FormulationOS 架构
+## 1 · FormulationOS 是什么
+
+面向 AI 驱动药物递送系统的**智能设计 + 性能预测平台**:自然语言 → 智能体规划/
+编排 → 调用专业 AI 模型 + 带溯源的药物情报数据库 → 输出制剂设计与评估。
+
+近期主要进展:
+1. **平台侧**:三个 AI 模型模块接入真实训练模型,已部署(Render/Streamlit);
+   多智能体框架的**规划/编排地基**已搭。
+2. **数据侧(本轮重点)**:药物分子数据库(DrugDB)重建为**多源、带溯源、离线**
+   的 **Drug Intelligence Database v1**。
+
+---
+
+## 2 · FormulationOS 架构(诚实版)
 
 ```
                 自然语言 (中/英)
                       │
-        ┌─────────────▼─────────────┐
-        │   LLM 编排层 (Claude/GPT/MiniMax) │  ← tool-use 循环
-        └─────────────┬─────────────┘
+        ┌─────────────▼──────────────────┐
+        │  推理/规划层                     │
+        │  • Scientific Planner + Workflow │  ← 规则/LLM/能力感知 DAG
+        │  • Orchestrator(编排执行)       │
+        │  • LLM 管理 (Claude/GPT/MiniMax) │  ← tool-use 循环
+        └─────────────┬──────────────────┘
                       │ 调用
    ┌──────────────────┼─────────────────────┐
    │ AI 模型模块       │        数据/知识层    │
-   │ • PreFormulationAI│  • Drug Intelligence DB(新)
+   │ • PreFormulationAI│  • Drug Intelligence DB(新,DrugDB)
    │ • FormulationAI2.0│  • Literature (PubMed)
    │ • Solid Dispersion│  • Knowledge base (SQLite)
    └──────────────────┴─────────────────────┘
                       │
               Streamlit Web UI (Render 部署)
 ```
+
+> **多智能体现状**:当前为**单智能体 + 工作流规划/编排**(planner + orchestrator +
+> 能力感知路由 + 科学推理/证据管理),这是**多智能体框架的地基**;完整的多智能体
+> 科学团队(多角色协作)是**路线图**,尚未完成——不夸大。
 
 ---
 
@@ -188,7 +216,11 @@ python demos/drug_report_card.py Atorvastatin   # 盐型/实体识别的故事
 
 ## 14 · 小结
 
-- **平台**:3 个 AI 模块接真模型,已部署
-- **数据**:多源、带溯源、离线的药物情报库 v1,25 药验证,中美双侧,溯源 100%
-- **方法学**:溯源分层、实体校验、三态状态、合规分级——经得起追问
-- **定位**:这是一个**靠谱的 v1 基线**,不是"几个 API 拼起来",可平滑扩展
+- **FYP 定位**:基于多智能体框架的 AI 药物递送设计/预测平台(FormulationOS);
+  本学期在**平台**与**数据**两侧同步推进。
+- **平台**:3 个 AI 模型接真模型 + 已部署;多智能体的规划/编排地基已搭(完整多
+  智能体团队为路线图)。
+- **数据(本人负责的 DrugDB)**:多源、带溯源、离线的药物情报库 v1,25 药验证,
+  中美双侧,溯源 100%——同时是 FYP 平台的数据层 + 教授制剂数据库平台的 DrugDB 组件。
+- **方法学**:溯源分层、实体校验、三态状态、合规分级——经得起追问。
+- **一句话**:一个**靠谱的 v1 基线**,不是"几个 API 拼起来",可平滑扩展。
