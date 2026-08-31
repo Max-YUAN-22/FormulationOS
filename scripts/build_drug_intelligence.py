@@ -42,7 +42,7 @@ from formulation_os.knowledge.local_store import LocalDrugStore  # noqa: E402
 _PUBLIC_DB = "data/drug_intelligence.db"
 _LOCAL_DB = "data/drug_intelligence.local.db"
 # Sources excluded from a public (redistributable) build.
-_LICENCE_RESTRICTED = {"DrugBank"}
+_LICENCE_RESTRICTED = {"DrugBank", "NMPA/CDE (China)"}
 
 
 def build_adapters(profile: str):

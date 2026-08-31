@@ -64,3 +64,26 @@ def test_resolve_prefers_local_over_public(tmp_path, monkeypatch):
         ls, "_DEFAULT_CANDIDATES", (str(localdb), str(publicdb))
     )
     assert resolve_db_path() == str(localdb)
+
+
+def test_extended_provenance_serialises_authority_and_channel():
+    """Constraint 1: authority (NMPA/CDE) is separate from the channel."""
+    from formulation_os.knowledge.sources.schema import FieldValue, Provenance, Evidence
+
+    prov = Provenance(
+        source="NMPA/CDE (China)",
+        authority="NMPA/CDE",
+        source_type="third_party_compilation",
+        source_provider="ExampleProvider",
+        source_file="cn_catalog.xlsx",
+        snapshot_date="2026-06",
+        official_reference="https://www.cde.org.cn/hymlj/",
+        ingested_at="2026-08-17T00:00:00Z",
+    )
+    d = FieldValue("盐酸二甲双胍片", None, Evidence.RECORDED, prov).to_dict()
+    assert d["source"] == "NMPA/CDE (China)"
+    assert d["authority"] == "NMPA/CDE"
+    assert d["source_type"] == "third_party_compilation"
+    assert d["source_provider"] == "ExampleProvider"
+    assert d["snapshot_date"] == "2026-06"
+    assert d["official_reference"].startswith("https://www.cde.org.cn")

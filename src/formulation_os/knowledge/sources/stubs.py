@@ -67,16 +67,6 @@ class EMAAdapter(_StubAdapter):
     _note = "Phase 2: parse EMA downloadable medicine data tables (EU authorisations / EPAR)."
 
 
-class NmpaCdeAdapter(_StubAdapter):
-    name = "NMPA/CDE (China)"
-    provides = (CATEGORY_APPROVED,)
-    _note = (
-        "Phase 2: China marketed products + reference listed drug (参比制剂). "
-        "Requires scraping the NMPA data portal and CDE 上市药品目录集 "
-        "(no public JSON API)."
-    )
-
-
 class PatentsAdapter(_StubAdapter):
     name = "Patents (USPTO/Espacenet/WIPO/CNIPA)"
     provides = (CATEGORY_PATENTS,)

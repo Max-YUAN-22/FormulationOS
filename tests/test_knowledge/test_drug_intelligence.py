@@ -152,7 +152,6 @@ def test_phase2_stubs_report_unavailable():
     for adapter in (
         stubs.CompToxAdapter(),
         stubs.EMAAdapter(),
-        stubs.NmpaCdeAdapter(),
         stubs.PatentsAdapter(),
         stubs.CSDAdapter(),
     ):

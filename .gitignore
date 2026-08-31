@@ -17,6 +17,11 @@ dist/
 # Database
 *.db
 *.sqlite
+
+# Licence-restricted local data (never commit / deploy)
+data/nmpa_cde/
+data/drugbank/*.xml
+data/*.local.db
 *.sqlite3
 
 # IDE

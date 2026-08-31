@@ -65,11 +65,25 @@ class Conditions:
 
 @dataclass
 class Provenance:
-    """Where a value came from."""
+    """Where a value came from.
 
-    source: str                            # e.g. "PubChem", "ChEMBL", "FDA Orange Book"
-    reference: Optional[str] = None        # URL / accession / citation
+    ``source`` is the immediate label. For data obtained via an intermediary
+    (e.g. a third-party compilation of CDE data), the *authority* (who is the
+    factual authority) is kept separate from the *channel* (how we actually got
+    it) so provenance never pretends third-party data came straight from CDE.
+    """
+
+    source: str                             # e.g. "PubChem", "NMPA/CDE (China)"
+    reference: Optional[str] = None         # URL / accession / citation
     retrieved_from_cache: bool = False
+    # -- extended provenance (populated where the distinction matters) --------
+    authority: Optional[str] = None          # e.g. "NMPA/CDE" — factual authority
+    source_type: Optional[str] = None        # e.g. "third_party_compilation", "official_file", "api"
+    source_provider: Optional[str] = None    # who compiled/served the data
+    source_file: Optional[str] = None        # originating file name
+    snapshot_date: Optional[str] = None      # edition/version date of the source
+    official_reference: Optional[str] = None # canonical authority page/citation
+    ingested_at: Optional[str] = None        # ETL run timestamp
 
 
 @dataclass
@@ -89,11 +103,17 @@ class FieldValue:
             d["unit"] = self.unit
         d["evidence"] = self.evidence.value if isinstance(self.evidence, Evidence) else self.evidence
         if self.provenance is not None:
-            d["source"] = self.provenance.source
-            if self.provenance.reference:
-                d["reference"] = self.provenance.reference
-            if self.provenance.retrieved_from_cache:
+            p = self.provenance
+            d["source"] = p.source
+            if p.reference:
+                d["reference"] = p.reference
+            if p.retrieved_from_cache:
                 d["cached"] = True
+            for k in ("authority", "source_type", "source_provider", "source_file",
+                      "snapshot_date", "official_reference", "ingested_at"):
+                v = getattr(p, k)
+                if v:
+                    d[k] = v
         if self.conditions is not None and not self.conditions.is_empty():
             d["conditions"] = {k: v for k, v in asdict(self.conditions).items() if v is not None}
         if self.confidence is not None:
@@ -119,6 +139,19 @@ ALL_CATEGORIES = list(SCALAR_CATEGORIES) + list(RECORD_CATEGORIES)
 STATUS_RECORD_FOUND = "record_found"          # primary source has data for this drug
 STATUS_NO_RECORD = "no_record"                # primary source reachable but no record
 STATUS_SOURCE_UNAVAILABLE = "source_unavailable"  # primary source not ingested yet
+
+# Consistency-evaluation status (一致性评价) — NEVER a bare bool. "Absent from the
+# sheet" is NOT "failed"; it is unknown / not-applicable.
+CONSISTENCY_PASSED = "passed"
+CONSISTENCY_NOT_APPLICABLE = "not_applicable"      # e.g. innovator / imported originator
+CONSISTENCY_UNKNOWN = "unknown"
+CONSISTENCY_INFERRED = "inferred_from_catalog_category"
+
+# Reference-product roles — CN 参比制剂 is NOT the same concept as US RLD, so the
+# role is kept explicit alongside region + authority.
+REF_ROLE_RLD = "RLD"                                # US FDA reference listed drug
+REF_ROLE_RS = "RS"                                 # US FDA reference standard
+REF_ROLE_CN_REFERENCE_PREPARATION = "REFERENCE_PREPARATION"  # CN CDE 参比制剂
 
 
 @dataclass

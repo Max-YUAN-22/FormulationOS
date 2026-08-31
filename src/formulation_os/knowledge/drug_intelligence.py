@@ -48,6 +48,7 @@ from .sources.chembl import ChEMBLAdapter
 from .sources.openfda import OpenFDAAdapter
 from .sources.orange_book import OrangeBookAdapter
 from .sources.drugbank_local import DrugBankLocalAdapter
+from .sources.nmpa_cde import NmpaCdeAdapter
 from .sources import stubs
 
 
@@ -81,9 +82,9 @@ def default_adapters() -> dict[str, SourceAdapter]:
         OpenFDAAdapter(),
         OrangeBookAdapter(),      # local OB DB — primary for patents/exclusivity
         DrugBankLocalAdapter(),   # local file, licence-restricted, optional
+        NmpaCdeAdapter(),         # local China catalog, licence-restricted, optional
         stubs.CompToxAdapter(),
         stubs.EMAAdapter(),
-        stubs.NmpaCdeAdapter(),
         stubs.PatentsAdapter(),
         stubs.CSDAdapter(),
     ]
