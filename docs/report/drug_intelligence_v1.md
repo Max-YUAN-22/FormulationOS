@@ -2,9 +2,9 @@
 ### Milestone report / 里程碑汇报
 
 **Positioning / 定位:** a *formulation-oriented, multi-source, provenance-aware,
-offline* drug intelligence database — **architecture + 25-drug validation +
-data-source feasibility study**. Not yet a full-scale (thousands-of-drugs)
-production database; the 25 drugs are a deliberate validation set.
+offline* drug intelligence database — **architecture + a 4,230-drug local catalog
++ ~110 curated drugs at full depth + data-source feasibility study**. The深度
+curated set is being scaled incrementally (25 → 110 this term).
 
 ---
 
@@ -36,22 +36,29 @@ reads **local only, zero network** (a deployed service is fast and reliable).
 
 ---
 
-## 2. 25-drug validation results / 25 药验收
+## 2. Scale & validation / 规模与验收
+
+**Two layers**: a **4,230-drug local catalog** (identity + physicochemical +
+predicted BCS, zero network) + **~110 curated drugs with full depth** (US/CN
+marketed products, patents/exclusivity; DrugBank pKa·logS + CN 参比制剂 in the
+local build).
 
 | Metric | Result |
 |---|---|
-| ① Identity (≥4 fields) | **25/25** |
-| ② Physicochemical (≥5 fields) | **25/25** |
-| ③ Drug Forms (parent/form) | **25/25** |
-| ④ Approved Products (US) | **25/25** |
-| ⑤ Patents record_found | **11/25** (+14 `no_record`, 0 `source_unavailable`) |
+| Local catalog (lightweight) | **4,230 drugs** (offline) |
+| Curated full-depth set | **~110 drugs** (25 → 110 this term) |
+| US marketed products (total) | **5,210** |
+| US patents/exclusivity (total) | **1,313** |
+| **CN reference-preparation coverage** | **110/111** (Griseofulvin = `no_record`) |
 | Provenance on every value | **100%** |
-| Entity/form mismatch detection | 2 drugs (e.g. atorvastatin free-acid vs Ca salt) |
-| **CN reference-preparation coverage** | **24/25** (Griseofulvin = genuine `no_record`) |
-| Runtime network calls | **0** |
+| Entity/form mismatch detection | e.g. atorvastatin free-acid vs Ca salt |
+| **Runtime network calls** | **0** (incl. the web drill-down) |
 
-Totals across the 25 drugs: **1,165** US marketed products, **583** US
-patent/exclusivity records, **288** CN reference-preparation records.
+Validated in depth on the curated set; QA spot-check of CN data vs the official
+NMPA .doc agreed 100% on the overlap.
+
+Totals across the curated set: **5,210** US marketed products, **1,313** US
+patent/exclusivity records, and CN reference preparations for **110/111** drugs.
 
 ### Per-drug US vs CN coverage (excerpt)
 
@@ -116,7 +123,7 @@ overlap agreed 100%** on English name / holder / strength / dosage form.
 
 - CN side is **reference preparations only** — the CDE 目录集's *收录类别 /
   一致性评价* fields are behind the 瑞数 wall (need a manual browser export).
-- **25-drug validation set**, not yet scaled to thousands.
+- **~110-drug curated deep set** (+ 4,120 lightweight catalog drugs); scaling incrementally.
 - drugfuture per-drug search caps at 20 results/drug (pagination is future work).
 - Full CN *marketed-product base* (NMPA registration universe) not yet ingested
   (NMPA online is the hardest 瑞数 site; enumeration blocked).
@@ -130,7 +137,7 @@ python scripts/build_drug_intelligence.py                     # public (US)
 python scripts/fetch_orange_book.py                           # US patents/exclusivity
 python scripts/parse_drugbank_xml.py <drugbank.xml.zip>       # DrugBank (local)
 python scripts/import_cn_reference_products.py --url <batch.doc> --batch N   # official CN
-python scripts/import_cn_reference_drugfuture.py              # CN (25 drugs)
+python scripts/import_cn_reference_drugfuture.py              # CN (curated set)
 python scripts/cn_reference_spotcheck.py --batch 10 --official <b10.doc>     # QA
 python scripts/build_drug_intelligence.py --profile local     # merge all
 ```
