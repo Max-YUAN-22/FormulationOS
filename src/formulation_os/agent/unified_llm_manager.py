@@ -55,6 +55,28 @@ class UnifiedLLMManager:
             "display_name": "GPT-4 Turbo",
             "description": "快速的GPT-4变体",
             "pricing": "OpenAI官方"
+        },
+
+        # Newer GPT generations (proxy group current as of 2026-09)
+        "gpt-5.4": {
+            "provider": "openai",
+            "display_name": "GPT-5.4",
+            "description": "新一代GPT旗舰,替代已下架的gpt-4o",
+            "pricing": "代理定价"
+        },
+        "gpt-5.4-mini": {
+            "provider": "openai",
+            "display_name": "GPT-5.4 Mini",
+            "description": "经济高效的新一代GPT",
+            "pricing": "代理定价"
+        },
+
+        # DeepSeek (OpenAI-compatible via proxy)
+        "deepseek-v4-flash": {
+            "provider": "openai",
+            "display_name": "DeepSeek V4 Flash",
+            "description": "高性价比工具调用模型(代理)",
+            "pricing": "代理定价"
         }
     }
 

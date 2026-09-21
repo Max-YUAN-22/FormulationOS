@@ -71,7 +71,7 @@ CLAUDE_BASE_URL = get_config("CLAUDE_BASE_URL", "https://www.cun.ai")
 GPT_BASE_URL = get_config("GPT_BASE_URL", "https://api.openai.com/v1")
 MINIMAX_BASE_URL = get_config("MINIMAX_BASE_URL", "https://api.minimaxi.com/v1")
 
-DEFAULT_MODEL = "gpt-4o" if GPT_API_KEY else "MiniMax-M3"
+DEFAULT_MODEL = "gpt-5.4" if GPT_API_KEY else "MiniMax-M3"
 
 # Page config
 st.set_page_config(
