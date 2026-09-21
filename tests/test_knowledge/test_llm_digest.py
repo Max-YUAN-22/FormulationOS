@@ -98,3 +98,23 @@ def test_dispatch_not_found(monkeypatch):
     mgr = UnifiedLLMManager.__new__(UnifiedLLMManager)
     out = mgr.execute_tool_call("lookup_drug_intelligence", {"drug_name": "Nonexistol"})
     assert out.get("error") == "not_found"
+
+
+def test_digest_includes_in_vivo_and_solid_state():
+    prof = _profile()
+    prof["in_vivo"] = {
+        "half_life": [{"value": "The terminal half-life ranges 12-16 hours", "source": "DrugBank"}],
+        "protein_binding": [{"value": "Approximately 98% bound", "source": "DrugBank"}],
+    }
+    prof["solid_state"] = {
+        "melting_point_experimental": [{"value": "152 °C", "evidence": "experimental", "source": "DrugBank"}],
+        "water_solubility_experimental": [{
+            "value": "19 mg/L at 25 °C", "evidence": "experimental",
+            "source": "DrugBank", "official_reference": "Yalkowsky,SH (2012)",
+        }],
+    }
+    d = digest_profile(prof)
+    assert "IN-VIVO (ADME):" in d and "half_life=The terminal half-life" in d
+    assert "SOLID STATE (experimental):" in d
+    assert "melting_point_experimental=152 °C (experimental)" in d
+    assert "Yalkowsky" in d  # literature source surfaced

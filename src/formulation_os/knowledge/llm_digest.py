@@ -66,6 +66,35 @@ def digest_profile(profile: dict[str, Any]) -> str:
         lines.append(f"FORM NOTE: {em['field']} differs across chemical forms: {forms} "
                      f"— distinct entities (parent vs salt), not an error.")
 
+    # -- in-vivo / ADME (clip prose to keep the digest token-friendly) ------
+    iv = profile.get("in_vivo", {})
+    iv_bits = []
+    for k in ["half_life", "protein_binding", "volume_of_distribution", "clearance",
+              "route_of_elimination"]:
+        if k in iv:
+            v, src = _v(iv[k][0])
+            if v:
+                v = v if len(v) <= 140 else v[:139] + "…"
+                iv_bits.append(f"{k}={v} ({src})")
+    if iv_bits:
+        lines.append("IN-VIVO (ADME): " + "; ".join(iv_bits))
+
+    # -- experimental solid-state -------------------------------------------
+    ss = profile.get("solid_state", {})
+    ss_bits = []
+    for k in ["melting_point_experimental", "water_solubility_experimental",
+              "isoelectric_point_experimental"]:
+        if k in ss:
+            fv = ss[k][0]
+            v, src = _v(fv)
+            if v:
+                tag = "experimental" if fv.get("evidence") == "experimental" else src
+                ref = fv.get("official_reference") or ""
+                extra = f" [src: {ref[:60]}]" if ref else ""
+                ss_bits.append(f"{k}={v} ({tag}){extra}")
+    if ss_bits:
+        lines.append("SOLID STATE (experimental): " + "; ".join(ss_bits))
+
     # -- drug forms ---------------------------------------------------------
     forms = profile.get("drug_forms", [])
     if forms:

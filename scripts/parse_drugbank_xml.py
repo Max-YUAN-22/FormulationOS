@@ -62,6 +62,15 @@ class DrugBankParser:
             absorption TEXT,
             half_life TEXT,
             protein_binding TEXT,
+            route_of_elimination TEXT,
+            volume_of_distribution TEXT,
+            clearance TEXT,
+
+            -- Experimental (solid-state / solubility) properties, with source
+            exp_melting_point TEXT,
+            exp_water_solubility TEXT,
+            exp_water_solubility_source TEXT,
+            exp_isoelectric_point TEXT,
 
             -- Classification
             classification_description TEXT,
@@ -97,6 +106,22 @@ class DrugBankParser:
             kind = self.get_text(prop, 'db:kind')
             if kind == property_kind:
                 return self.get_text(prop, 'db:value')
+        return None
+
+    def get_experimental_property(self, drug_element, property_kind):
+        """获取experimental-properties中的特定属性值(实验值,非计算值)"""
+        props = drug_element.findall('.//db:experimental-properties/db:property', self.NS)
+        for prop in props:
+            if self.get_text(prop, 'db:kind') == property_kind:
+                return self.get_text(prop, 'db:value')
+        return None
+
+    def get_experimental_property_source(self, drug_element, property_kind):
+        """获取实验性质的来源"""
+        props = drug_element.findall('.//db:experimental-properties/db:property', self.NS)
+        for prop in props:
+            if self.get_text(prop, 'db:kind') == property_kind:
+                return self.get_text(prop, 'db:source')
         return None
 
     def predict_bcs_class(self, mw, logp, logs, hbd, psa):
@@ -167,6 +192,19 @@ class DrugBankParser:
         half_life = self.get_text(drug_element, 'db:half-life')
         protein_binding = self.get_text(drug_element, 'db:protein-binding')
 
+        # In-vivo / ADME (text fields)
+        route_of_elimination = self.get_text(drug_element, 'db:route-of-elimination')
+        volume_of_distribution = self.get_text(drug_element, 'db:volume-of-distribution')
+        clearance = self.get_text(drug_element, 'db:clearance')
+
+        # Experimental (solid-state / solubility) properties
+        exp_melting_point = self.get_experimental_property(drug_element, 'Melting Point')
+        exp_water_solubility = self.get_experimental_property(drug_element, 'Water Solubility')
+        exp_isoelectric_point = self.get_experimental_property(drug_element, 'Isoelectric Point')
+        exp_ws_source = None
+        if exp_water_solubility:
+            exp_ws_source = self.get_experimental_property_source(drug_element, 'Water Solubility')
+
         # Classification
         classification = drug_element.find('db:classification', self.NS)
         class_desc = None
@@ -192,6 +230,8 @@ class DrugBankParser:
             rotatable_bonds, hba, hbd,
             indication, pharmacodynamics, mechanism, toxicity,
             metabolism, absorption, half_life, protein_binding,
+            route_of_elimination, volume_of_distribution, clearance,
+            exp_melting_point, exp_water_solubility, exp_ws_source, exp_isoelectric_point,
             class_desc, class_kingdom, class_superclass, class_class, class_subclass,
             bcs_class
         )
@@ -220,6 +260,7 @@ class DrugBankParser:
                         ?, ?, ?, ?, ?,
                         ?, ?, ?,
                         ?, ?, ?, ?,
+                        ?, ?, ?, ?, ?, ?, ?,
                         ?, ?, ?, ?,
                         ?, ?, ?, ?, ?,
                         ?, CURRENT_TIMESTAMP

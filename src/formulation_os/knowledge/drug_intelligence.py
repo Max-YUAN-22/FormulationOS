@@ -28,8 +28,10 @@ from .sources.schema import (
     CATEGORY_APPROVED,
     CATEGORY_FORMS,
     CATEGORY_IDENTITY,
+    CATEGORY_IN_VIVO,
     CATEGORY_PATENTS,
     CATEGORY_PHYSCHEM,
+    CATEGORY_SOLID_STATE,
     RECORD_CATEGORIES,
     SCALAR_CATEGORIES,
     STATUS_NO_RECORD,
@@ -59,6 +61,8 @@ PRIMARY_SOURCE = {
     CATEGORY_FORMS: ("ChEMBL", ["CSD (CCDC)", "DrugBank"]),
     CATEGORY_APPROVED: ("openFDA (FDA)", ["FDA Orange Book", "EMA", "NMPA/CDE (China)"]),
     CATEGORY_PATENTS: ("FDA Orange Book", ["Patents (USPTO/Espacenet/WIPO/CNIPA)"]),
+    CATEGORY_IN_VIVO: ("DrugBank", ["openFDA (FDA)"]),
+    CATEGORY_SOLID_STATE: ("DrugBank", ["EPA CompTox"]),
 }
 
 #: numeric fields where cross-source disagreement is worth flagging, with the

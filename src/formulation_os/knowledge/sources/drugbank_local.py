@@ -26,7 +26,9 @@ from typing import Optional
 from .base import SourceAdapter
 from .schema import (
     CATEGORY_IDENTITY,
+    CATEGORY_IN_VIVO,
     CATEGORY_PHYSCHEM,
+    CATEGORY_SOLID_STATE,
     Evidence,
     FieldValue,
     Provenance,
@@ -38,7 +40,7 @@ _DEFAULT_DB = "data/drugbank/drugbank.db"
 
 class DrugBankLocalAdapter(SourceAdapter):
     name = "DrugBank"
-    provides = (CATEGORY_IDENTITY, CATEGORY_PHYSCHEM)
+    provides = (CATEGORY_IDENTITY, CATEGORY_PHYSCHEM, CATEGORY_IN_VIVO, CATEGORY_SOLID_STATE)
 
     def __init__(self, db_path: str = _DEFAULT_DB):
         self.db_path = db_path
@@ -107,6 +109,43 @@ class DrugBankLocalAdapter(SourceAdapter):
             if val not in (None, ""):
                 result.add_field(CATEGORY_PHYSCHEM, fname, FieldValue(_num(val), unit, ev, prov))
 
+        # -- in-vivo / ADME (DrugBank text fields; curated prose, RECORDED) ---
+        in_vivo = {
+            "absorption": _get(row, "absorption"),
+            "half_life": _get(row, "half_life"),
+            "protein_binding": _get(row, "protein_binding"),
+            "route_of_elimination": _get(row, "route_of_elimination"),
+            "volume_of_distribution": _get(row, "volume_of_distribution"),
+            "clearance": _get(row, "clearance"),
+        }
+        for fname, val in in_vivo.items():
+            if val not in (None, ""):
+                result.add_field(CATEGORY_IN_VIVO, fname, FieldValue(_clip(val), None, Evidence.RECORDED, prov))
+
+        # -- solid state (EXPERIMENTAL values from DrugBank experimental-
+        #    properties, each carrying its own literature source) -------------
+        if _get(row, "exp_water_solubility"):
+            prov_ws = Provenance(
+                source=self.name,
+                reference=prov.reference,
+                source_type="experimental_property",
+                official_reference=_get(row, "exp_water_solubility_source"),
+            )
+            result.add_field(
+                CATEGORY_SOLID_STATE, "water_solubility_experimental",
+                FieldValue(_clip(_get(row, "exp_water_solubility")), None,
+                           Evidence.EXPERIMENTAL, prov_ws),
+            )
+        solid = [
+            # raw experimental strings already carry their units — no extra unit
+            ("melting_point_experimental", _get(row, "exp_melting_point"), None),
+            ("isoelectric_point_experimental", _get(row, "exp_isoelectric_point"), None),
+        ]
+        for fname, val, unit in solid:
+            if val not in (None, ""):
+                result.add_field(CATEGORY_SOLID_STATE, fname,
+                                 FieldValue(_clip(val), unit, Evidence.EXPERIMENTAL, prov))
+
         return result
 
 
@@ -122,3 +161,9 @@ def _num(v):
         return float(v)
     except (TypeError, ValueError):
         return v
+
+
+def _clip(v, limit: int = 600):
+    """ADME fields are prose paragraphs — keep enough for LLM/UI, not megabytes."""
+    s = " ".join(str(v).split())
+    return s if len(s) <= limit else s[: limit - 1] + "…"

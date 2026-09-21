@@ -99,6 +99,22 @@ def render_drug_card(st, profile: dict[str, Any], *, live: bool = False) -> None
         for rec in forms[:8]:
             st.markdown("- " + ", ".join(f"{k}={v.get('value')}" for k, v in rec.items()))
 
+    iv = profile.get("in_vivo", {})
+    with st.expander(f"⑥ In-Vivo / ADME — {len(iv)} fields  (DrugBank)"):
+        for f in ("absorption", "half_life", "protein_binding",
+                  "volume_of_distribution", "clearance", "route_of_elimination"):
+            if f in iv:
+                v = str(iv[f][0].get("value", ""))
+                v = v if len(v) <= 400 else v[:399] + "…"
+                st.markdown(f"- **{f}**: {v}")
+
+    ss = profile.get("solid_state", {})
+    with st.expander(f"⑦ Solid State (experimental) — {len(ss)} values"):
+        for f, fv in ss.items():
+            d = fv[0].to_dict() if isinstance(fv, list) and fv else {}
+            src_note = f" · src: {d['official_reference']}" if d.get("official_reference") else ""
+            st.markdown(f"- **{f}**: {_fv_line(fv[0])}{src_note}")
+
     ap = profile.get("approved_products", [])
     us = [r for r in ap if r.get("region", {}).get("value") != "CN"]
     cn = [r for r in ap if r.get("region", {}).get("value") == "CN"]

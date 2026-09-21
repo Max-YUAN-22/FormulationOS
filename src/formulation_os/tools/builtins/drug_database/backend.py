@@ -26,8 +26,10 @@ from formulation_os.knowledge.sources.schema import (
     CATEGORY_APPROVED,
     CATEGORY_FORMS,
     CATEGORY_IDENTITY,
+    CATEGORY_IN_VIVO,
     CATEGORY_PATENTS,
     CATEGORY_PHYSCHEM,
+    CATEGORY_SOLID_STATE,
     SCALAR_CATEGORIES,
 )
 
@@ -39,6 +41,8 @@ _QUERY_MAP = {
     "forms": [CATEGORY_FORMS],
     "approved_products": [CATEGORY_APPROVED],
     "patents": [CATEGORY_PATENTS],
+    "in_vivo": [CATEGORY_IN_VIVO],
+    "solid_state": [CATEGORY_SOLID_STATE],
     "all": ALL_CATEGORIES,
 }
 

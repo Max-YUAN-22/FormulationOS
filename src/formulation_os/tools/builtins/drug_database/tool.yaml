@@ -37,7 +37,7 @@ input_schema:
       description: Optional SMILES; used when name lookup is unavailable
     query_type:
       type: string
-      enum: [identity, properties, physicochemical, forms, approved_products, patents, all]
+      enum: [identity, properties, physicochemical, forms, approved_products, patents, in_vivo, solid_state, all]
       default: properties
       description: Category of information to retrieve
   required: [drug_name]

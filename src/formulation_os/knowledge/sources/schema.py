@@ -130,8 +130,10 @@ CATEGORY_PHYSCHEM = "physicochemical"             # (2) molecular/physchem [scal
 CATEGORY_FORMS = "drug_forms"                     # (3) salt/crystal/hydrate [records]
 CATEGORY_APPROVED = "approved_products"           # (4) marketed products    [records]
 CATEGORY_PATENTS = "patents_exclusivity"          # (5) patent & exclusivity [records]
+CATEGORY_IN_VIVO = "in_vivo"                      # (6) ADME / biopharmaceutics [scalar-text]
+CATEGORY_SOLID_STATE = "solid_state"              # (7) experimental solid-state [scalar]
 
-SCALAR_CATEGORIES = (CATEGORY_IDENTITY, CATEGORY_PHYSCHEM)
+SCALAR_CATEGORIES = (CATEGORY_IDENTITY, CATEGORY_PHYSCHEM, CATEGORY_IN_VIVO, CATEGORY_SOLID_STATE)
 RECORD_CATEGORIES = (CATEGORY_FORMS, CATEGORY_APPROVED, CATEGORY_PATENTS)
 ALL_CATEGORIES = list(SCALAR_CATEGORIES) + list(RECORD_CATEGORIES)
 
@@ -186,6 +188,8 @@ class DrugIntelligence:
     # scalar categories: field name -> list of FieldValue (one per source)
     identity: dict[str, list[FieldValue]] = field(default_factory=dict)
     physicochemical: dict[str, list[FieldValue]] = field(default_factory=dict)
+    in_vivo: dict[str, list[FieldValue]] = field(default_factory=dict)
+    solid_state: dict[str, list[FieldValue]] = field(default_factory=dict)
     # record categories: list of records
     drug_forms: list[dict[str, FieldValue]] = field(default_factory=list)
     approved_products: list[dict[str, FieldValue]] = field(default_factory=list)
