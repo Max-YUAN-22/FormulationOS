@@ -106,7 +106,12 @@ class UnifiedLLMManager:
 CRITICAL RULE: When the user provides a SMILES string, you MUST IMMEDIATELY call analysis tools in your FIRST response. DO NOT ask clarifying questions before calling tools.
 
 Correct workflow:
-1. User provides SMILES → 2. IMMEDIATELY call tools (no questions) → 3. Analyze results → 4. Present hypotheses → 5. Then ask follow-up questions if needed
+1. User provides drug name or SMILES → 2. IMMEDIATELY call tools (no questions) → 3. Analyze results → 4. Present hypotheses → 5. Then ask follow-up questions if needed
+
+GROUNDING TOOL (call FIRST when a drug NAME is given, or the drug is well-known):
+- lookup_drug_intelligence — real multi-source data: identity, MW/LogP/pKa/logS/TPSA,
+  salt/crystal forms, US marketed products, CN reference preparations, FDA patents &
+  exclusivity. Every value is attributed to its source — cite it in your answer.
 
 MANDATORY TOOLS TO CALL (when SMILES is provided):
 - preformulation_ai_fundamentals (ALWAYS call first)
@@ -132,6 +137,24 @@ Remember: TOOLS FIRST, QUESTIONS LATER."""
     def _define_anthropic_tools(self) -> List[Dict[str, Any]]:
         """Define tools in Anthropic format"""
         return [
+            {
+                "name": "lookup_drug_intelligence",
+                "description": ("Query the multi-source Drug Intelligence Database for a drug: "
+                                "identity (IDs/structure), physicochemical properties (MW/LogP/pKa/logS/TPSA), "
+                                "salt/crystal forms, US marketed products, CN reference preparations (参比制剂), "
+                                "and FDA Orange Book patents & exclusivity — every value with its source. "
+                                "Use this FIRST to ground any formulation analysis in real data."),
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "drug_name": {"type": "string", "description": "Drug name, e.g. Metformin or Atorvastatin"},
+                        "query_type": {"type": "string", "enum": ["identity", "properties", "forms",
+                                                                  "approved_products", "patents", "all"],
+                                       "description": "Category of information (default: all)"}
+                    },
+                    "required": ["drug_name"]
+                }
+            },
             {
                 "name": "preformulation_ai_fundamentals",
                 "description": "Analyze physicochemical properties: LogP, LogS, MW, pKa. Use when you need basic drug properties.",
@@ -283,6 +306,25 @@ Remember: TOOLS FIRST, QUESTIONS LATER."""
     def _define_openai_tools(self) -> List[Dict[str, Any]]:
         """Define tools in OpenAI format"""
         return [
+            {
+                "type": "function",
+                "function": {
+                    "name": "lookup_drug_intelligence",
+                    "description": ("Query the multi-source Drug Intelligence Database: identity, "
+                                    "physicochemical properties, salt/crystal forms, US marketed products, "
+                                    "CN reference preparations, FDA patents & exclusivity — with sources. "
+                                    "Use FIRST to ground formulation analysis in real data."),
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "drug_name": {"type": "string", "description": "Drug name"},
+                            "query_type": {"type": "string", "enum": ["identity", "properties", "forms",
+                                                                      "approved_products", "patents", "all"]}
+                        },
+                        "required": ["drug_name"]
+                    }
+                }
+            },
             {
                 "type": "function",
                 "function": {
@@ -645,6 +687,22 @@ Remember: TOOLS FIRST, QUESTIONS LATER."""
         from formulation_os.tools.builtins.formulation_ai.adapter import run as formulation_run
 
         try:
+            if tool_name == "lookup_drug_intelligence":
+                # DrugDB: read the local, provenance-aware store (zero network)
+                from formulation_os.knowledge.local_store import LocalDrugStore
+                from formulation_os.knowledge.llm_digest import digest_profile
+
+                drug = tool_input.get("drug_name", "")
+                profile = LocalDrugStore().get(drug)
+                if profile is None:
+                    return {
+                        "error": "not_found",
+                        "message": (f"'{drug}' has no deep record in the local Drug Intelligence DB. "
+                                    f"Ask the user or fall back to preformulation tools with a SMILES."),
+                    }
+                return {"digest": digest_profile(profile),
+                        "drug_name": drug}
+
             if "preformulation_ai" in tool_name:
                 # Map tool name to module
                 if "fundamentals" in tool_name:

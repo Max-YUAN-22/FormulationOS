@@ -150,6 +150,11 @@ Drug → Chemical Form → US/CN Marketed Product → Patent · Exclusivity · R
 **网页集成**:Knowledge Base「Drug Database」= 4,225 目录浏览 + **单药深度情报卡
 下钻**(点药出 5 模块 + 溯源 + 中美产品 + 专利),**运行时零外网**。
 
+**平台集成(对话流)**:DrugDB 已注册为 LLM 工具 `lookup_drug_intelligence`——
+智能体在对话中**先查药物情报**(身份/理化/盐型/中美产品/专利,自动压缩为带溯源的
+事实摘要)再做制剂推理,实现"数据层 → AI 模型"打通;深度卡同时给出**基于真实理化
+数据的 BCS 预测**(标注 predicted),专利按 patent_number 聚合展示。
+
 ---
 
 ## 8 · 数据源可达性研究(真实调研,是"发现")
