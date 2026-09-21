@@ -71,12 +71,18 @@ class UnifiedLLMManager:
             "pricing": "代理定价"
         },
 
-        # DeepSeek (OpenAI-compatible via proxy)
-        "deepseek-v4-flash": {
+        # DeepSeek (OpenAI-compatible, official API)
+        "deepseek-flash": {
             "provider": "openai",
-            "display_name": "DeepSeek V4 Flash",
-            "description": "高性价比工具调用模型(代理)",
-            "pricing": "代理定价"
+            "display_name": "DeepSeek Flash",
+            "description": "DeepSeek 官方 API,高性价比工具调用",
+            "pricing": "DeepSeek 官方"
+        },
+        "deepseek-v4-pro": {
+            "provider": "openai",
+            "display_name": "DeepSeek V4 Pro",
+            "description": "DeepSeek 官方 API 旗舰,制剂推理建议用这个",
+            "pricing": "DeepSeek 官方"
         }
     }
 

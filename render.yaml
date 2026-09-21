@@ -17,7 +17,7 @@ services:
       - key: MINIMAX_API_KEY
         sync: false
       - key: GPT_BASE_URL
-        value: https://www.cun.ai/v1
+        value: https://api.deepseek.com/v1
       - key: CLAUDE_BASE_URL
         value: https://www.cun.ai
       - key: MINIMAX_BASE_URL
