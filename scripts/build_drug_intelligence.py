@@ -57,11 +57,29 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--profile", choices=["public", "local"], default="public")
     ap.add_argument("--drugs", help="comma-separated drug names (default: curated list)")
+    ap.add_argument("--drugs-file", help="file with one drug name per line")
+    ap.add_argument("--skip-existing", action="store_true",
+                    help="skip drugs already carrying a full-depth profile in the output DB")
     ap.add_argument("--out", help="override output DB path")
     args = ap.parse_args()
 
-    drugs = [d.strip() for d in args.drugs.split(",")] if args.drugs else CURATED_DRUGS
+    if args.drugs_file:
+        drugs = [ln.strip() for ln in Path(args.drugs_file).read_text().splitlines() if ln.strip()]
+    elif args.drugs:
+        drugs = [d.strip() for d in args.drugs.split(",")]
+    else:
+        drugs = CURATED_DRUGS
     out_path = args.out or (_LOCAL_DB if args.profile == "local" else _PUBLIC_DB)
+
+    if args.skip_existing:
+        from prebuild_catalog_lite import _existing_full
+        done = _existing_full(out_path)
+        before = len(drugs)
+        drugs = [d for d in drugs if d.lower() not in done]
+        print(f"    --skip-existing: {before - len(drugs)} already built, {len(drugs)} to go")
+        if not drugs:
+            print("✅ nothing to build")
+            return
 
     print(f"🏗  Building {args.profile} drug-intelligence DB -> {out_path}")
     print(f"    {len(drugs)} drugs, sources: {', '.join(build_adapters(args.profile))}")
