@@ -114,7 +114,7 @@ def test_digest_includes_in_vivo_and_solid_state():
         }],
     }
     d = digest_profile(prof)
-    assert "IN-VIVO (ADME):" in d and "half_life=The terminal half-life" in d
+    assert "IN-VIVO (ADME prose):" in d and "half_life=The terminal half-life" in d
     assert "SOLID STATE (experimental):" in d
     assert "melting_point_experimental=152 °C (experimental)" in d
     assert "Yalkowsky" in d  # literature source surfaced

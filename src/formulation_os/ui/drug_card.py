@@ -101,6 +101,14 @@ def render_drug_card(st, profile: dict[str, Any], *, live: bool = False) -> None
 
     iv = profile.get("in_vivo", {})
     with st.expander(f"⑥ In-Vivo / ADME — {len(iv)} fields  (DrugBank)"):
+        # structured numbers first
+        from formulation_os.knowledge.llm_digest import _fmt_val
+        for f in ("half_life_h", "protein_binding_pct", "vd", "clearance_structured"):
+            if f in iv:
+                fv0 = iv[f][0]
+                st.markdown(f"- 🧮 **{f}**: **{_fmt_val(fv0.get('value'))}** "
+                            f"`experimental · extracted from DrugBank text`")
+        st.markdown("")
         for f in ("absorption", "half_life", "protein_binding",
                   "volume_of_distribution", "clearance", "route_of_elimination"):
             if f in iv:

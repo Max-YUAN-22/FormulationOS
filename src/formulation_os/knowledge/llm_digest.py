@@ -14,6 +14,21 @@ from __future__ import annotations
 from typing import Any
 
 
+def _fmt_val(v: Any) -> str:
+    """Format scalar / range-dict values compactly."""
+    if isinstance(v, dict):
+        lo, hi = v.get("min"), v.get("max")
+        unit = f" {v['unit']}" if v.get("unit") else ""
+        if lo is not None and hi is not None and hi != lo:
+            return f"{lo}–{hi}{unit}"
+        if lo is not None:
+            return f"{lo}{unit}"
+        if v.get("value") is not None:
+            return f"{v['value']}{unit}"
+        return str(v)
+    return str(v)
+
+
 def _v(fv: dict[str, Any] | None) -> tuple[str, str]:
     """(value string, source tag) from a serialized FieldValue."""
     if not fv:
@@ -21,7 +36,7 @@ def _v(fv: dict[str, Any] | None) -> tuple[str, str]:
     v = fv.get("value")
     unit = f" {fv['unit']}" if fv.get("unit") else ""
     src = fv.get("source", "")
-    return f"{v}{unit}", src
+    return f"{_fmt_val(v)}{unit}", src
 
 
 def digest_profile(profile: dict[str, Any]) -> str:
@@ -66,8 +81,16 @@ def digest_profile(profile: dict[str, Any]) -> str:
         lines.append(f"FORM NOTE: {em['field']} differs across chemical forms: {forms} "
                      f"— distinct entities (parent vs salt), not an error.")
 
-    # -- in-vivo / ADME (clip prose to keep the digest token-friendly) ------
+    # -- in-vivo / ADME: structured numbers first, then clipped prose ------
     iv = profile.get("in_vivo", {})
+    st_bits = []
+    for k in ["half_life_h", "protein_binding_pct", "vd", "clearance_structured"]:
+        if k in iv:
+            v, _ = _v(iv[k][0])
+            if v:
+                st_bits.append(f"{k}={v}")
+    if st_bits:
+        lines.append("IN-VIVO STRUCTURED (from DrugBank text, experimental): " + "; ".join(st_bits))
     iv_bits = []
     for k in ["half_life", "protein_binding", "volume_of_distribution", "clearance",
               "route_of_elimination"]:
@@ -77,7 +100,7 @@ def digest_profile(profile: dict[str, Any]) -> str:
                 v = v if len(v) <= 140 else v[:139] + "…"
                 iv_bits.append(f"{k}={v} ({src})")
     if iv_bits:
-        lines.append("IN-VIVO (ADME): " + "; ".join(iv_bits))
+        lines.append("IN-VIVO (ADME prose): " + "; ".join(iv_bits))
 
     # -- experimental solid-state -------------------------------------------
     ss = profile.get("solid_state", {})

@@ -122,6 +122,22 @@ class DrugBankLocalAdapter(SourceAdapter):
             if val not in (None, ""):
                 result.add_field(CATEGORY_IN_VIVO, fname, FieldValue(_clip(val), None, Evidence.RECORDED, prov))
 
+        # -- structured ADME numbers extracted from the prose above ----------
+        try:
+            from formulation_os.knowledge.in_vivo_extract import extract_structured
+            for sname, sval in extract_structured(in_vivo).items():
+                prov_x = Provenance(
+                    source=self.name,
+                    reference=prov.reference,
+                    source_type="extracted_from_curated_text",
+                )
+                result.add_field(
+                    CATEGORY_IN_VIVO, sname,
+                    FieldValue(sval, None, Evidence.EXPERIMENTAL, prov_x),
+                )
+        except Exception:
+            pass  # extraction is best-effort; prose remains the source of truth
+
         # -- solid state (EXPERIMENTAL values from DrugBank experimental-
         #    properties, each carrying its own literature source) -------------
         if _get(row, "exp_water_solubility"):
