@@ -68,12 +68,18 @@ def search_drug(session: requests.Session, term: str) -> list[dict]:
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--drugs", help="comma-separated names (default: curated 25)")
+    ap.add_argument("--drugs", help="comma-separated names (default: curated list)")
+    ap.add_argument("--drugs-file", help="file with one drug name per line")
     ap.add_argument("--delay", type=float, default=0.4)
     ap.add_argument("--out", default=_OUT_DB)
     args = ap.parse_args()
 
-    drugs = [d.strip() for d in args.drugs.split(",")] if args.drugs else CURATED_DRUGS
+    if args.drugs_file:
+        drugs = [ln.strip() for ln in Path(args.drugs_file).read_text().splitlines() if ln.strip()]
+    elif args.drugs:
+        drugs = [d.strip() for d in args.drugs.split(",")]
+    else:
+        drugs = CURATED_DRUGS
     s = requests.Session()
     s.headers.update({"User-Agent": _UA})
     now = datetime.now(timezone.utc).isoformat()
