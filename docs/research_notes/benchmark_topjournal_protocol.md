@@ -90,11 +90,21 @@ to reduce format overfitting.
 - [ ] Full reproducibility package (code, frozen DB snapshot, prompts, logs)
 - [ ] Metric validation vs expert judgment
 
-## 8. Target venues (realistic tiering)
+## 8. Target venues (pharmaceutics-first tiering)
 
-1. **NeurIPS Datasets & Benchmarks track** (top target for a benchmark paper)
-2. Briefings in Bioinformatics / J. Chem. Inf. Model. / Digital Discovery
-3. Fallback: AI in the Life Sciences / workshop → extend
+Framing note: the paper is positioned as **"reliability evaluation methodology for
+AI-driven formulation design"** (pharmaceutics methods paper), NOT as an ML benchmark
+paper. The contribution story for reviewers: AI is entering pharmaceutical development;
+its reliability is unquantified; we provide the quantification method, first data
+(fabrication rates, entity-confusion profiles), failure taxonomy, and a mitigation
+(+50pp with provenance-grounded access) — relevant to formulators and to ongoing
+regulatory discussions on AI credibility (FDA/EMA).
+
+1. **Drug Discovery Today** (AI methods/commentary; fast-moving AI+pharma scope)
+2. **Acta Pharmaceutica Sinica B** (publishes AI-pharmaceutics methods)
+3. **Molecular Pharmaceutics / Pharmaceutical Research** (methods + data)
+4. Fallback: Briefings in Bioinformatics (lab precedent: FormulationAI) / J. Chem. Inf. Model.
+   / Digital Discovery
 
 ## 9. Timeline (from pilot signal)
 
