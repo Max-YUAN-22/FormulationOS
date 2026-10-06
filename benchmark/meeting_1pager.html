@@ -1,67 +1,61 @@
 <!doctype html><html><head><meta charset="utf-8"><style>
-body{font-family:'PingFang SC','Helvetica Neue',sans-serif;max-width:760px;margin:24px auto;padding:0 20px;font-size:13px;line-height:1.5;color:#111}
-h1{font-size:19px;margin:0 0 2px} h2{font-size:15px;margin:14px 0 4px;border-bottom:1px solid #ccc;padding-bottom:2px}
-h3{font-size:13.5px;margin:10px 0 3px} table{border-collapse:collapse;width:100%;margin:6px 0}
-th,td{border:1px solid #bbb;padding:3px 7px;text-align:left;vertical-align:top} th{background:#f0f0f0}
-p{margin:4px 0} b{color:#000}</style></head><body>&lt;h1&gt;Formulation Reasoning Pilot — 发现与方向讨论&lt;/h1&gt;
+body{font-family:'PingFang SC',sans-serif;max-width:760px;margin:20px auto;padding:0 20px;font-size:12.5px;line-height:1.45;color:#111}
+h1{font-size:18px;margin:0 0 2px} h2{font-size:14px;margin:12px 0 3px;border-bottom:1px solid #ccc;padding-bottom:2px}
+h3{font-size:13px;margin:9px 0 3px} table{border-collapse:collapse;width:100%;margin:5px 0}
+th,td{border:1px solid #bbb;padding:2px 6px;text-align:left;vertical-align:top} th{background:#f0f0f0}
+p{margin:3px 0}</style></head><body>&lt;h1&gt;Formulation Reasoning Pilot → 评估框架方向讨论&lt;/h1&gt;
 &lt;b&gt;袁天祚 · 2026-10-07 · 1 页纸(附 5 个示例题)&lt;/b&gt;
 
 &lt;p&gt;---&lt;/p&gt;
 
-&lt;h2&gt;① 30 题 pilot 核心结果&lt;/h2&gt;
-
-&lt;p&gt;同一模型("直接回答" vs "查询数据库后回答"),题目由数据库生成、判分全自动:&lt;/p&gt;
+&lt;h2&gt;① 30 题 pilot 核心结果(同一模型,"直接回答" vs "查数据库后回答";判分全自动)&lt;/h2&gt;
 
 &lt;table&gt;
-&lt;tr&gt;&lt;th&gt;指标&lt;/th&gt;&lt;th&gt;直接回答&lt;/th&gt;&lt;th&gt;查库后回答&lt;/th&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;th&gt;指标&lt;/th&gt;&lt;th&gt;直接回答&lt;/th&gt;&lt;th&gt;查库后&lt;/th&gt;&lt;/tr&gt;
 &lt;tr&gt;&lt;td&gt;数值检索正确率&lt;/td&gt;&lt;td&gt;&lt;b&gt;42%&lt;/b&gt;&lt;/td&gt;&lt;td&gt;&lt;b&gt;92%&lt;/b&gt;&lt;/td&gt;&lt;/tr&gt;
 &lt;tr&gt;&lt;td&gt;母体/盐型混淆后"完全错误"&lt;/td&gt;&lt;td&gt;33%&lt;/td&gt;&lt;td&gt;&lt;b&gt;0%&lt;/b&gt;&lt;/td&gt;&lt;/tr&gt;
-&lt;tr&gt;&lt;td&gt;Agent 实际调用数据库比例&lt;/td&gt;&lt;td&gt;—&lt;/td&gt;&lt;td&gt;90%&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;Agent 实际调用数据库&lt;/td&gt;&lt;td&gt;—&lt;/td&gt;&lt;td&gt;90%&lt;/td&gt;&lt;/tr&gt;
 &lt;/table&gt;
 
-&lt;p&gt;附注:16 个"直接回答错误"经人工初审,&lt;b&gt;部分为预测口径差异而非编造&lt;/b&gt;&lt;/p&gt;
-&lt;p&gt;(如 XLogP:ChEMBL alogp=0.9 vs PubChem XLogP≈1.2)——错误本身怎么分类,正需要专业定义。&lt;/p&gt;
+&lt;p&gt;附注:16 个错误人工初审后,&lt;b&gt;部分为预测口径差异而非编造&lt;/b&gt;(如 XLogP 1.2 vs 0.9)——"错误如何分类"本身需要专业定义。&lt;/p&gt;
 
-&lt;h2&gt;② 初步问题定义&lt;/h2&gt;
+&lt;h2&gt;② 初步问题定义(试点所测 = 下图 Layer 1)&lt;/h2&gt;
 
-&lt;b&gt;Evidence-grounded formulation reasoning&lt;/b&gt; = AI 在制剂问题上的回答是否:
-&lt;p&gt;(1) 数值正确 (2) 实体正确(母体 vs 盐型)(3) 证据类型正确(实验 vs 预测/计算)&lt;/p&gt;
-&lt;p&gt;(4) 与真实上市产品一致 ——以及——&lt;b&gt;证据接地能否系统性纠正 (1)(2) 类错误&lt;/b&gt;。&lt;/p&gt;
+&lt;b&gt;Evidence-grounded formulation answering&lt;/b&gt;:数值正确 / 实体正确(母体 vs 盐型)/ 证据类型正确(实验 vs 预测)/ 与真实上市产品一致。
 
-&lt;h2&gt;③ Benchmark 现状(2025–26 调研)&lt;/h2&gt;
+&lt;h2&gt;③ 更完整的问题地图(试点只走到 Layer 1,终点想请老师定)&lt;/h2&gt;
 
 &lt;table&gt;
-&lt;tr&gt;&lt;th&gt;已有工作&lt;/th&gt;&lt;th&gt;差异&lt;/th&gt;&lt;/tr&gt;
-&lt;tr&gt;&lt;td&gt;DrugDiscoveryBench&lt;/td&gt;&lt;td&gt;&lt;b&gt;明确 formulation out of scope&lt;/b&gt;(停在 candidate selection)&lt;/td&gt;&lt;/tr&gt;
-&lt;tr&gt;&lt;td&gt;Rx-LLM&lt;/td&gt;&lt;td&gt;临床 medication management,非制剂科学推理&lt;/td&gt;&lt;/tr&gt;
-&lt;tr&gt;&lt;td&gt;SEDDS formulation cards&lt;/td&gt;&lt;td&gt;最接近;但 few-shot 卡片,无溯源判定&lt;/td&gt;&lt;/tr&gt;
-&lt;tr&gt;&lt;td&gt;FACTS Grounding&lt;/td&gt;&lt;td&gt;通用 grounding,无母体/盐型、实验/预测、制剂条件等专业维度&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;th&gt;层&lt;/th&gt;&lt;th&gt;评估内容&lt;/th&gt;&lt;th&gt;现状&lt;/th&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;L1 证据正确性&lt;/td&gt;&lt;td&gt;数值/实体/证据类型/口径&lt;/td&gt;&lt;td&gt;✅ 试点已测(42%→92%)&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;L2 机制推理&lt;/td&gt;&lt;td&gt;pH-溶解度、成盐、晶型等推理链&lt;/td&gt;&lt;td&gt;题型已设计,判分标准待定&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;L3 证据仲裁&lt;/td&gt;&lt;td&gt;预测与权威数据冲突时能否定位原因&lt;/td&gt;&lt;td&gt;试点中出现真实正面案例&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;L4 策略选择&lt;/td&gt;&lt;td&gt;给定约束下的方案排序与依据&lt;/td&gt;&lt;td&gt;题型已设计&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;&lt;b&gt;L5 研发效用&lt;/b&gt;&lt;/td&gt;&lt;td&gt;&lt;b&gt;候选排序、下一步实验选择、随新证据更新判断——能否减少 screening 次数&lt;/b&gt;&lt;/td&gt;&lt;td&gt;未做;&lt;b&gt;需要回顾性实验数据&lt;/b&gt;(组内历史数据或文献案例)&lt;/td&gt;&lt;/tr&gt;
 &lt;/table&gt;
 
-&lt;p&gt;→ &lt;b&gt;"制剂推理 × 溯源可判定 × 受控 agent"三维交叉,目前无公开基准。&lt;/b&gt;&lt;/p&gt;
+&lt;h2&gt;④ Benchmark 现状(2025–26 调研)&lt;/h2&gt;
 
-&lt;h2&gt;④ 想请老师判断的三个问题&lt;/h2&gt;
+&lt;p&gt;DrugDiscoveryBench:&lt;b&gt;formulation 明确 out of scope&lt;/b&gt; · Rx-LLM:临床用药安全,非制剂科学推理 · SEDDS cards:最接近但 few-shot、无溯源判定 · FACTS:通用 grounding,无制剂专业维度。&lt;/p&gt;
+&lt;p&gt;→ "制剂 × 溯源可判定 × 受控 agent" 交叉无公开基准;且现有工作均为&lt;b&gt;静态题集&lt;/b&gt;,无 sequential 证据更新评估。&lt;/p&gt;
 
-&lt;p&gt;1. &lt;b&gt;这个现象值得系统研究吗?&lt;/b&gt; 还是主要是"接了数据库检索自然变好",没有超出预期的科学问题?&lt;/p&gt;
-&lt;p&gt;2. &lt;b&gt;哪些任务才算"真正的 formulation reasoning"&lt;/b&gt;(而非信息检索)?——什么是计算药剂学里的真实任务?&lt;/p&gt;
-&lt;p&gt;3. &lt;b&gt;第一版 scope 收在哪&lt;/b&gt;:preformulation 判断 + 证据接地先行,还是把处方策略选择、计算工具调用解释也纳入?&lt;/p&gt;
+&lt;h2&gt;⑤ 想请老师判断的三个问题&lt;/h2&gt;
+
+&lt;p&gt;1. 这个现象(不接证据时 ~58% 出错)&lt;b&gt;值得系统研究吗&lt;/b&gt;?还是只是"接了数据库检索自然变好"?&lt;/p&gt;
+&lt;p&gt;2. 对我们组,评价"AI 会不会答制剂问题"和"&lt;b&gt;AI 能不能帮研究者决定下一步实验&lt;/b&gt;"——&lt;b&gt;哪个更有价值、更符合计算药剂学&lt;/b&gt;?&lt;/p&gt;
+&lt;p&gt;3. &lt;b&gt;如果只允许看一个指标&lt;/b&gt;来判断一个制剂 AI 有没有实际价值,您最希望看到什么(找到可行配方的成功率 / 减少实验次数 / top-k 排序质量 / 失败预警 / 其他)?——&lt;b&gt;您的答案就是这个评估框架的 endpoint&lt;/b&gt;。&lt;/p&gt;
 
 &lt;p&gt;---&lt;/p&gt;
 
-&lt;h3&gt;附:五个示例题(各代表一类任务;每题都有"好/坏答案"模式,请老师以制剂专家身份判断)&lt;/h3&gt;
+&lt;h3&gt;附:五个示例题(五类任务;每题都有好/坏答案模式,请老师以制剂专家身份判断)&lt;/h3&gt;
 
-&lt;b&gt;T1 数值取证&lt;/b&gt; — "ABACAVIR 的 XLogP 是多少?"
-&lt;p&gt;模型答 1.2;ChEMBL alogp=0.9,PubChem XLogP≈1.2 → &lt;b&gt;好答案&lt;/b&gt;:给出数值并指出描述符口径;&lt;b&gt;坏答案&lt;/b&gt;:只报一个数。考"模型知道自己不知道什么"。&lt;/p&gt;
+&lt;b&gt;T1 数值取证&lt;/b&gt; — "ABACAVIR 的 XLogP?" 模型答 1.2;ChEMBL alogp=0.9,PubChem XLogP≈1.2 → 好答案需指出描述符口径。考"模型知道自己不知道什么"。
 
-&lt;b&gt;T2 盐型/实体识别&lt;/b&gt; — "Atorvastatin calcium tablets 中 API 的分子量是多少?"
-&lt;p&gt;游离酸 558.6 vs 钙盐 1155.4 → 制剂语境下&lt;b&gt;正确实体是钙盐&lt;/b&gt;;答 558.6 = 实体错。考"专业语境下的实体消解"(通用 grounding 不覆盖)。&lt;/p&gt;
+&lt;b&gt;T2 盐型/实体识别&lt;/b&gt; — "Atorvastatin calcium tablets 中 API 的 MW?" 游离酸 558.6 vs 钙盐 1155.4 → 制剂语境下正确实体是钙盐;通用 grounding 无法定义"正确实体"。
 
-&lt;b&gt;T3 Preformulation 判断&lt;/b&gt; — "弱酸性药物 pKa 4.4、BCS II,口服固体制剂:胃(pH 1–2)/肠(pH 6.8)中溶出行为如何?成盐策略有效吗?有何风险?"
-&lt;p&gt;无 lookup 可用,考 pH-溶解度推理(Henderson–Hasselbalch)与成盐后胃内析出("salting-out")意识 → 请老师判断"好的推理路径"长什么样。&lt;/p&gt;
+&lt;b&gt;T3 Preformulation 判断&lt;/b&gt; — "弱酸 pKa 4.4、BCS II:胃/肠 pH 下溶出?成盐策略有效吗?有何风险?" 纯推理无 lookup,考 pH-溶解度与成盐析出意识。
 
-&lt;b&gt;T4 制剂策略选择&lt;/b&gt; — "Itraconazole(MW 705、中性、高 LogP、难溶、剂量 200 mg)首选增溶策略?"
-&lt;p&gt;真实世界答案:上市产品 Sporanox 口服液用环糊精增溶、胶囊为 ASD(HPMC 载药微丸)→ 用&lt;b&gt;真实上市产品做 ground truth&lt;/b&gt;,对照模型建议。&lt;/p&gt;
+&lt;b&gt;T4 策略选择&lt;/b&gt; — "Itraconazole(MW 705、中性、高 LogP、难溶、200mg)首选增溶策略?" 真实答案:Sporanox 口服液=环糊精、胶囊=ASD —— 用真实上市产品做 ground truth。
 
-&lt;b&gt;T5 工具/模型结果解释&lt;/b&gt; — "工具返回:二甲双胍 pKa 12.3、LogP −1.8;预测模块输出:LogP 2.5、BCS II。请解释矛盾并给结论。"
-&lt;b&gt;好答案&lt;/b&gt;:用证据指出预测按游离碱口径建模错误、实际为 BCS III(试点中真实出现);&lt;b&gt;坏答案&lt;/b&gt;:两个结果照单全收或只复述。
+&lt;b&gt;T5 证据仲裁&lt;/b&gt; — "工具返回:二甲双胍 pKa 12.3、LogP −1.8;预测模块:LogP 2.5、BCS II。解释矛盾。" 好答案:指出预测按游离碱口径建模错误、实为 BCS III(试点中真实出现)。
 </body></html>
