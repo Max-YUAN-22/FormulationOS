@@ -1,0 +1,928 @@
+{
+  "questions": [
+    {
+      "type": "A_numeric",
+      "drug": "ABACAVIR",
+      "field": "molecular_weight",
+      "q": "ABACAVIR 的分子量是多少？只回答数值（单位 g/mol）。",
+      "truth": 286.33,
+      "unit": "g/mol",
+      "tol": 0.05
+    },
+    {
+      "type": "A_numeric",
+      "drug": "ABACAVIR",
+      "field": "xlogp",
+      "q": "ABACAVIR 的XLogP是多少？只回答数值。",
+      "truth": 0.9,
+      "unit": "",
+      "tol": 0.15
+    },
+    {
+      "type": "A_numeric",
+      "drug": "ABACAVIR",
+      "field": "melting_point_experimental",
+      "q": "ABACAVIR 的实验熔点是多少？只回答数值。",
+      "truth": "165 °C",
+      "unit": "",
+      "tol": null
+    },
+    {
+      "type": "A_numeric",
+      "drug": "ABACAVIR",
+      "field": "half_life_h",
+      "q": "ABACAVIR 的半衰期是多少？只回答数值（单位 h）。",
+      "truth": 0.63,
+      "unit": "h",
+      "tol": 0.1
+    },
+    {
+      "type": "A_numeric",
+      "drug": "ABACAVIR",
+      "field": "pka_strongest_acidic",
+      "q": "ABACAVIR 的最强酸性pKa是多少？只回答数值。",
+      "truth": 15.41,
+      "unit": "",
+      "tol": 0.15
+    },
+    {
+      "type": "A_numeric",
+      "drug": "ABACAVIR SULFATE",
+      "field": "molecular_weight",
+      "q": "ABACAVIR SULFATE 的分子量是多少？只回答数值（单位 g/mol）。",
+      "truth": 670.7,
+      "unit": "g/mol",
+      "tol": 0.05
+    },
+    {
+      "type": "A_numeric",
+      "drug": "Abemaciclib",
+      "field": "molecular_weight",
+      "q": "Abemaciclib 的分子量是多少？只回答数值（单位 g/mol）。",
+      "truth": 506.6,
+      "unit": "g/mol",
+      "tol": 0.05
+    },
+    {
+      "type": "A_numeric",
+      "drug": "Abemaciclib",
+      "field": "xlogp",
+      "q": "Abemaciclib 的XLogP是多少？只回答数值。",
+      "truth": 3.8,
+      "unit": "",
+      "tol": 0.15
+    },
+    {
+      "type": "A_numeric",
+      "drug": "Abemaciclib",
+      "field": "half_life_h",
+      "q": "Abemaciclib 的半衰期是多少？只回答数值（单位 h）。",
+      "truth": 18.3,
+      "unit": "h",
+      "tol": 0.1
+    },
+    {
+      "type": "A_numeric",
+      "drug": "Abemaciclib",
+      "field": "pka_strongest_acidic",
+      "q": "Abemaciclib 的最强酸性pKa是多少？只回答数值。",
+      "truth": 10.27,
+      "unit": "",
+      "tol": 0.15
+    },
+    {
+      "type": "A_numeric",
+      "drug": "Abiraterone",
+      "field": "molecular_weight",
+      "q": "Abiraterone 的分子量是多少？只回答数值（单位 g/mol）。",
+      "truth": 349.5,
+      "unit": "g/mol",
+      "tol": 0.05
+    },
+    {
+      "type": "A_numeric",
+      "drug": "Abiraterone",
+      "field": "xlogp",
+      "q": "Abiraterone 的XLogP是多少？只回答数值。",
+      "truth": 4.6,
+      "unit": "",
+      "tol": 0.15
+    },
+    {
+      "type": "B_entity",
+      "drug": "Acyclovir",
+      "q": "Acyclovir 的分子量是多少？只回答数值。",
+      "truth_parent": 225.2,
+      "truth_salt": 324.34
+    },
+    {
+      "type": "B_entity",
+      "drug": "Adefovir",
+      "q": "Adefovir 的分子量是多少？只回答数值。",
+      "truth_parent": 273.1857,
+      "truth_salt": 501.48
+    },
+    {
+      "type": "B_entity",
+      "drug": "Alogliptin",
+      "q": "Alogliptin 的分子量是多少？只回答数值。",
+      "truth_parent": 339.3916,
+      "truth_salt": 461.52
+    },
+    {
+      "type": "B_entity",
+      "drug": "AMPHETAMINE ASPARTATE",
+      "q": "AMPHETAMINE ASPARTATE 的分子量是多少？只回答数值。",
+      "truth_parent": 268.31,
+      "truth_salt": 403.5
+    },
+    {
+      "type": "B_entity",
+      "drug": "AMPHETAMINE SULFATE",
+      "q": "AMPHETAMINE SULFATE 的分子量是多少？只回答数值。",
+      "truth_parent": 233.29,
+      "truth_salt": 368.5
+    },
+    {
+      "type": "B_entity",
+      "drug": "ANISOTROPINE",
+      "q": "ANISOTROPINE 的分子量是多少？只回答数值。",
+      "truth_parent": 267.41,
+      "truth_salt": 362.345
+    },
+    {
+      "type": "C_evidence",
+      "drug": "ABACAVIR",
+      "q": "ABACAVIR 的 pKa 是多少？这个数值是实验测定的还是计算预测的？",
+      "truth_value": 5.8
+    },
+    {
+      "type": "C_evidence",
+      "drug": "Abemaciclib",
+      "q": "Abemaciclib 的 pKa 是多少？这个数值是实验测定的还是计算预测的？",
+      "truth_value": 7.94
+    },
+    {
+      "type": "C_evidence",
+      "drug": "Abiraterone",
+      "q": "Abiraterone 的 pKa 是多少？这个数值是实验测定的还是计算预测的？",
+      "truth_value": 4.81
+    },
+    {
+      "type": "C_evidence",
+      "drug": "ABROCITINIB",
+      "q": "ABROCITINIB 的 pKa 是多少？这个数值是实验测定的还是计算预测的？",
+      "truth_value": 6.45
+    },
+    {
+      "type": "C_evidence",
+      "drug": "ACALABRUTINIB",
+      "q": "ACALABRUTINIB 的 pKa 是多少？这个数值是实验测定的还是计算预测的？",
+      "truth_value": 5.0
+    },
+    {
+      "type": "C_evidence",
+      "drug": "ACAMPROSATE",
+      "q": "ACAMPROSATE 的 pKa 是多少？这个数值是实验测定的还是计算预测的？",
+      "truth_value": -1.5
+    },
+    {
+      "type": "D_strategy",
+      "drug": "ABACAVIR",
+      "q": "针对 ABACAVIR，应采用什么制剂策略（给出剂型建议即可）？",
+      "truth_forms": [
+        "SOLUTION",
+        "TABLET"
+      ]
+    },
+    {
+      "type": "D_strategy",
+      "drug": "ABACAVIR SULFATE",
+      "q": "针对 ABACAVIR SULFATE，应采用什么制剂策略（给出剂型建议即可）？",
+      "truth_forms": [
+        "SOLUTION",
+        "TABLET"
+      ]
+    },
+    {
+      "type": "D_strategy",
+      "drug": "Abiraterone",
+      "q": "针对 Abiraterone，应采用什么制剂策略（给出剂型建议即可）？",
+      "truth_forms": [
+        "TABLET"
+      ]
+    },
+    {
+      "type": "D_strategy",
+      "drug": "ABIRATERONE ACETATE",
+      "q": "针对 ABIRATERONE ACETATE，应采用什么制剂策略（给出剂型建议即可）？",
+      "truth_forms": [
+        "TABLET"
+      ]
+    },
+    {
+      "type": "D_strategy",
+      "drug": "ABROCITINIB",
+      "q": "针对 ABROCITINIB，应采用什么制剂策略（给出剂型建议即可）？",
+      "truth_forms": [
+        "TABLET"
+      ]
+    },
+    {
+      "type": "D_strategy",
+      "drug": "ACALABRUTINIB",
+      "q": "针对 ACALABRUTINIB，应采用什么制剂策略（给出剂型建议即可）？",
+      "truth_forms": [
+        "CAPSULE",
+        "TABLET"
+      ]
+    }
+  ],
+  "results": [
+    {
+      "type": "A_numeric",
+      "drug": "ABACAVIR",
+      "used_db": false,
+      "correct": true,
+      "truth": 286.33,
+      "condition": "no_tool",
+      "answer": "286.33",
+      "q": "ABACAVIR 的分子量是多少？只回答数值（单位 g/mol）。"
+    },
+    {
+      "type": "A_numeric",
+      "drug": "ABACAVIR",
+      "used_db": true,
+      "correct": true,
+      "truth": 286.33,
+      "condition": "with_db",
+      "answer": "286.33",
+      "q": "ABACAVIR 的分子量是多少？只回答数值（单位 g/mol）。"
+    },
+    {
+      "type": "A_numeric",
+      "drug": "ABACAVIR",
+      "used_db": false,
+      "correct": false,
+      "truth": 0.9,
+      "condition": "no_tool",
+      "answer": "1.2",
+      "q": "ABACAVIR 的XLogP是多少？只回答数值。"
+    },
+    {
+      "type": "A_numeric",
+      "drug": "ABACAVIR",
+      "used_db": true,
+      "correct": true,
+      "truth": 0.9,
+      "condition": "with_db",
+      "answer": "0.9",
+      "q": "ABACAVIR 的XLogP是多少？只回答数值。"
+    },
+    {
+      "type": "A_numeric",
+      "drug": "ABACAVIR",
+      "used_db": false,
+      "correct": true,
+      "truth": "165 °C",
+      "condition": "no_tool",
+      "answer": "165–166",
+      "q": "ABACAVIR 的实验熔点是多少？只回答数值。"
+    },
+    {
+      "type": "A_numeric",
+      "drug": "ABACAVIR",
+      "used_db": true,
+      "correct": true,
+      "truth": "165 °C",
+      "condition": "with_db",
+      "answer": "165 °C",
+      "q": "ABACAVIR 的实验熔点是多少？只回答数值。"
+    },
+    {
+      "type": "A_numeric",
+      "drug": "ABACAVIR",
+      "used_db": false,
+      "correct": false,
+      "truth": 0.63,
+      "condition": "no_tool",
+      "answer": "1.5",
+      "q": "ABACAVIR 的半衰期是多少？只回答数值（单位 h）。"
+    },
+    {
+      "type": "A_numeric",
+      "drug": "ABACAVIR",
+      "used_db": true,
+      "correct": false,
+      "truth": 0.63,
+      "condition": "with_db",
+      "answer": "1.54 h",
+      "q": "ABACAVIR 的半衰期是多少？只回答数值（单位 h）。"
+    },
+    {
+      "type": "A_numeric",
+      "drug": "ABACAVIR",
+      "used_db": false,
+      "correct": false,
+      "truth": 15.41,
+      "condition": "no_tool",
+      "answer": "",
+      "q": "ABACAVIR 的最强酸性pKa是多少？只回答数值。"
+    },
+    {
+      "type": "A_numeric",
+      "drug": "ABACAVIR",
+      "used_db": true,
+      "correct": true,
+      "truth": 15.41,
+      "condition": "with_db",
+      "answer": "15.41",
+      "q": "ABACAVIR 的最强酸性pKa是多少？只回答数值。"
+    },
+    {
+      "type": "A_numeric",
+      "drug": "ABACAVIR SULFATE",
+      "used_db": false,
+      "correct": false,
+      "truth": 670.7,
+      "condition": "no_tool",
+      "answer": "",
+      "q": "ABACAVIR SULFATE 的分子量是多少？只回答数值（单位 g/mol）。"
+    },
+    {
+      "type": "A_numeric",
+      "drug": "ABACAVIR SULFATE",
+      "used_db": true,
+      "correct": true,
+      "truth": 670.7,
+      "condition": "with_db",
+      "answer": "670.7",
+      "q": "ABACAVIR SULFATE 的分子量是多少？只回答数值（单位 g/mol）。"
+    },
+    {
+      "type": "A_numeric",
+      "drug": "Abemaciclib",
+      "used_db": false,
+      "correct": true,
+      "truth": 506.6,
+      "condition": "no_tool",
+      "answer": "506.60",
+      "q": "Abemaciclib 的分子量是多少？只回答数值（单位 g/mol）。"
+    },
+    {
+      "type": "A_numeric",
+      "drug": "Abemaciclib",
+      "used_db": true,
+      "correct": true,
+      "truth": 506.6,
+      "condition": "with_db",
+      "answer": "506.6",
+      "q": "Abemaciclib 的分子量是多少？只回答数值（单位 g/mol）。"
+    },
+    {
+      "type": "A_numeric",
+      "drug": "Abemaciclib",
+      "used_db": false,
+      "correct": false,
+      "truth": 3.8,
+      "condition": "no_tool",
+      "answer": "",
+      "q": "Abemaciclib 的XLogP是多少？只回答数值。"
+    },
+    {
+      "type": "A_numeric",
+      "drug": "Abemaciclib",
+      "used_db": true,
+      "correct": true,
+      "truth": 3.8,
+      "condition": "with_db",
+      "answer": "3.8",
+      "q": "Abemaciclib 的XLogP是多少？只回答数值。"
+    },
+    {
+      "type": "A_numeric",
+      "drug": "Abemaciclib",
+      "used_db": false,
+      "correct": true,
+      "truth": 18.3,
+      "condition": "no_tool",
+      "answer": "18.3",
+      "q": "Abemaciclib 的半衰期是多少？只回答数值（单位 h）。"
+    },
+    {
+      "type": "A_numeric",
+      "drug": "Abemaciclib",
+      "used_db": true,
+      "correct": true,
+      "truth": 18.3,
+      "condition": "with_db",
+      "answer": "18.3",
+      "q": "Abemaciclib 的半衰期是多少？只回答数值（单位 h）。"
+    },
+    {
+      "type": "A_numeric",
+      "drug": "Abemaciclib",
+      "used_db": false,
+      "correct": false,
+      "truth": 10.27,
+      "condition": "no_tool",
+      "answer": "",
+      "q": "Abemaciclib 的最强酸性pKa是多少？只回答数值。"
+    },
+    {
+      "type": "A_numeric",
+      "drug": "Abemaciclib",
+      "used_db": true,
+      "correct": true,
+      "truth": 10.27,
+      "condition": "with_db",
+      "answer": "10.27",
+      "q": "Abemaciclib 的最强酸性pKa是多少？只回答数值。"
+    },
+    {
+      "type": "A_numeric",
+      "drug": "Abiraterone",
+      "used_db": false,
+      "correct": true,
+      "truth": 349.5,
+      "condition": "no_tool",
+      "answer": "349.51",
+      "q": "Abiraterone 的分子量是多少？只回答数值（单位 g/mol）。"
+    },
+    {
+      "type": "A_numeric",
+      "drug": "Abiraterone",
+      "used_db": true,
+      "correct": true,
+      "truth": 349.5,
+      "condition": "with_db",
+      "answer": "349.5",
+      "q": "Abiraterone 的分子量是多少？只回答数值（单位 g/mol）。"
+    },
+    {
+      "type": "A_numeric",
+      "drug": "Abiraterone",
+      "used_db": false,
+      "correct": false,
+      "truth": 4.6,
+      "condition": "no_tool",
+      "answer": "",
+      "q": "Abiraterone 的XLogP是多少？只回答数值。"
+    },
+    {
+      "type": "A_numeric",
+      "drug": "Abiraterone",
+      "used_db": true,
+      "correct": true,
+      "truth": 4.6,
+      "condition": "with_db",
+      "answer": "4.6",
+      "q": "Abiraterone 的XLogP是多少？只回答数值。"
+    },
+    {
+      "type": "B_entity",
+      "drug": "Acyclovir",
+      "used_db": false,
+      "verdict": "parent",
+      "correct": true,
+      "condition": "no_tool",
+      "answer": "225.21",
+      "q": "Acyclovir 的分子量是多少？只回答数值。"
+    },
+    {
+      "type": "B_entity",
+      "drug": "Acyclovir",
+      "used_db": true,
+      "verdict": "parent",
+      "correct": true,
+      "condition": "with_db",
+      "answer": "225.2",
+      "q": "Acyclovir 的分子量是多少？只回答数值。"
+    },
+    {
+      "type": "B_entity",
+      "drug": "Adefovir",
+      "used_db": false,
+      "verdict": "parent",
+      "correct": true,
+      "condition": "no_tool",
+      "answer": "273.19",
+      "q": "Adefovir 的分子量是多少？只回答数值。"
+    },
+    {
+      "type": "B_entity",
+      "drug": "Adefovir",
+      "used_db": true,
+      "verdict": "parent",
+      "correct": true,
+      "condition": "with_db",
+      "answer": "273.19",
+      "q": "Adefovir 的分子量是多少？只回答数值。"
+    },
+    {
+      "type": "B_entity",
+      "drug": "Alogliptin",
+      "used_db": false,
+      "verdict": "parent",
+      "correct": true,
+      "condition": "no_tool",
+      "answer": "339.39",
+      "q": "Alogliptin 的分子量是多少？只回答数值。"
+    },
+    {
+      "type": "B_entity",
+      "drug": "Alogliptin",
+      "used_db": true,
+      "verdict": "parent",
+      "correct": true,
+      "condition": "with_db",
+      "answer": "339.4",
+      "q": "Alogliptin 的分子量是多少？只回答数值。"
+    },
+    {
+      "type": "B_entity",
+      "drug": "AMPHETAMINE ASPARTATE",
+      "used_db": false,
+      "verdict": "wrong",
+      "correct": false,
+      "condition": "no_tool",
+      "answer": "",
+      "q": "AMPHETAMINE ASPARTATE 的分子量是多少？只回答数值。"
+    },
+    {
+      "type": "B_entity",
+      "drug": "AMPHETAMINE ASPARTATE",
+      "used_db": true,
+      "verdict": "salt",
+      "correct": false,
+      "condition": "with_db",
+      "answer": "403.5",
+      "q": "AMPHETAMINE ASPARTATE 的分子量是多少？只回答数值。"
+    },
+    {
+      "type": "B_entity",
+      "drug": "AMPHETAMINE SULFATE",
+      "used_db": false,
+      "verdict": "salt",
+      "correct": false,
+      "condition": "no_tool",
+      "answer": "368.49",
+      "q": "AMPHETAMINE SULFATE 的分子量是多少？只回答数值。"
+    },
+    {
+      "type": "B_entity",
+      "drug": "AMPHETAMINE SULFATE",
+      "used_db": true,
+      "verdict": "salt",
+      "correct": false,
+      "condition": "with_db",
+      "answer": "368.5",
+      "q": "AMPHETAMINE SULFATE 的分子量是多少？只回答数值。"
+    },
+    {
+      "type": "B_entity",
+      "drug": "ANISOTROPINE",
+      "used_db": false,
+      "verdict": "wrong",
+      "correct": false,
+      "condition": "no_tool",
+      "answer": "",
+      "q": "ANISOTROPINE 的分子量是多少？只回答数值。"
+    },
+    {
+      "type": "B_entity",
+      "drug": "ANISOTROPINE",
+      "used_db": true,
+      "verdict": "parent",
+      "correct": true,
+      "condition": "with_db",
+      "answer": "267.41",
+      "q": "ANISOTROPINE 的分子量是多少？只回答数值。"
+    },
+    {
+      "type": "C_evidence",
+      "drug": "ABACAVIR",
+      "used_db": false,
+      "hedged": false,
+      "claims_experimental": false,
+      "value_ok": false,
+      "overconfident": false,
+      "condition": "no_tool",
+      "answer": "",
+      "q": "ABACAVIR 的 pKa 是多少？这个数值是实验测定的还是计算预测的？"
+    },
+    {
+      "type": "C_evidence",
+      "drug": "ABACAVIR",
+      "used_db": true,
+      "hedged": false,
+      "claims_experimental": false,
+      "value_ok": false,
+      "overconfident": false,
+      "condition": "with_db",
+      "answer": "",
+      "q": "ABACAVIR 的 pKa 是多少？这个数值是实验测定的还是计算预测的？"
+    },
+    {
+      "type": "C_evidence",
+      "drug": "Abemaciclib",
+      "used_db": false,
+      "hedged": false,
+      "claims_experimental": false,
+      "value_ok": false,
+      "overconfident": false,
+      "condition": "no_tool",
+      "answer": "",
+      "q": "Abemaciclib 的 pKa 是多少？这个数值是实验测定的还是计算预测的？"
+    },
+    {
+      "type": "C_evidence",
+      "drug": "Abemaciclib",
+      "used_db": false,
+      "hedged": false,
+      "claims_experimental": false,
+      "value_ok": false,
+      "overconfident": false,
+      "condition": "with_db",
+      "answer": "",
+      "q": "Abemaciclib 的 pKa 是多少？这个数值是实验测定的还是计算预测的？"
+    },
+    {
+      "type": "C_evidence",
+      "drug": "Abiraterone",
+      "used_db": false,
+      "hedged": false,
+      "claims_experimental": false,
+      "value_ok": false,
+      "overconfident": false,
+      "condition": "no_tool",
+      "answer": "",
+      "q": "Abiraterone 的 pKa 是多少？这个数值是实验测定的还是计算预测的？"
+    },
+    {
+      "type": "C_evidence",
+      "drug": "Abiraterone",
+      "used_db": true,
+      "hedged": false,
+      "claims_experimental": false,
+      "value_ok": false,
+      "overconfident": false,
+      "condition": "with_db",
+      "answer": "API Error: Expecting value: line 1 column 1 (char 0)",
+      "q": "Abiraterone 的 pKa 是多少？这个数值是实验测定的还是计算预测的？"
+    },
+    {
+      "type": "C_evidence",
+      "drug": "ABROCITINIB",
+      "used_db": false,
+      "hedged": false,
+      "claims_experimental": false,
+      "value_ok": false,
+      "overconfident": false,
+      "condition": "no_tool",
+      "answer": "",
+      "q": "ABROCITINIB 的 pKa 是多少？这个数值是实验测定的还是计算预测的？"
+    },
+    {
+      "type": "C_evidence",
+      "drug": "ABROCITINIB",
+      "used_db": true,
+      "hedged": false,
+      "claims_experimental": false,
+      "value_ok": false,
+      "overconfident": false,
+      "condition": "with_db",
+      "answer": "",
+      "q": "ABROCITINIB 的 pKa 是多少？这个数值是实验测定的还是计算预测的？"
+    },
+    {
+      "type": "C_evidence",
+      "drug": "ACALABRUTINIB",
+      "used_db": false,
+      "hedged": false,
+      "claims_experimental": false,
+      "value_ok": false,
+      "overconfident": false,
+      "condition": "no_tool",
+      "answer": "",
+      "q": "ACALABRUTINIB 的 pKa 是多少？这个数值是实验测定的还是计算预测的？"
+    },
+    {
+      "type": "C_evidence",
+      "drug": "ACALABRUTINIB",
+      "used_db": true,
+      "hedged": false,
+      "claims_experimental": false,
+      "value_ok": false,
+      "overconfident": false,
+      "condition": "with_db",
+      "answer": "",
+      "q": "ACALABRUTINIB 的 pKa 是多少？这个数值是实验测定的还是计算预测的？"
+    },
+    {
+      "type": "C_evidence",
+      "drug": "ACAMPROSATE",
+      "used_db": false,
+      "hedged": false,
+      "claims_experimental": false,
+      "value_ok": false,
+      "overconfident": false,
+      "condition": "no_tool",
+      "answer": "",
+      "q": "ACAMPROSATE 的 pKa 是多少？这个数值是实验测定的还是计算预测的？"
+    },
+    {
+      "type": "C_evidence",
+      "drug": "ACAMPROSATE",
+      "used_db": true,
+      "hedged": false,
+      "claims_experimental": false,
+      "value_ok": false,
+      "overconfident": false,
+      "condition": "with_db",
+      "answer": "",
+      "q": "ACAMPROSATE 的 pKa 是多少？这个数值是实验测定的还是计算预测的？"
+    },
+    {
+      "type": "D_strategy",
+      "drug": "ABACAVIR",
+      "used_db": false,
+      "matches_market": false,
+      "truth_forms": [
+        "SOLUTION",
+        "TABLET"
+      ],
+      "correct": false,
+      "condition": "no_tool",
+      "answer": "针对 Abacavir（阿巴卡韦，常用硫酸盐）的制剂策略建议：\n\n1. **口服速释片剂**：300 mg（按阿巴卡韦计）薄膜包衣片，为最常用剂型。  \n2. **口服溶液剂**：如 20 mg/mL，适用于儿童或吞咽困难患者，需注意掩味。  \n3. **复方单片制剂**：与拉米夫定、多替拉韦等组成固定剂量",
+      "q": "针对 ABACAVIR，应采用什么制剂策略（给出剂型建议即可）？"
+    },
+    {
+      "type": "D_strategy",
+      "drug": "ABACAVIR",
+      "used_db": true,
+      "matches_market": true,
+      "truth_forms": [
+        "SOLUTION",
+        "TABLET"
+      ],
+      "correct": true,
+      "condition": "with_db",
+      "answer": "## ABACAVIR 制剂策略分析\n\n### 1. BCS 分类及依据\n\n**结论：BCS III 类（高溶解、中/低渗透）为主流共识；计算模型给出 BCS II 类，需以实测盐型数据校正。**\n\n| 数据来源 | 数值 | 意义 |\n|---|---|---|\n| 计算 logS（游离碱） | -3.0（约 0.1 mg/mL） | 游离碱溶解度较低 → 计算模型判 BCS II |\n| FDA 标签实测（硫酸盐） | **77 mg/mL** | 成盐后溶解度大幅提升 |\n| LogP / XLogP | 0.61–2.5 | 中等亲脂性 |\n| pKa（最强碱性） | 5.8 | 弱碱，胃肠道可离子化 |\n| TPSA | ~102 Å² | 极性适中，渗透性中等 |\n\n**关键校正**：按最高单剂量 300 mg 计，剂量/溶解度比 = 300 mg ÷ (77 mg/mL × 250 mL) ≈ **0.016 ≪ 1**，明确属于**高溶解**。因此阿巴卡韦硫酸盐实际是**高溶解性药物**，成盐（硫酸盐）是解决游离碱溶解度不足的关键。计算模型基于游离碱 SMILES，故给出偏保守的 BCS II，应采信实测盐型数据。\n\n### 2. 关键理化性质解读\n\n- **弱碱性（pKa 5.8）**：在胃酸（pH 1–2）中完全离子化、溶解度良好；近中性 pH 溶解下降。速释制",
+      "q": "针对 ABACAVIR，应采用什么制剂策略（给出剂型建议即可）？"
+    },
+    {
+      "type": "D_strategy",
+      "drug": "ABACAVIR SULFATE",
+      "used_db": false,
+      "matches_market": false,
+      "truth_forms": [
+        "SOLUTION",
+        "TABLET"
+      ],
+      "correct": false,
+      "condition": "no_tool",
+      "answer": "针对硫酸阿巴卡韦（abacavir sulfate），建议采用以下剂型：\n\n1. **速释薄膜包衣片**：最常用，规格以阿巴卡韦计 300 mg/片，便于口服、掩味及避光防潮。\n2. **口服溶液**：规格 20 mg/mL，适用于儿童或吞咽困难患者。\n3. **分散片/口崩片**：可作为儿科或特殊人群的改良剂型，提高顺应性。\n4. **固定剂量复方片**：与拉米夫定、多替拉韦等组成单片复方制剂，提高依从性。\n\n不推荐制成缓释/",
+      "q": "针对 ABACAVIR SULFATE，应采用什么制剂策略（给出剂型建议即可）？"
+    },
+    {
+      "type": "D_strategy",
+      "drug": "ABACAVIR SULFATE",
+      "used_db": true,
+      "matches_market": false,
+      "truth_forms": [
+        "SOLUTION",
+        "TABLET"
+      ],
+      "correct": false,
+      "condition": "with_db",
+      "answer": "",
+      "q": "针对 ABACAVIR SULFATE，应采用什么制剂策略（给出剂型建议即可）？"
+    },
+    {
+      "type": "D_strategy",
+      "drug": "Abiraterone",
+      "used_db": false,
+      "matches_market": false,
+      "truth_forms": [
+        "TABLET"
+      ],
+      "correct": false,
+      "condition": "no_tool",
+      "answer": "针对 Abiraterone（醋酸阿比特龙）可采用以下制剂策略：\n\n1. **纳米晶体片/胶囊**：减小粒径，提高溶出速率和口服生物利用度，降低食物效应。  \n2. **无定形固体分散体片**：通过载体抑制结晶，提高表观溶解度和溶出度。  \n3. **自微乳化/自乳化递药系统（SMEDDS/SNEDDS）**：利用脂质增溶，改善吸收并减少食物",
+      "q": "针对 Abiraterone，应采用什么制剂策略（给出剂型建议即可）？"
+    },
+    {
+      "type": "D_strategy",
+      "drug": "Abiraterone",
+      "used_db": true,
+      "matches_market": false,
+      "truth_forms": [
+        "TABLET"
+      ],
+      "correct": false,
+      "condition": "with_db",
+      "answer": "## Abiraterone 制剂策略分析\n\n### 1. BCS 分类与依据\n**结论：BCS II 类（低溶解性、高渗透性）**\n- 溶解性：LogS = −3.0 ~ −5.1（多源数据），动力学溶解度约 0.1 mg/mL（AI 预测）或 ~1 mg/L（水，25°C）——**溶解度极低，属\"难溶\"**。\n- 渗透性：LogP = 2.5（AI）~ 5.1（DrugBank），TPSA = 33 Å²，HBD=1、HBA=2，MW=349.5——符合高渗透性特征。\n- **不确定性**：市售品实际为**醋酸阿比特龙前药（Abiraterone Acetate）**，常被归为 BCS IV（低溶、渗透性存疑）；本模型基于母体阿比特龙给出 BCS II，故\"溶出/增溶\"始终是限速关键，二者结论方向一致。\n\n### 2. 关键理化性质解读\n| 性质 | 数值 | 制剂含义 |\n|---|---|---|\n| LogP | 4.6–5.4（高脂溶性） | 胃肠道润湿差，需表面活性剂/增溶 |\n| LogS | −3.0 ~ −5.1 | 极难溶，需增溶技术 |\n| pKa（碱性，吡啶N） | 4.81 | 弱碱性，低 pH 下成盐可溶、高 pH 易析出 |\n| TPSA | 33 Å² | 利于渗透（<60 Å²） |\n| HBD / HBA | 1 / 2 | 分子小、氢键少，适",
+      "q": "针对 Abiraterone，应采用什么制剂策略（给出剂型建议即可）？"
+    },
+    {
+      "type": "D_strategy",
+      "drug": "ABIRATERONE ACETATE",
+      "used_db": false,
+      "matches_market": false,
+      "truth_forms": [
+        "TABLET"
+      ],
+      "correct": false,
+      "condition": "no_tool",
+      "answer": "",
+      "q": "针对 ABIRATERONE ACETATE，应采用什么制剂策略（给出剂型建议即可）？"
+    },
+    {
+      "type": "D_strategy",
+      "drug": "ABIRATERONE ACETATE",
+      "used_db": true,
+      "matches_market": false,
+      "truth_forms": [
+        "TABLET"
+      ],
+      "correct": false,
+      "condition": "with_db",
+      "answer": "",
+      "q": "针对 ABIRATERONE ACETATE，应采用什么制剂策略（给出剂型建议即可）？"
+    },
+    {
+      "type": "D_strategy",
+      "drug": "ABROCITINIB",
+      "used_db": false,
+      "matches_market": false,
+      "truth_forms": [
+        "TABLET"
+      ],
+      "correct": false,
+      "condition": "no_tool",
+      "answer": "Abrocitinib 推荐采用**口服薄膜包衣片**剂型，便于每日一次给药和剂量调整（常用规格：50 mg、100 mg、150 mg、200 mg）。",
+      "q": "针对 ABROCITINIB，应采用什么制剂策略（给出剂型建议即可）？"
+    },
+    {
+      "type": "D_strategy",
+      "drug": "ABROCITINIB",
+      "used_db": false,
+      "matches_market": false,
+      "truth_forms": [
+        "TABLET"
+      ],
+      "correct": false,
+      "condition": "with_db",
+      "answer": "API Error: Unterminated string starting at: line 1 column 40 (char 39)",
+      "q": "针对 ABROCITINIB，应采用什么制剂策略（给出剂型建议即可）？"
+    },
+    {
+      "type": "D_strategy",
+      "drug": "ACALABRUTINIB",
+      "used_db": false,
+      "matches_market": false,
+      "truth_forms": [
+        "CAPSULE",
+        "TABLET"
+      ],
+      "correct": false,
+      "condition": "no_tool",
+      "answer": "针对 acalabrutinib，建议采用**口服速释硬胶囊剂**。\n\n具体策略要点：\n- 使用 **acalabrutinib 马来酸盐** 形式，改善溶解性与化学稳定性。\n- 可采用 **微粉化或纳米化** 处理原料药，提高溶出速率。\n- 处方中配伍适宜填充剂、崩解剂和润滑剂，制成内容物为粉末或颗粒的硬胶囊。\n- 剂型以 **速释** 为主，便于口服",
+      "q": "针对 ACALABRUTINIB，应采用什么制剂策略（给出剂型建议即可）？"
+    },
+    {
+      "type": "D_strategy",
+      "drug": "ACALABRUTINIB",
+      "used_db": false,
+      "matches_market": false,
+      "truth_forms": [
+        "CAPSULE",
+        "TABLET"
+      ],
+      "correct": false,
+      "condition": "with_db",
+      "answer": "",
+      "q": "针对 ACALABRUTINIB，应采用什么制剂策略（给出剂型建议即可）？"
+    }
+  ],
+  "summary": {
+    "no_tool": {
+      "A_numeric": 42,
+      "B_entity": 50,
+      "B_entity_salt_mismatch": 17,
+      "B_entity_wrong": 33,
+      "C_evidence_overconfident": 0,
+      "D_strategy": 0
+    },
+    "with_db": {
+      "A_numeric": 92,
+      "B_entity": 67,
+      "B_entity_salt_mismatch": 33,
+      "B_entity_wrong": 0,
+      "C_evidence_overconfident": 0,
+      "D_strategy": 17
+    },
+    "db_used_pct": 90
+  }
+}
