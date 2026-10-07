@@ -1,4 +1,4 @@
-# Research Protocol — FormGround-Bench
+# Research Protocol — FormulationBench
 ## A Benchmark and Controlled Agent Framework for Evaluating Evidence-Grounded Formulation Reasoning
 
 **Version:** v1.0 (pre-registration draft) · **Date:** 2026-10-06 · **Status:** pilot running
