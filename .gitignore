@@ -45,3 +45,7 @@ node_modules/
 *.tmp
 *.bak
 *~
+
+# DrugBank-derived content stays local (licence: no redistribution via public repo)
+data/processed/in_vivo_audit.csv
+data/raw/pubchem_backfill/exp_properties.jsonl

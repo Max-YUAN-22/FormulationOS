@@ -1,0 +1,50 @@
+{
+  "generated_at": "2026-11-20T09:32:15.408383+00:00",
+  "db_sha256": "8946662e4451f381b3a328bfeb4bc5eb2d3d9ed73016427180ce9e45fe89434a",
+  "db_bytes": 14409728,
+  "tables": {
+    "manifest": {
+      "rows": 5,
+      "schema": "CREATE TABLE manifest (key TEXT PRIMARY KEY, value TEXT)"
+    },
+    "master_drug": {
+      "rows": 19857,
+      "schema": "CREATE TABLE master_drug (\n    drugbank_id      TEXT PRIMARY KEY,\n    name             TEXT,\n    cas_number       TEXT,\n    unii             TEXT,\n    type             TEXT,\n    state            TEXT,\n    inchikey         TEXT,\n    smiles           TEXT,\n    molecular_formula TEXT,\n    molecular_weight REAL,\n    -- calculated (DrugBank, predicted)\n    logp REAL, logs REAL,\n    pka_strongest_acidic REAL, pka_strongest_basic REAL,\n    polar_surface_area REAL,\n    h_bond_donor_count INTEGER, h_bond_acceptor_count INTEGER,\n    rotatable_bond_count INTEGER,\n    -- in-vivo (DrugBank curated text)\n    absorption TEXT, half_life TEXT, protein_binding TEXT,\n    route_of_elimination TEXT, volume_of_distribution TEXT, clearance TEXT,\n    -- experimental (solid-state / solubility, with literature source)\n    exp_melting_point TEXT,\n    exp_water_solubility TEXT, exp_water_solubility_source TEXT,\n    exp_isoelectric_point TEXT,\n    -- classification\n    superclass TEXT, class TEXT,\n    -- pipeline metadata\n    source_version TEXT,\n    built_at TEXT\n)"
+    },
+    "x_chembl": {
+      "rows": 2701,
+      "schema": "CREATE TABLE x_chembl (\n            drugbank_id TEXT PRIMARY KEY,\n            chembl_id TEXT, chembl_name TEXT, match_type TEXT,\n            first_approval TEXT, bcs_class TEXT,\n            alogp REAL, psa REAL, hbd INTEGER, hba INTEGER, rtb INTEGER,\n            oral INTEGER, parenteral INTEGER, topical INTEGER, black_box INTEGER\n        )"
+    },
+    "x_confidence": {
+      "rows": 19857,
+      "schema": "CREATE TABLE x_confidence (\n            drugbank_id TEXT PRIMARY KEY, name TEXT,\n            mw_n INTEGER, mw_agree INTEGER, mw_tier TEXT,\n            logp_n INTEGER, logp_agree INTEGER, logp_tier TEXT,\n            psa_n INTEGER, psa_agree INTEGER, psa_tier TEXT,\n            overall_tier TEXT\n        )"
+    },
+    "x_groups": {
+      "rows": 19857,
+      "schema": "CREATE TABLE x_groups (\n            drugbank_id TEXT PRIMARY KEY,\n            name TEXT,\n            groups_verbatim TEXT,        -- 官方 XML 原文,逐字保留(顿号连接)\n            is_approved INTEGER, is_investigational INTEGER,\n            is_experimental INTEGER, is_withdrawn INTEGER,\n            is_illicit INTEGER, is_nutraceutical INTEGER,\n            is_veterinary INTEGER\n        )"
+    },
+    "x_in_vivo": {
+      "rows": 2422,
+      "schema": "CREATE TABLE x_in_vivo (\n            drugbank_id TEXT PRIMARY KEY,\n            name TEXT,\n            -- half-life, normalised to hours (min..max interval)\n            half_life_h_min REAL, half_life_h_max REAL, half_life_raw TEXT,\n            -- protein binding, percent; qualitative=1 for 'negligibly bound'\n            protein_binding_pct REAL, protein_binding_qualitative INTEGER,\n            protein_binding_raw TEXT,\n            -- volume of distribution, as-stated unit\n            vd_value REAL, vd_unit TEXT, vd_raw TEXT,\n            -- clearance, as-stated unit (interval or point)\n            clearance_min REAL, clearance_max REAL, clearance_unit TEXT,\n            clearance_raw TEXT,\n            extracted_fields INTEGER\n        )"
+    },
+    "x_nmpa": {
+      "rows": 315,
+      "schema": "CREATE TABLE \"x_nmpa\"(\n  drugbank_id TEXT,\n  match_name TEXT,\n  match_type TEXT,\n  n_cn_references INT,\n  n_originator INT,\n  sample_holder TEXT,\n  latest_batch TEXT\n)"
+    },
+    "x_orange_book": {
+      "rows": 1997,
+      "schema": "CREATE TABLE x_orange_book (\n            drugbank_id TEXT PRIMARY KEY,\n            match_name TEXT, match_type TEXT,\n            n_products INTEGER, n_rld INTEGER, n_rs INTEGER,\n            n_patents INTEGER, n_exclusivity INTEGER,\n            sample_trade_name TEXT, sample_appl_no TEXT\n        )"
+    },
+    "x_pubchem": {
+      "rows": 1368,
+      "schema": "CREATE TABLE x_pubchem (\n            drugbank_id TEXT PRIMARY KEY,\n            match_name TEXT, match_type TEXT,\n            pubchem_cid TEXT,\n            molecular_weight REAL, xlogp REAL, tpsa REAL,\n            hbd INTEGER, hba INTEGER,\n            molecular_formula TEXT\n        )"
+    }
+  },
+  "manifest": {
+    "drugbank_xml_sha256": "413f26cc8da069609557b221c9d2385095a6071cdd76bdaf1ad6ce14f2e40160",
+    "drugbank_xml_version": "5.1.19",
+    "groups_extracted_at": "2026-10-23T17:44:49.341261+00:00",
+    "in_vivo_extracted_at": "2026-11-20T09:11:54.031607+00:00",
+    "in_vivo_rule_module": "src/formulation_os/knowledge/in_vivo_extract.py"
+  }
+}
