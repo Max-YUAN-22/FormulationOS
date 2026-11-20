@@ -1,0 +1,183 @@
+================================================================
+Grounding Pilot 30 题 · 文字版(含两条件回答与判分)
+================================================================
+
+[1] A 数值检索 · ABACAVIR
+问: ABACAVIR 的分子量是多少？只回答数值（单位 g/mol）。
+   真值: 286.33 g/mol
+   裸LLM ✓: 286.33
+   查库 ✓(调用True): 286.33
+
+[2] A 数值检索 · ABACAVIR
+问: ABACAVIR 的XLogP是多少？只回答数值。
+   真值: 0.9 
+   裸LLM ✗: 1.2
+   查库 ✓(调用True): 0.9
+
+[3] A 数值检索 · ABACAVIR
+问: ABACAVIR 的实验熔点是多少？只回答数值。
+   真值: 165 °C 
+   裸LLM ✓: 165–166
+   查库 ✓(调用True): 165 °C
+
+[4] A 数值检索 · ABACAVIR
+问: ABACAVIR 的半衰期是多少？只回答数值（单位 h）。
+   真值: 0.63 h
+   裸LLM ✗: 1.5
+   查库 ✗(调用True): 1.54 h
+
+[5] A 数值检索 · ABACAVIR
+问: ABACAVIR 的最强酸性pKa是多少？只回答数值。
+   真值: 15.41 
+   裸LLM ✗: 
+   查库 ✓(调用True): 15.41
+
+[6] A 数值检索 · ABACAVIR SULFATE
+问: ABACAVIR SULFATE 的分子量是多少？只回答数值（单位 g/mol）。
+   真值: 670.7 g/mol
+   裸LLM ✗: 
+   查库 ✓(调用True): 670.7
+
+[7] A 数值检索 · Abemaciclib
+问: Abemaciclib 的分子量是多少？只回答数值（单位 g/mol）。
+   真值: 506.6 g/mol
+   裸LLM ✓: 506.60
+   查库 ✓(调用True): 506.6
+
+[8] A 数值检索 · Abemaciclib
+问: Abemaciclib 的XLogP是多少？只回答数值。
+   真值: 3.8 
+   裸LLM ✗: 
+   查库 ✓(调用True): 3.8
+
+[9] A 数值检索 · Abemaciclib
+问: Abemaciclib 的半衰期是多少？只回答数值（单位 h）。
+   真值: 18.3 h
+   裸LLM ✓: 18.3
+   查库 ✓(调用True): 18.3
+
+[10] A 数值检索 · Abemaciclib
+问: Abemaciclib 的最强酸性pKa是多少？只回答数值。
+   真值: 10.27 
+   裸LLM ✗: 
+   查库 ✓(调用True): 10.27
+
+[11] A 数值检索 · Abiraterone
+问: Abiraterone 的分子量是多少？只回答数值（单位 g/mol）。
+   真值: 349.5 g/mol
+   裸LLM ✓: 349.51
+   查库 ✓(调用True): 349.5
+
+[12] A 数值检索 · Abiraterone
+问: Abiraterone 的XLogP是多少？只回答数值。
+   真值: 4.6 
+   裸LLM ✗: 
+   查库 ✓(调用True): 4.6
+
+[13] B 实体/盐型 · Acyclovir
+问: Acyclovir 的分子量是多少？只回答数值。
+   真值: 母体=225.2  盐型=324.34
+   裸LLM ✓/parent: 225.21
+   查库 ✓/parent(调用True): 225.2
+
+[14] B 实体/盐型 · Adefovir
+问: Adefovir 的分子量是多少？只回答数值。
+   真值: 母体=273.1857  盐型=501.48
+   裸LLM ✓/parent: 273.19
+   查库 ✓/parent(调用True): 273.19
+
+[15] B 实体/盐型 · Alogliptin
+问: Alogliptin 的分子量是多少？只回答数值。
+   真值: 母体=339.3916  盐型=461.52
+   裸LLM ✓/parent: 339.39
+   查库 ✓/parent(调用True): 339.4
+
+[16] B 实体/盐型 · AMPHETAMINE ASPARTATE
+问: AMPHETAMINE ASPARTATE 的分子量是多少？只回答数值。
+   真值: 母体=268.31  盐型=403.5
+   裸LLM ✗/wrong: 
+   查库 ✗/salt(调用True): 403.5
+
+[17] B 实体/盐型 · AMPHETAMINE SULFATE
+问: AMPHETAMINE SULFATE 的分子量是多少？只回答数值。
+   真值: 母体=233.29  盐型=368.5
+   裸LLM ✗/salt: 368.49
+   查库 ✗/salt(调用True): 368.5
+
+[18] B 实体/盐型 · ANISOTROPINE
+问: ANISOTROPINE 的分子量是多少？只回答数值。
+   真值: 母体=267.41  盐型=362.345
+   裸LLM ✗/wrong: 
+   查库 ✓/parent(调用True): 267.41
+
+[19] C 证据类型 · ABACAVIR
+问: ABACAVIR 的 pKa 是多少？这个数值是实验测定的还是计算预测的？
+   真值: pKa=5.8(DB来源为预测值)
+   裸LLM ✓: 
+   查库 ✓(调用True): 
+
+[20] C 证据类型 · Abemaciclib
+问: Abemaciclib 的 pKa 是多少？这个数值是实验测定的还是计算预测的？
+   真值: pKa=7.94(DB来源为预测值)
+   裸LLM ✓: 
+   查库 ✓(调用False): 
+
+[21] C 证据类型 · Abiraterone
+问: Abiraterone 的 pKa 是多少？这个数值是实验测定的还是计算预测的？
+   真值: pKa=4.81(DB来源为预测值)
+   裸LLM ✓: 
+   查库 ✓(调用True): API Error: Expecting value: line 1 column 1 (char 0)
+
+[22] C 证据类型 · ABROCITINIB
+问: ABROCITINIB 的 pKa 是多少？这个数值是实验测定的还是计算预测的？
+   真值: pKa=6.45(DB来源为预测值)
+   裸LLM ✓: 
+   查库 ✓(调用True): 
+
+[23] C 证据类型 · ACALABRUTINIB
+问: ACALABRUTINIB 的 pKa 是多少？这个数值是实验测定的还是计算预测的？
+   真值: pKa=5.0(DB来源为预测值)
+   裸LLM ✓: 
+   查库 ✓(调用True): 
+
+[24] C 证据类型 · ACAMPROSATE
+问: ACAMPROSATE 的 pKa 是多少？这个数值是实验测定的还是计算预测的？
+   真值: pKa=-1.5(DB来源为预测值)
+   裸LLM ✓: 
+   查库 ✓(调用True): 
+
+[25] D 策略vs上市 · ABACAVIR
+问: 针对 ABACAVIR，应采用什么制剂策略（给出剂型建议即可）？
+   真实上市剂型: ['SOLUTION', 'TABLET']
+   裸LLM ✗: 针对 Abacavir（阿巴卡韦，常用硫酸盐）的制剂策略建议：  1. **口服速释片剂**：300 mg（按阿巴卡韦计）薄膜包衣片，为最常用剂型。   2. **口服溶液剂**：如 20 mg/mL，适用于儿童或吞咽困
+   查库 ✓(调用True): ## ABACAVIR 制剂策略分析  ### 1. BCS 分类及依据  **结论：BCS III 类（高溶解、中/低渗透）为主流共识；计算模型给出 BCS II 类，需以实测盐型数据校正。**  | 数据来源 | 数
+
+[26] D 策略vs上市 · ABACAVIR SULFATE
+问: 针对 ABACAVIR SULFATE，应采用什么制剂策略（给出剂型建议即可）？
+   真实上市剂型: ['SOLUTION', 'TABLET']
+   裸LLM ✗: 针对硫酸阿巴卡韦（abacavir sulfate），建议采用以下剂型：  1. **速释薄膜包衣片**：最常用，规格以阿巴卡韦计 300 mg/片，便于口服、掩味及避光防潮。 2. **口服溶液**：规格 20 mg/
+   查库 ✗(调用True): 
+
+[27] D 策略vs上市 · Abiraterone
+问: 针对 Abiraterone，应采用什么制剂策略（给出剂型建议即可）？
+   真实上市剂型: ['TABLET']
+   裸LLM ✗: 针对 Abiraterone（醋酸阿比特龙）可采用以下制剂策略：  1. **纳米晶体片/胶囊**：减小粒径，提高溶出速率和口服生物利用度，降低食物效应。   2. **无定形固体分散体片**：通过载体抑制结晶，提高表观
+   查库 ✗(调用True): ## Abiraterone 制剂策略分析  ### 1. BCS 分类与依据 **结论：BCS II 类（低溶解性、高渗透性）** - 溶解性：LogS = −3.0 ~ −5.1（多源数据），动力学溶解度约 0.1 
+
+[28] D 策略vs上市 · ABIRATERONE ACETATE
+问: 针对 ABIRATERONE ACETATE，应采用什么制剂策略（给出剂型建议即可）？
+   真实上市剂型: ['TABLET']
+   裸LLM ✗: 
+   查库 ✗(调用True): 
+
+[29] D 策略vs上市 · ABROCITINIB
+问: 针对 ABROCITINIB，应采用什么制剂策略（给出剂型建议即可）？
+   真实上市剂型: ['TABLET']
+   裸LLM ✗: Abrocitinib 推荐采用**口服薄膜包衣片**剂型，便于每日一次给药和剂量调整（常用规格：50 mg、100 mg、150 mg、200 mg）。
+   查库 ✗(调用False): API Error: Unterminated string starting at: line 1 column 40 (char 39)
+
+[30] D 策略vs上市 · ACALABRUTINIB
+问: 针对 ACALABRUTINIB，应采用什么制剂策略（给出剂型建议即可）？
+   真实上市剂型: ['CAPSULE', 'TABLET']
+   裸LLM ✗: 针对 acalabrutinib，建议采用**口服速释硬胶囊剂**。  具体策略要点： - 使用 **acalabrutinib 马来酸盐** 形式，改善溶解性与化学稳定性。 - 可采用 **微粉化或纳米化** 处理原料
+   查库 ✗(调用False): 

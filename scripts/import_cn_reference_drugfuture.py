@@ -94,16 +94,29 @@ def main() -> None:
     }
 
     total = 0
+    failed: list[str] = []
     for i, drug in enumerate(drugs, 1):
-        try:
-            recs = search_drug(s, drug)
-            if recs:
-                write_reference_records(args.out, recs, prov)
+        recs = []
+        for attempt in range(3):
+            try:
+                recs = search_drug(s, drug)
+                break
+            except Exception as e:
+                wait = args.delay * (attempt + 1) * 4  # backoff on SSL/429
+                if attempt < 2:
+                    time.sleep(wait)
+                else:
+                    print(f"  [{i}/{len(drugs)}] {drug:16s} ERROR {e}")
+                    failed.append(drug)
+        if recs:
+            write_reference_records(args.out, recs, prov)
             total += len(recs)
-            print(f"  [{i}/{len(drugs)}] {drug:16s} +{len(recs)} reference products")
-        except Exception as e:
-            print(f"  [{i}/{len(drugs)}] {drug:16s} ERROR {e}")
+            print(f"  [{i}/{len(drugs)}] {drug:16s} +{len(recs)} reference products", flush=True)
         time.sleep(args.delay)
+    if failed:
+        fpath = Path(args.out).parent / "cn_import_failed.txt"
+        fpath.write_text("\n".join(failed))
+        print(f"  ⚠ {len(failed)} drugs failed (saved to {fpath}) — re-run to retry")
 
     print(f"\n✅ Compiled {total} reference products (curated drugs) into {args.out}")
 

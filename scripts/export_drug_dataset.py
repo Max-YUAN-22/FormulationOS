@@ -215,11 +215,17 @@ def main() -> None:
     df.to_csv(csv_path, index=False, encoding="utf-8-sig")
 
     xlsx_path = out_dir / "drug_dataset.xlsx"
+    lite_path = out_dir / "drug_dataset_主表.xlsx"
     try:
         with pd.ExcelWriter(xlsx_path, engine="openpyxl") as w:
             df.to_excel(w, sheet_name="数据集", index=False)
             pd.DataFrame(us_sheet).drop_duplicates().to_excel(w, sheet_name="美国上市产品", index=False)
             pd.DataFrame(cn_sheet).drop_duplicates().to_excel(w, sheet_name="中国参比制剂", index=False)
+            pd.DataFrame(DATA_DICTIONARY, columns=["字段", "说明", "来源与证据类型"]).to_excel(
+                w, sheet_name="字段说明", index=False)
+        # lightweight: main sheet only (for easy sharing)
+        with pd.ExcelWriter(lite_path, engine="openpyxl") as w:
+            df.to_excel(w, sheet_name="数据集", index=False)
             pd.DataFrame(DATA_DICTIONARY, columns=["字段", "说明", "来源与证据类型"]).to_excel(
                 w, sheet_name="字段说明", index=False)
     except Exception as e:  # openpyxl missing -> CSV still delivered
@@ -231,7 +237,8 @@ def main() -> None:
           f"| 美国产品明细 {len(us_sheet)} 行 · 中国参比明细 {len(cn_sheet)} 行")
     print(f"   CSV : {csv_path}")
     if xlsx_path:
-        print(f"   Excel: {xlsx_path} (数据集/美国产品/中国参比/字段说明 四个sheet)")
+        print(f"   Excel 全量: {xlsx_path} (数据集/美国产品/中国参比/字段说明)")
+        print(f"   Excel 轻量: {lite_path} (仅主表,方便发送)")
     print("   关键字段覆盖:")
     for c in ("半衰期-下限 (h)", "血浆蛋白结合率 (%)", "熔点 (实验, °C)", "水溶解度 (实验)",
               "药物分类(class)", "首次批准年份 (ChEMBL)"):

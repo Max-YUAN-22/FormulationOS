@@ -60,6 +60,8 @@ def main() -> None:
     ap.add_argument("--drugs-file", help="file with one drug name per line")
     ap.add_argument("--skip-existing", action="store_true",
                     help="skip drugs already carrying a full-depth profile in the output DB")
+    ap.add_argument("--workers", type=int, default=1,
+                    help="parallel fetch threads (network-bound; 6 is safe)")
     ap.add_argument("--out", help="override output DB path")
     args = ap.parse_args()
 
@@ -92,16 +94,41 @@ def main() -> None:
     store.init_schema()
 
     now = datetime.now(timezone.utc).isoformat()
+    workers = max(1, int(getattr(args, "workers", 1) or 1))
     ok = 0
-    for i, drug in enumerate(drugs, 1):
-        try:
-            profile = aggregator.build(drug_name=drug)
-            store.write(drug, profile.to_dict(), built_at=now)
-            used = ", ".join(profile.sources_used) or "none"
-            print(f"  [{i}/{len(drugs)}] {drug:16s} ✓  sources: {used}")
-            ok += 1
-        except Exception as exc:  # keep going; one bad drug shouldn't abort build
-            print(f"  [{i}/{len(drugs)}] {drug:16s} ✗  {exc}")
+    if workers > 1:
+        # network-bound: thread pool gives near-linear speedup
+        from concurrent.futures import ThreadPoolExecutor
+        lock_print = __import__("threading").Lock()
+        counter = {"i": 0}
+
+        def _one(drug: str):
+            try:
+                profile = aggregator.build(drug_name=drug)
+                store.write(drug, profile.to_dict(), built_at=now)
+                with lock_print:
+                    counter["i"] += 1
+                    if counter["i"] % 25 == 0:
+                        print(f"  [{counter['i']}/{len(drugs)}] built… (last: {drug})", flush=True)
+                return True
+            except Exception as exc:
+                with lock_print:
+                    print(f"  {drug:16s} ✗  {exc}", flush=True)
+                return False
+
+        with ThreadPoolExecutor(max_workers=workers) as ex:
+            oks = list(ex.map(_one, drugs))
+        ok = sum(1 for x in oks if x)
+    else:
+        for i, drug in enumerate(drugs, 1):
+            try:
+                profile = aggregator.build(drug_name=drug)
+                store.write(drug, profile.to_dict(), built_at=now)
+                used = ", ".join(profile.sources_used) or "none"
+                print(f"  [{i}/{len(drugs)}] {drug:16s} ✓  sources: {used}")
+                ok += 1
+            except Exception as exc:  # keep going; one bad drug shouldn't abort build
+                print(f"  [{i}/{len(drugs)}] {drug:16s} ✗  {exc}")
 
     print()
     print(f"✅ Done: {ok}/{len(drugs)} drugs written to {out_path}")
