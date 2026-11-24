@@ -61,14 +61,17 @@ def main() -> None:
         SELECT m.drugbank_id, m.name,
                m.molecular_weight mw, m.logp, m.polar_surface_area psa,
                ch.alogp clogp, ch.psa cpsa,
-               p.molecular_weight pmw, p.xlogp plogp, p.tpsa ptpsa
+               p.molecular_weight pmw, p.xlogp plogp, p.tpsa ptpsa,
+               sv.match_level
         FROM master_drug m
         LEFT JOIN x_chembl ch ON ch.drugbank_id = m.drugbank_id
         LEFT JOIN x_pubchem p ON p.drugbank_id = m.drugbank_id
+        LEFT JOIN x_structure_verify sv ON sv.drugbank_id = m.drugbank_id
         """
     ).fetchall()
 
     t_mw, t_lp, t_psa, overall = Counter(), Counter(), Counter(), Counter()
+    exact_overall = Counter()
     ins = []
     for r in rows:
         nm, ag, tt = tier3(r["mw"], cmw.get(_norm(r["name"])), r["pmw"], 0.02)
@@ -80,8 +83,10 @@ def main() -> None:
               else "CONFLICT" if "CONFLICT" in tiers
               else "B" if tiers else "")
         overall[ov] += 1
+        if r["match_level"] == "exact_match":
+            exact_overall[ov] += 1
         ins.append((r["drugbank_id"], r["name"], nm, ag, tt,
-                    lp, lag, lt, ps, pag, pt, ov))
+                    lp, lag, lt, ps, pag, pt, ov, r["match_level"]))
 
     m.executescript(
         """
@@ -91,19 +96,20 @@ def main() -> None:
             mw_n INTEGER, mw_agree INTEGER, mw_tier TEXT,
             logp_n INTEGER, logp_agree INTEGER, logp_tier TEXT,
             psa_n INTEGER, psa_agree INTEGER, psa_tier TEXT,
-            overall_tier TEXT
+            overall_tier TEXT, match_level TEXT
         );
         """
     )
-    m.executemany("INSERT INTO x_confidence VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", ins)
+    m.executemany("INSERT INTO x_confidence VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)", ins)
     m.commit()
     m.close()
 
-    print("=== 三源置信度 v2(DrugBank + ChEMBL + PubChem)===")
+    print("=== 三源置信度 v3(DrugBank + ChEMBL + PubChem, 结构验证标注)===")
     print("MW:  ", dict(t_mw))
     print("LogP:", dict(t_lp))
     print("TPSA:", dict(t_psa))
-    print("总体:", dict(overall))
+    print("总体(全部):", dict(overall))
+    print("总体(仅结构验证 exact_match):", dict(exact_overall))
 
 
 if __name__ == "__main__":

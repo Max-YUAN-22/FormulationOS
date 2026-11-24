@@ -1,10 +1,10 @@
 {
-  "generated_at": "2026-11-24T15:51:36.814612+00:00",
-  "db_sha256": "f7a644265e83e6e3084c6d8f3a033d866541be72323f9beec7c4892f04e03fd6",
-  "db_bytes": 17604608,
+  "generated_at": "2026-11-24T16:01:01.503908+00:00",
+  "db_sha256": "68f75e349145bb2b6c32283d50efe2cb6bb263f10f23d3d1852ce00c5db9e4d6",
+  "db_bytes": 19668992,
   "tables": {
     "manifest": {
-      "rows": 14,
+      "rows": 15,
       "schema": "CREATE TABLE manifest (key TEXT PRIMARY KEY, value TEXT)"
     },
     "master_drug": {
@@ -17,7 +17,7 @@
     },
     "x_confidence": {
       "rows": 19857,
-      "schema": "CREATE TABLE x_confidence (\n            drugbank_id TEXT PRIMARY KEY, name TEXT,\n            mw_n INTEGER, mw_agree INTEGER, mw_tier TEXT,\n            logp_n INTEGER, logp_agree INTEGER, logp_tier TEXT,\n            psa_n INTEGER, psa_agree INTEGER, psa_tier TEXT,\n            overall_tier TEXT\n        )"
+      "schema": "CREATE TABLE x_confidence (\n            drugbank_id TEXT PRIMARY KEY, name TEXT,\n            mw_n INTEGER, mw_agree INTEGER, mw_tier TEXT,\n            logp_n INTEGER, logp_agree INTEGER, logp_tier TEXT,\n            psa_n INTEGER, psa_agree INTEGER, psa_tier TEXT,\n            overall_tier TEXT, match_level TEXT\n        )"
     },
     "x_coverage": {
       "rows": 35,
@@ -50,6 +50,10 @@
     "x_pubchem": {
       "rows": 15058,
       "schema": "CREATE TABLE x_pubchem (\n            drugbank_id TEXT PRIMARY KEY,\n            match_name TEXT, match_type TEXT,\n            pubchem_cid TEXT,\n            molecular_weight REAL, xlogp REAL, tpsa REAL,\n            hbd INTEGER, hba INTEGER,\n            molecular_formula TEXT\n        )"
+    },
+    "x_structure_verify": {
+      "rows": 14992,
+      "schema": "CREATE TABLE x_structure_verify (\n            drugbank_id TEXT PRIMARY KEY, name TEXT,\n            match_level TEXT, master_inchikey TEXT, pubchem_inchikey TEXT\n        )"
     }
   },
   "manifest": {
@@ -66,6 +70,7 @@
     "pubchem_props_jsonl_sha256": "a7aa3695e876f3ee8dfe2f8c900c067f54e23e7325896f28769c1d5757475341",
     "logp_analysis_built_at": "2026-11-24T15:48:46.292921+00:00",
     "coverage_built_at": "2026-11-24T15:48:46.540907+00:00",
-    "exp_crosscheck_built_at": "2026-11-24T15:51:36.697485+00:00"
+    "exp_crosscheck_built_at": "2026-11-24T15:51:36.697485+00:00",
+    "structure_verify_built_at": "2026-11-24T16:00:41.374454+00:00"
   }
 }
