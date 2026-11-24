@@ -49,3 +49,6 @@ node_modules/
 # DrugBank-derived content stays local (licence: no redistribution via public repo)
 data/processed/in_vivo_audit.csv
 data/raw/pubchem_backfill/exp_properties.jsonl
+
+# W1 v2 question bank: bulk DrugBank-derived facts stay local
+benchmark/results/w1_v2_question_bank.jsonl

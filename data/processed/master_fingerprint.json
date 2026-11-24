@@ -1,10 +1,10 @@
 {
-  "generated_at": "2026-11-24T16:02:57.039976+00:00",
-  "db_sha256": "7498416ce55bc37d7177f5a0608857b5d2898978b9e3ce97a2ca87813ee8a065",
+  "generated_at": "2026-11-24T16:07:50.199333+00:00",
+  "db_sha256": "e8a861f243810325e8b8fb38804c8cef2386d9e07f05dfd45ef6a1a957810765",
   "db_bytes": 20045824,
   "tables": {
     "manifest": {
-      "rows": 16,
+      "rows": 19,
       "schema": "CREATE TABLE manifest (key TEXT PRIMARY KEY, value TEXT)"
     },
     "master_drug": {
@@ -76,6 +76,9 @@
     "coverage_built_at": "2026-11-24T15:48:46.540907+00:00",
     "exp_crosscheck_built_at": "2026-11-24T15:51:36.697485+00:00",
     "structure_verify_built_at": "2026-11-24T16:00:41.374454+00:00",
-    "chembl_structure_verify_built_at": "2026-11-24T16:02:21.008671+00:00"
+    "chembl_structure_verify_built_at": "2026-11-24T16:02:21.008671+00:00",
+    "w1_v2_bank_sha256": "f0f95deddc8437308ca7cddcacf195025c26d5b59f93783c70fd54a57ab9dfb7",
+    "w1_v2_bank_built_at": "2026-11-24T16:04:52.071810+00:00",
+    "w1_v2_bank_seed": "20261120"
   }
 }
