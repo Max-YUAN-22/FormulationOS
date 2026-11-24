@@ -191,7 +191,7 @@ def phase_c(spine: list[dict], cid_of: dict[str, str]) -> None:
 
     def work(t: tuple) -> None:
         cid, mp, ws = t
-        for heading, flag in (("Melting Point", "mp"), ("Water Solubility", "ws")):
+        for heading, flag in (("Melting Point", "mp"), ("Solubility", "ws")):
             key = f"{cid}:{flag}"
             if sink.has(key):
                 continue
@@ -221,7 +221,17 @@ def main() -> None:
         )
     ]
     t0 = time.time()
-    cid_of = phase_a(spine) if "A" in phases else {}
+    if "A" in phases or not (RAW / "cid_resolution.jsonl").exists():
+        cid_of = phase_a(spine)
+    else:
+        # resuming later phases only: adopt CIDs from the frozen A-phase file
+        cid_of = {}
+        with (RAW / "cid_resolution.jsonl").open() as f:
+            for line in f:
+                r = json.loads(line)
+                if r.get("status") in ("ok", "salt_fallback") and r.get("cid"):
+                    cid_of[r["drugbank_id"]] = str(r["cid"])
+        print(f"[resume] {len(cid_of)} CIDs adopted from frozen A-phase file", flush=True)
     if "B" in phases:
         phase_b(cid_of)
     if "C" in phases:
