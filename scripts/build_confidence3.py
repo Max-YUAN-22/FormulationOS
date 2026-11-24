@@ -62,16 +62,18 @@ def main() -> None:
                m.molecular_weight mw, m.logp, m.polar_surface_area psa,
                ch.alogp clogp, ch.psa cpsa,
                p.molecular_weight pmw, p.xlogp plogp, p.tpsa ptpsa,
-               sv.match_level
+               sv.match_level pc_level, cv.match_level ch_level
         FROM master_drug m
         LEFT JOIN x_chembl ch ON ch.drugbank_id = m.drugbank_id
         LEFT JOIN x_pubchem p ON p.drugbank_id = m.drugbank_id
         LEFT JOIN x_structure_verify sv ON sv.drugbank_id = m.drugbank_id
+        LEFT JOIN x_chembl_structure_verify cv ON cv.drugbank_id = m.drugbank_id
         """
     ).fetchall()
 
     t_mw, t_lp, t_psa, overall = Counter(), Counter(), Counter(), Counter()
     exact_overall = Counter()
+    double_verified = 0
     ins = []
     for r in rows:
         nm, ag, tt = tier3(r["mw"], cmw.get(_norm(r["name"])), r["pmw"], 0.02)
@@ -83,10 +85,12 @@ def main() -> None:
               else "CONFLICT" if "CONFLICT" in tiers
               else "B" if tiers else "")
         overall[ov] += 1
-        if r["match_level"] == "exact_match":
+        if r["pc_level"] == "exact_match":
             exact_overall[ov] += 1
+        if r["pc_level"] == "exact_match" and r["ch_level"] == "exact_match":
+            double_verified += ov == "A"
         ins.append((r["drugbank_id"], r["name"], nm, ag, tt,
-                    lp, lag, lt, ps, pag, pt, ov, r["match_level"]))
+                    lp, lag, lt, ps, pag, pt, ov, r["pc_level"], r["ch_level"]))
 
     m.executescript(
         """
@@ -96,20 +100,22 @@ def main() -> None:
             mw_n INTEGER, mw_agree INTEGER, mw_tier TEXT,
             logp_n INTEGER, logp_agree INTEGER, logp_tier TEXT,
             psa_n INTEGER, psa_agree INTEGER, psa_tier TEXT,
-            overall_tier TEXT, match_level TEXT
+            overall_tier TEXT,
+            pubchem_match_level TEXT, chembl_match_level TEXT
         );
         """
     )
-    m.executemany("INSERT INTO x_confidence VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)", ins)
+    m.executemany("INSERT INTO x_confidence VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)", ins)
     m.commit()
     m.close()
 
-    print("=== 三源置信度 v3(DrugBank + ChEMBL + PubChem, 结构验证标注)===")
+    print("=== 三源置信度 v3(DrugBank + ChEMBL + PubChem, 双侧结构验证标注)===")
     print("MW:  ", dict(t_mw))
     print("LogP:", dict(t_lp))
     print("TPSA:", dict(t_psa))
     print("总体(全部):", dict(overall))
-    print("总体(仅结构验证 exact_match):", dict(exact_overall))
+    print("总体(PubChem 侧结构验证 exact_match):", dict(exact_overall))
+    print(f"双重结构验证金标(两源均 exact_match 的 A 级): {double_verified}")
 
 
 if __name__ == "__main__":
