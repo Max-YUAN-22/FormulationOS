@@ -75,7 +75,8 @@ def parse_mp(text: str):
 
 
 def _sol_log10(v: float, u: str) -> float:
-    f = _SOL_FACTOR[u.lower()]
+    # Greek mu (U+03BC) and micro sign (U+00B5) are distinct codepoints; both occur
+    f = _SOL_FACTOR[u.lower().replace("μ", "µ")]
     return math.log10(v * f)
 
 
@@ -87,9 +88,15 @@ def parse_sol(text: str):
         m = rx.search(text)
         if m:
             if rx is _SOL_RANGE:
-                a, b = _sol_log10(float(m.group(1)), m.group(3)), _sol_log10(float(m.group(2)), m.group(3))
+                a, b = float(m.group(1)), float(m.group(2))
+                if a <= 0 or b <= 0:
+                    return None                      # 0 / negative: not log-comparable
+                a, b = _sol_log10(a, m.group(3)), _sol_log10(b, m.group(3))
                 return (min(a, b), max(a, b))
-            v = _sol_log10(float(m.group(1)), m.group(2))
+            v = float(m.group(1))
+            if v <= 0:
+                return None
+            v = _sol_log10(v, m.group(2))
             return (v, v)
     return None
 
@@ -141,6 +148,9 @@ def collect_pc(response: dict, kind: str):
                         hits.append((math.log10(v * f),) * 2)
             if "StringValue" in d:
                 texts.append(str(d["StringValue"]))
+            for x in d.get("StringWithMarkup") or []:
+                if isinstance(x, dict) and x.get("String"):
+                    texts.append(str(x["String"]))
             for x in d.values():
                 walk(x)
         elif isinstance(d, list):

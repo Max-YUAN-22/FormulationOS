@@ -1,10 +1,10 @@
 {
-  "generated_at": "2026-11-24T15:41:24.058667+00:00",
-  "db_sha256": "deb7ce58a4322184d865ee41bd18e28802930d9c7a654e9b65cff966feac4860",
-  "db_bytes": 16371712,
+  "generated_at": "2026-11-24T15:51:36.814612+00:00",
+  "db_sha256": "f7a644265e83e6e3084c6d8f3a033d866541be72323f9beec7c4892f04e03fd6",
+  "db_bytes": 17604608,
   "tables": {
     "manifest": {
-      "rows": 12,
+      "rows": 14,
       "schema": "CREATE TABLE manifest (key TEXT PRIMARY KEY, value TEXT)"
     },
     "master_drug": {
@@ -19,8 +19,12 @@
       "rows": 19857,
       "schema": "CREATE TABLE x_confidence (\n            drugbank_id TEXT PRIMARY KEY, name TEXT,\n            mw_n INTEGER, mw_agree INTEGER, mw_tier TEXT,\n            logp_n INTEGER, logp_agree INTEGER, logp_tier TEXT,\n            psa_n INTEGER, psa_agree INTEGER, psa_tier TEXT,\n            overall_tier TEXT\n        )"
     },
+    "x_coverage": {
+      "rows": 35,
+      "schema": "CREATE TABLE x_coverage (\n            layer TEXT, field TEXT, source TEXT,\n            drugs_with_field INTEGER, pct_of_spine REAL\n        )"
+    },
     "x_exp_crosscheck": {
-      "rows": 1799,
+      "rows": 3606,
       "schema": "CREATE TABLE x_exp_crosscheck (\n            drugbank_id TEXT, name TEXT, field TEXT,\n            drugbank_value TEXT, drugbank_lo REAL, drugbank_hi REAL, drugbank_unit_known INTEGER,\n            pubchem_value TEXT, pubchem_lo REAL, pubchem_hi REAL,\n            relation TEXT,\n            PRIMARY KEY (drugbank_id, field)\n        )"
     },
     "x_groups": {
@@ -30,6 +34,10 @@
     "x_in_vivo": {
       "rows": 2422,
       "schema": "CREATE TABLE x_in_vivo (\n            drugbank_id TEXT PRIMARY KEY,\n            name TEXT,\n            -- half-life, normalised to hours (min..max interval)\n            half_life_h_min REAL, half_life_h_max REAL, half_life_raw TEXT,\n            -- protein binding, percent; qualitative=1 for 'negligibly bound'\n            protein_binding_pct REAL, protein_binding_qualitative INTEGER,\n            protein_binding_raw TEXT,\n            -- volume of distribution, as-stated unit\n            vd_value REAL, vd_unit TEXT, vd_raw TEXT,\n            -- clearance, as-stated unit (interval or point)\n            clearance_min REAL, clearance_max REAL, clearance_unit TEXT,\n            clearance_raw TEXT,\n            extracted_fields INTEGER\n        )"
+    },
+    "x_logp_analysis": {
+      "rows": 11061,
+      "schema": "CREATE TABLE x_logp_analysis (\n            drugbank_id TEXT PRIMARY KEY, name TEXT,\n            db_logp REAL, chembl_alogp REAL, pubchem_xlogp REAL,\n            db_minus_chembl REAL, db_minus_pubchem REAL, chembl_minus_pubchem REAL\n        )"
     },
     "x_nmpa": {
       "rows": 315,
@@ -56,6 +64,8 @@
     "pubchem_props_rows": "15058",
     "pubchem_cid_jsonl_sha256": "b9c13daf44b2a4a77083d083f9e270b4e8a5e322974f08cfe73c2276df180c7a",
     "pubchem_props_jsonl_sha256": "a7aa3695e876f3ee8dfe2f8c900c067f54e23e7325896f28769c1d5757475341",
-    "exp_crosscheck_built_at": "2026-11-24T15:40:39.767373+00:00"
+    "logp_analysis_built_at": "2026-11-24T15:48:46.292921+00:00",
+    "coverage_built_at": "2026-11-24T15:48:46.540907+00:00",
+    "exp_crosscheck_built_at": "2026-11-24T15:51:36.697485+00:00"
   }
 }
