@@ -16,7 +16,7 @@ import json
 import os
 
 # Configuration
-GPT_API_KEY = "sk-rpuahfQDWzbqQKW0AbzGJpo7OMpftFRAaOsFzQUXqUXlMMNW"
+GPT_API_KEY = os.environ.get("GPT_API_KEY", "")  # set in shell env / .env — never hardcode
 GPT_BASE_URL = "https://www.cun.ai/v1"
 
 def test_ibuprofen_reasoning_chain():

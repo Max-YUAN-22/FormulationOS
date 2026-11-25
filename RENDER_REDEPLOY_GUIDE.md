@@ -49,7 +49,7 @@ MINIMAX_BASE_URL = https://api.minimaxi.com/v1
 
 **需要手动添加的密钥（点击 "Add Environment Variable"）：**
 ```
-GPT_API_KEY = sk-rpuahfQDWzbqQKW0AbzGJpo7OMpftFRAaOsFzQUXqUXlMMNW
+GPT_API_KEY = <set in Render dashboard → Environment; never commit keys>
 CLAUDE_API_KEY = (你的Claude API密钥)
 MINIMAX_API_KEY = (你的Minimax API密钥，如果有)
 PREFORMULATION_AI_API_KEY = (你的PreformulationAI密钥，如果有)
